@@ -1,0 +1,28 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# Env
+.env
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# Model files (QUAN TRỌNG nếu sau này có AI model nặng)
+*.h5
+*.pt
+*.pth
+*.onnx
+
+# Jupyter
+.ipynb_checkpoints/

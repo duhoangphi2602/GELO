@@ -1,0 +1,194 @@
+// ==============================
+// 1. ACCOUNTS
+// ==============================
+
+Table Accounts {
+  account_id      int [pk, increment]
+  username        varchar(100) [unique, not null]
+  email           varchar(255) [unique, not null]
+  password_hash   varchar(255)
+
+  role            varchar(20) [default: 'patient']  // patient | admin
+  created_at      timestamp [default: `now()`]
+}
+
+
+// ==============================
+// 2. PATIENTS
+// ==============================
+
+Table Patients {
+  patient_id      int [pk, increment]
+  account_id      int [unique, not null]
+  age             int 
+  gender          varchar(10) // male | female | other
+  created_at      timestamp [default: `now()`]
+}
+
+
+// ==============================
+// 3. DISEASES
+// ==============================
+
+Table Diseases {
+  disease_id      int [pk]
+  name            varchar(100)
+  description     text
+  visual_pattern  varchar(100)
+  color_pattern   varchar(100)
+  border_type     varchar(100)
+  is_contagious   boolean
+}
+
+
+// ==============================
+// 4. AI DATASET
+// ==============================
+
+Table DiseaseImages {
+  image_id        int [pk, increment]
+  disease_id      int
+  image_url       text
+  source          varchar(50)   // system | user_feedback
+  created_at      timestamp [default: `now()`]
+}
+
+Table DiagnosticQuestions {
+  question_id     int [pk, increment]
+  question_text   text         
+  created_at      timestamp [default: `now()`]
+}
+
+Table DiseaseRules {
+  rule_id         int [pk, increment]
+  disease_id      int
+  question_id     int
+  expected_answer boolean      
+  weight          float        
+}
+
+Table DiseaseAdvice {
+  advice_id       int [pk, increment]
+  disease_id      int
+  advice_type     varchar(20)  // care | lifestyle | warning
+  title           varchar(255)
+  content         text
+  priority        int          
+}
+
+Table EmergencyRules {
+  emergency_id    int [pk, increment]
+  condition_text  text         
+  is_active       boolean
+}
+
+
+// ==============================
+// 5. SCAN SESSION
+// ==============================
+
+Table SkinScans {
+  scan_id         int [pk, increment]
+  patient_id      int
+  created_at      timestamp [default: `now()`]
+}
+
+
+// ==============================
+// 6. SCAN IMAGES
+// ==============================
+
+Table ScanImages {
+  image_id        int [pk, increment]
+  scan_id         int
+  image_url       text
+  angle           varchar(50)   // front | side | close-up
+  is_blurry       boolean
+  created_at      timestamp [default: `now()`]
+}
+
+
+// ==============================
+// 7. AI PREDICTION
+// ==============================
+
+Table Predictions {
+  prediction_id   int [pk, increment]
+  scan_id         int
+  disease_id      int
+  confidence      float
+  model_version   varchar(50)
+  created_at      timestamp [default: `now()`]
+}
+
+
+// ==============================
+// 8. FINAL DIAGNOSIS
+// ==============================
+
+Table DiagnosisResults {
+  result_id       int [pk, increment]
+  scan_id         int [unique]
+  predicted_disease_id int
+  final_disease_id     int
+  is_emergency    boolean
+  created_at      timestamp [default: `now()`]
+}
+
+
+// ==============================
+// 9. FEEDBACK LOOP
+// ==============================
+
+Table FeedbackLogs {
+  feedback_id     int [pk, increment]
+  scan_id         int
+  predicted_disease_id int
+  actual_disease_id    int
+  is_correct      boolean
+  note            text
+  created_at      timestamp [default: `now()`]
+}
+
+
+// ==============================
+// 10. SKIN DIARY
+// ==============================
+
+Table SkinDiary {
+  diary_id        int [pk, increment]
+  patient_id      int
+  scan_id         int
+  condition_score int
+  note            text
+  created_at      timestamp [default: `now()`]
+}
+
+
+// ==============================
+// RELATIONSHIPS
+// ==============================
+
+Ref: Patients.account_id > Accounts.account_id
+
+Ref: DiseaseImages.disease_id > Diseases.disease_id
+Ref: DiseaseRules.disease_id > Diseases.disease_id
+Ref: DiseaseRules.question_id > DiagnosticQuestions.question_id
+Ref: DiseaseAdvice.disease_id > Diseases.disease_id
+
+Ref: SkinScans.patient_id > Patients.patient_id
+Ref: ScanImages.scan_id > SkinScans.scan_id
+
+Ref: Predictions.scan_id > SkinScans.scan_id
+Ref: Predictions.disease_id > Diseases.disease_id
+
+Ref: DiagnosisResults.scan_id > SkinScans.scan_id
+Ref: DiagnosisResults.predicted_disease_id > Diseases.disease_id
+Ref: DiagnosisResults.final_disease_id > Diseases.disease_id
+
+Ref: FeedbackLogs.scan_id > SkinScans.scan_id
+Ref: FeedbackLogs.predicted_disease_id > Diseases.disease_id
+Ref: FeedbackLogs.actual_disease_id > Diseases.disease_id
+
+Ref: SkinDiary.patient_id > Patients.patient_id
+Ref: SkinDiary.scan_id > SkinScans.scan_id
