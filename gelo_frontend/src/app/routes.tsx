@@ -14,11 +14,11 @@ import { RuleEngine } from "./components/rule-engine";
 export const router = createBrowserRouter([
   {
     path: "/",
-    Component: Registration,
+    Component: Login,
   },
   {
-    path: "/login",
-    Component: Login,
+    path: "/register",
+    Component: Registration,
   },
   {
     path: "/dashboard",

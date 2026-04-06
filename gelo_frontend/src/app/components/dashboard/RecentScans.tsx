@@ -54,9 +54,9 @@ export function RecentScans({ loading, scanHistory }: { loading: boolean, scanHi
               recentScansPreview.map((scan) => {
                 const result = scan.diagnosis?.predictedDisease?.name || "Pending Validation";
                 const isDanger = result !== "Normal" && result !== "Pending Validation";
-                
+
                 return (
-                  <tr key={scan.id} className="hover:bg-slate-50/50 transition-colors group cursor-default">
+                  <tr key={scan.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDanger ? 'bg-red-100' : 'bg-blue-100'}`}>
@@ -78,21 +78,22 @@ export function RecentScans({ loading, scanHistory }: { loading: boolean, scanHi
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-emerald-500 rounded-full" 
-                            style={{ width: `${Math.random() * 20 + 75}%` }} 
+                          <div
+                            className="h-full bg-emerald-500 rounded-full"
+                            style={{ width: `${Math.random() * 20 + 75}%` }}
                           />
                         </div>
                         <span className="text-xs font-bold text-slate-700">98%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button 
-                        onClick={() => {
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Ngăn sự kiện click lan ra hàng <tr>
                           localStorage.setItem("currentScanId", scan.id.toString());
                           navigate("/results");
                         }}
-                        className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-emerald-200"
+                        className="cursor-pointer text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-emerald-200"
                       >
                         View Report
                       </button>
@@ -104,12 +105,12 @@ export function RecentScans({ loading, scanHistory }: { loading: boolean, scanHi
           </tbody>
         </table>
       </div>
-      
-      <div 
+
+      <div
         onClick={() => navigate("/history")}
         className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors"
       >
-        <button className="text-sm font-semibold text-emerald-600 flex items-center gap-1 group">
+        <button className="cursor-pointer text-sm font-semibold text-emerald-600 flex items-center gap-1 group">
           View all scan history <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </button>
       </div>

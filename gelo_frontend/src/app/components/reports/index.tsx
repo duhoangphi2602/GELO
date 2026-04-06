@@ -12,15 +12,15 @@ export function Reports() {
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
+          <div className="cursor-pointer bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
             <p className="text-sm font-semibold text-slate-500 mb-1">Total Scans</p>
             <h3 className="text-3xl font-black text-slate-800">12</h3>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
+          <div className="cursor-pointer bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
             <p className="text-sm font-semibold text-slate-500 mb-1">Success Rate</p>
             <h3 className="text-3xl font-black text-slate-800">98%</h3>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
+          <div className="cursor-pointer bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
             <p className="text-sm font-semibold text-slate-500 mb-1">Flagged Cases</p>
             <h3 className="text-3xl font-black text-slate-800">1</h3>
           </div>

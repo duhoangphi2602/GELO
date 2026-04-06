@@ -1,7 +1,8 @@
+// src/app/ui/login.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Activity } from "lucide-react";
 import axios from "axios";
+import AuthLayout from "../components/layout/AuthLayout";
 
 export function Login() {
   const navigate = useNavigate();
@@ -42,84 +43,67 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8">
-      <div className="w-full max-w-md">
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary mb-4">
-            <Activity className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl mb-2">Welcome to GELO</h1>
-          <p className="text-muted-foreground">
-            Log in to access your GELO dashboard
-          </p>
+    <AuthLayout
+      subtitle="AI Skin Analysis"
+      title="Sign in to your account"
+      description="Enter your credentials to access the platform."
+    >
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-md">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label htmlFor="email" className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="doctor@hospital.com"
+            required
+            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2a64ad] text-gray-900"
+          />
         </div>
 
-        {/* Login Form */}
-        <div className="bg-card rounded-lg shadow-lg border border-border p-8">
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block mb-2 text-foreground">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block mb-2 text-foreground"
-              >
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-colors mt-6"
-            >
-              Sign In
-            </button>
-          </form>
-
-          <p className="text-center text-muted-foreground mt-6">
-            Don't have an account?{" "}
-            <button
-              onClick={() => navigate("/")}
-              className="text-primary hover:underline"
-            >
-              Register here
-            </button>
-          </p>
+        <div>
+          <label htmlFor="password" className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+            Password
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Enter your password"
+            required
+            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2a64ad] text-gray-900"
+          />
         </div>
-      </div>
-    </div>
+
+        <button
+          type="submit"
+          className="w-full bg-[#2a64ad] text-white py-3 rounded-md font-medium hover:bg-blue-800 transition duration-200 mt-2 cursor-pointer"
+        >
+          Sign In
+        </button>
+      </form>
+
+      <p className="text-center text-sm text-gray-500 mt-6">
+        Don't have an account?{" "}
+        <button
+          onClick={() => navigate("/register")}
+          className="text-[#2a64ad] font-medium hover:underline cursor-pointer"
+        >
+          Sign up
+        </button>
+      </p>
+    </AuthLayout>
   );
 }

@@ -55,16 +55,15 @@ export function AdminDashboard() {
             return (
               <div
                 key={stat.label}
-                className="bg-card rounded-lg border border-border p-6"
+                className="cursor-pointer bg-card rounded-lg border border-border p-6 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Icon className="w-6 h-6 text-primary" />
                   </div>
                   <span
-                    className={`text-sm ${
-                      stat.trend === "up" ? "text-green-600" : "text-red-600"
-                    }`}
+                    className={`text-sm ${stat.trend === "up" ? "text-green-600" : "text-red-600"
+                      }`}
                   >
                     {stat.change}
                   </span>
@@ -130,7 +129,7 @@ export function AdminDashboard() {
                 Model prediction accuracy by disease category
               </p>
             </div>
-            <button className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
+            <button className="cursor-pointer px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
               Export Data
             </button>
           </div>
@@ -172,7 +171,7 @@ export function AdminDashboard() {
                 {confusionMatrix.map((row, idx) => {
                   const total = row.eczema + row.psoriasis + row.dermatitis + row.acne + row.other;
                   return (
-                    <tr key={idx} className="border-b border-border hover:bg-muted/20">
+                    <tr key={idx} className="cursor-pointer border-b border-border hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 bg-muted/30">{row.actual}</td>
                       <td className={`px-4 py-3 text-center ${row.actual === "Eczema" ? "bg-green-100 text-green-800" : ""}`}>
                         {row.eczema}
@@ -217,7 +216,7 @@ export function AdminDashboard() {
             ].map((activity, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between py-3 px-4 bg-muted/20 rounded-lg"
+                className="cursor-pointer flex items-center justify-between py-3 px-4 bg-muted/20 rounded-lg hover:bg-muted/30 transition-colors"
               >
                 <div className="flex-1">
                   <p className="text-sm">{activity.event}</p>

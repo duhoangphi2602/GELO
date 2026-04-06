@@ -10,7 +10,7 @@ export function PatientDiary() {
   const [notes, setNotes] = useState("");
   const [savedMessage, setSavedMessage] = useState(false);
   const [diaries, setDiaries] = useState<any[]>([]);
-  
+
   // Format today as YYYY-MM-DD for date input constraints
   const today = new Date().toISOString().split('T')[0];
   const [entryDate, setEntryDate] = useState(today);
@@ -59,7 +59,7 @@ export function PatientDiary() {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
-        
+
         <div className="flex flex-col mb-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center border border-emerald-200">
@@ -91,7 +91,7 @@ export function PatientDiary() {
                 value={entryDate}
                 max={today}
                 onChange={(e) => setEntryDate(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800 font-medium"
+                className="cursor-pointer w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800 font-medium"
               />
             </div>
 
@@ -121,16 +121,16 @@ export function PatientDiary() {
 
                 {/* Scale Labels */}
                 <div className="flex justify-between text-xs font-medium text-slate-400">
-                  <span className="text-center w-8">1<br/>Worse</span>
+                  <span className="text-center w-8">1<br />Worse</span>
                   <span className="text-center w-4 mt-1">2</span>
                   <span className="text-center w-4 mt-1">3</span>
                   <span className="text-center w-4 mt-1">4</span>
-                  <span className="text-center w-8">5<br/>Same</span>
+                  <span className="text-center w-8">5<br />Same</span>
                   <span className="text-center w-4 mt-1">6</span>
                   <span className="text-center w-4 mt-1">7</span>
                   <span className="text-center w-4 mt-1">8</span>
                   <span className="text-center w-4 mt-1">9</span>
-                  <span className="text-center w-8">10<br/>Better</span>
+                  <span className="text-center w-8">10<br />Better</span>
                 </div>
               </div>
 
@@ -167,7 +167,7 @@ export function PatientDiary() {
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Describe your symptoms, any changes you've noticed, medications taken, activities performed..."
                 rows={7}
-                className="w-full flex-1 px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none text-slate-800"
+                className="cursor-text w-full flex-1 px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none text-slate-800"
               />
               <p className="text-xs font-medium text-slate-400 mt-3 text-right">
                 {notes.length} characters
@@ -204,14 +204,14 @@ export function PatientDiary() {
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             <button
               onClick={handleSave}
-              className="px-8 py-3.5 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-emerald-500/20 sm:w-auto w-full"
+              className="cursor-pointer px-8 py-3.5 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-emerald-500/20 sm:w-auto w-full"
             >
               <Save className="w-5 h-5 flex-shrink-0" />
               Save Diary Entry
             </button>
             <button
               onClick={() => navigate("/dashboard")}
-              className="px-8 py-3.5 bg-white border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition-all sm:w-auto w-full"
+              className="cursor-pointer px-8 py-3.5 bg-white border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition-all sm:w-auto w-full"
             >
               Cancel
             </button>

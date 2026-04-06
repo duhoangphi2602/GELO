@@ -10,7 +10,7 @@ export function QuickActions() {
       <p className="text-sm text-slate-500 mb-6">Common tasks and shortcuts</p>
 
       {/* Start New Scan CTA - Prominent */}
-      <div 
+      <div
         onClick={() => navigate("/scan")}
         className="bg-emerald-600 rounded-xl p-5 mb-4 text-white cursor-pointer hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-500/20 group relative overflow-hidden flex flex-col"
       >
@@ -20,16 +20,16 @@ export function QuickActions() {
         </div>
         <h4 className="font-bold text-lg mb-1 relative z-10">Start New AI Scan</h4>
         <p className="text-emerald-50 text-xs font-medium mb-4 relative z-10">Upload medical images for instant analysis</p>
-        
-        <button className="flex items-center gap-1 font-bold text-sm bg-white text-emerald-600 py-2.5 px-4 rounded-lg w-fit mt-auto relative z-10 shadow-sm">
+
+        <button className="cursor-pointer flex items-center gap-1 font-bold text-sm bg-white text-emerald-600 py-2.5 px-4 rounded-lg w-fit mt-auto relative z-10 shadow-sm">
           Go to Scan Page <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
       <div className="space-y-3 mt-auto">
-        <button 
+        <button
           onClick={() => navigate("/reports")}
-          className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all group"
+          className="cursor-pointer w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all group"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
@@ -39,10 +39,10 @@ export function QuickActions() {
           </div>
           <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-600" />
         </button>
-        
-        <button 
+
+        <button
           onClick={() => navigate("/profile")}
-          className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all group"
+          className="cursor-pointer w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all group"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">

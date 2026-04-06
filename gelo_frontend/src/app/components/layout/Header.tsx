@@ -5,7 +5,7 @@ export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const fullName = localStorage.getItem("fullName") || "Guest Account";
-  
+
   // Get initials for avatar (e.g. "John Doe" -> "JD")
   const initials = fullName
     .split(" ")
@@ -28,29 +28,29 @@ export function Header() {
     localStorage.removeItem("patientId");
     localStorage.removeItem("fullName");
     localStorage.removeItem("role");
-    navigate("/login");
+    navigate("/");
   };
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-30 shadow-sm">
       <h2 className="text-xl font-bold text-slate-800 tracking-tight">{getPageTitle()}</h2>
-      
+
       <div className="flex items-center gap-6">
         <div className="relative group">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-          <input 
+          <input
             type="text"
             placeholder="Search patients, results..."
-            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all w-64 md:w-80"
+            className="cursor-text pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all w-64 md:w-80"
           />
         </div>
-        
+
         <div className="flex items-center gap-4">
-          <button className="relative p-2 text-slate-400 hover:bg-slate-50 hover:text-emerald-600 rounded-full transition-colors">
+          <button className="cursor-pointer relative p-2 text-slate-400 hover:bg-slate-50 hover:text-emerald-600 rounded-full transition-colors">
             <Bell className="w-5 h-5" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
-          
+
           <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
             <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm border border-emerald-200">
               {initials}
@@ -60,10 +60,10 @@ export function Header() {
               <span className="text-[11px] text-slate-500 mt-1">Patient</span>
             </div>
           </div>
-          
-          <button 
+
+          <button
             onClick={handleLogout}
-            className="ml-1 p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors flex items-center justify-center"
+            className="cursor-pointer ml-1 p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors flex items-center justify-center"
             title="Log out"
           >
             <LogOut className="w-5 h-5" />

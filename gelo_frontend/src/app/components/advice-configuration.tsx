@@ -57,7 +57,7 @@ export function AdviceConfiguration() {
         {/* Selection Controls */}
         <div className="bg-card rounded-lg border border-border p-6">
           <h3 className="mb-6">Select Disease & Category</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Disease Dropdown */}
             <div>
@@ -71,7 +71,7 @@ export function AdviceConfiguration() {
                   setSelectedDisease(e.target.value);
                   if (e.target.value) loadExistingAdvice();
                 }}
-                className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="cursor-pointer w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select a disease...</option>
                 {diseases.map((disease) => (
@@ -91,7 +91,7 @@ export function AdviceConfiguration() {
                 id="category"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 disabled={!selectedDisease}
               >
                 <option value="">Select a category...</option>
@@ -132,7 +132,7 @@ export function AdviceConfiguration() {
                   onChange={(e) => setCareAdvice(e.target.value)}
                   rows={12}
                   placeholder="• First care instruction&#10;• Second care instruction&#10;• Third care instruction..."
-                  className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                  className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
                   Use bullet points (•) for each instruction
@@ -156,7 +156,7 @@ export function AdviceConfiguration() {
                   onChange={(e) => setLifestyleAdvice(e.target.value)}
                   rows={12}
                   placeholder="• First lifestyle tip&#10;• Second lifestyle tip&#10;• Third lifestyle tip..."
-                  className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                  className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
                   Use bullet points (•) for each recommendation
@@ -180,7 +180,7 @@ export function AdviceConfiguration() {
                   onChange={(e) => setEmergencyWarnings(e.target.value)}
                   rows={12}
                   placeholder="• First warning sign&#10;• Second warning sign&#10;• Third warning sign..."
-                  className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                  className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
                   Use bullet points (•) for each warning
@@ -224,13 +224,13 @@ export function AdviceConfiguration() {
                 setLifestyleAdvice("");
                 setEmergencyWarnings("");
               }}
-              className="px-6 py-3 bg-card border-2 border-border rounded-lg hover:bg-muted/30 transition-colors"
+              className="cursor-pointer px-6 py-3 bg-card border-2 border-border rounded-lg hover:bg-muted/30 transition-colors"
             >
               Reset
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              className="cursor-pointer flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               <Save className="w-5 h-5" />
               Save Configuration

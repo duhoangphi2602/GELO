@@ -16,7 +16,7 @@ export function DiseaseManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -69,8 +69,8 @@ export function DiseaseManagement() {
     e.preventDefault();
     if (editingId) {
       // Update existing disease
-      setDiseases(diseases.map(d => 
-        d.id === editingId 
+      setDiseases(diseases.map(d =>
+        d.id === editingId
           ? { ...d, ...formData }
           : d
       ));
@@ -136,12 +136,12 @@ export function DiseaseManagement() {
               placeholder="Search diseases..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="cursor-text w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
             />
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+            className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             <Plus className="w-5 h-5" />
             Add Disease
@@ -167,7 +167,7 @@ export function DiseaseManagement() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filteredDiseases.map((disease) => (
-                      <tr key={disease.id} className="hover:bg-muted/20">
+                      <tr key={disease.id} className="cursor-pointer hover:bg-muted/20 transition-colors">
                         <td className="px-6 py-4">
                           <span>{disease.name}</span>
                         </td>
@@ -212,13 +212,13 @@ export function DiseaseManagement() {
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => handleEdit(disease)}
-                              className="p-2 hover:bg-muted rounded-lg text-primary"
+                              className="cursor-pointer p-2 hover:bg-muted rounded-lg text-primary transition-colors"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(disease.id)}
-                              className="p-2 hover:bg-destructive/10 rounded-lg text-destructive"
+                              className="cursor-pointer p-2 hover:bg-destructive/10 rounded-lg text-destructive transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -239,7 +239,7 @@ export function DiseaseManagement() {
                 <h3 className="mb-6">
                   {editingId ? "Edit Disease" : "Add New Disease"}
                 </h3>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Name */}
                   <div>
@@ -251,7 +251,7 @@ export function DiseaseManagement() {
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                      className="cursor-text w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-colors"
                       placeholder="e.g., Contact Dermatitis"
                       required
                     />
@@ -267,7 +267,7 @@ export function DiseaseManagement() {
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
-                      className="w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                      className="cursor-text w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm transition-colors"
                       placeholder="Brief medical description..."
                       required
                     />
@@ -283,7 +283,7 @@ export function DiseaseManagement() {
                       value={formData.patterns}
                       onChange={(e) => setFormData({ ...formData, patterns: e.target.value })}
                       rows={3}
-                      className="w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                      className="cursor-text w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm transition-colors"
                       placeholder="Common visual patterns..."
                       required
                     />
@@ -294,13 +294,13 @@ export function DiseaseManagement() {
                     <label className="block text-sm mb-3">
                       Physical Characteristics
                     </label>
-                    
+
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={formData.hasBlister}
                         onChange={(e) => setFormData({ ...formData, hasBlister: e.target.checked })}
-                        className="w-5 h-5 text-primary accent-primary rounded"
+                        className="cursor-pointer w-5 h-5 text-primary accent-primary rounded"
                       />
                       <span className="text-sm">Has Blisters</span>
                     </label>
@@ -310,7 +310,7 @@ export function DiseaseManagement() {
                         type="checkbox"
                         checked={formData.hasScaling}
                         onChange={(e) => setFormData({ ...formData, hasScaling: e.target.checked })}
-                        className="w-5 h-5 text-primary accent-primary rounded"
+                        className="cursor-pointer w-5 h-5 text-primary accent-primary rounded"
                       />
                       <span className="text-sm">Has Scaling</span>
                     </label>
@@ -320,14 +320,14 @@ export function DiseaseManagement() {
                   <div className="flex gap-2 pt-4">
                     <button
                       type="submit"
-                      className="flex-1 bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90 text-sm"
+                      className="cursor-pointer flex-1 bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90 text-sm transition-colors"
                     >
                       {editingId ? "Update" : "Add"} Disease
                     </button>
                     <button
                       type="button"
                       onClick={resetForm}
-                      className="px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm"
+                      className="cursor-pointer px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm transition-colors"
                     >
                       Cancel
                     </button>

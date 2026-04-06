@@ -71,11 +71,10 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive(item.path)
+                className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive(item.path)
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted/50 text-foreground"
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 <span>{item.label}</span>
@@ -86,7 +85,7 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
           <div className="pt-4 mt-4 border-t border-border">
             <button
               onClick={() => navigate("/dashboard")}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted/50 text-foreground transition-colors"
+              className="cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted/50 text-foreground transition-colors"
             >
               <Users className="w-5 h-5" />
               <span>Patient Portal</span>
@@ -107,7 +106,7 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
           </div>
           <button
             onClick={() => navigate("/")}
-            className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors mt-2"
+            className="cursor-pointer w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors mt-2"
           >
             <LogOut className="w-4 h-4" />
             <span className="text-sm">Logout</span>

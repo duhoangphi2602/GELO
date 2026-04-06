@@ -1,3 +1,4 @@
+// registration.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Activity } from "lucide-react";
@@ -67,12 +68,12 @@ export function Registration() {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
+                className="cursor-text w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
                 placeholder="Choose a username"
                 required
               />
             </div>
-            
+
             {/* Full Name */}
             <div>
               <label
@@ -87,7 +88,7 @@ export function Registration() {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
+                className="cursor-text w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
                 placeholder="Enter your full name"
                 required
               />
@@ -104,7 +105,7 @@ export function Registration() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Enter your email"
                 required
               />
@@ -124,7 +125,7 @@ export function Registration() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Create a password"
                 required
               />
@@ -141,7 +142,7 @@ export function Registration() {
                 name="age"
                 value={formData.age}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Enter your age"
                 required
                 min="1"
@@ -159,7 +160,7 @@ export function Registration() {
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="cursor-pointer hover:bg-slate-50 transition-colors w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               >
                 <option value="">Select gender</option>
@@ -173,7 +174,7 @@ export function Registration() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-colors mt-6"
+              className="cursor-pointer w-full bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 hover:shadow-md transition-all mt-6"
             >
               Register
             </button>
@@ -182,8 +183,8 @@ export function Registration() {
           <p className="text-center text-muted-foreground mt-6">
             Already have an account?{" "}
             <button
-              onClick={() => navigate("/login")}
-              className="text-primary hover:underline"
+              onClick={() => navigate("/")}
+              className="cursor-pointer text-primary hover:underline"
             >
               Sign in
             </button>

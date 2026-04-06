@@ -33,7 +33,7 @@ export function Feedback() {
           </div>
           <button
             onClick={() => navigate("/results")}
-            className="px-4 py-2 text-primary hover:text-primary/80"
+            className="cursor-pointer px-4 py-2 text-primary hover:text-primary/80"
           >
             ← Back to Results
           </button>
@@ -77,35 +77,31 @@ export function Feedback() {
             {/* Is AI Correct Question */}
             <div className="bg-card rounded-lg shadow-lg border border-border p-6">
               <h3 className="mb-6">Is the AI diagnosis correct?</h3>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => setIsCorrect(true)}
-                  className={`p-6 rounded-lg border-2 transition-all ${
-                    isCorrect === true
+                  className={`cursor-pointer p-6 rounded-lg border-2 transition-all ${isCorrect === true
                       ? "border-green-500 bg-green-50"
                       : "border-border hover:border-green-300"
-                  }`}
+                    }`}
                 >
                   <div className="flex flex-col items-center gap-3">
                     <div
-                      className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                        isCorrect === true
+                      className={`w-16 h-16 rounded-full flex items-center justify-center ${isCorrect === true
                           ? "bg-green-500"
                           : "bg-muted"
-                      }`}
+                        }`}
                     >
                       <ThumbsUp
-                        className={`w-8 h-8 ${
-                          isCorrect === true ? "text-white" : "text-muted-foreground"
-                        }`}
+                        className={`w-8 h-8 ${isCorrect === true ? "text-white" : "text-muted-foreground"
+                          }`}
                       />
                     </div>
                     <span
-                      className={`text-xl ${
-                        isCorrect === true ? "text-green-600" : "text-foreground"
-                      }`}
+                      className={`text-xl ${isCorrect === true ? "text-green-600" : "text-foreground"
+                        }`}
                     >
                       Yes, Correct
                     </span>
@@ -115,30 +111,26 @@ export function Feedback() {
                 <button
                   type="button"
                   onClick={() => setIsCorrect(false)}
-                  className={`p-6 rounded-lg border-2 transition-all ${
-                    isCorrect === false
+                  className={`cursor-pointer p-6 rounded-lg border-2 transition-all ${isCorrect === false
                       ? "border-destructive bg-red-50"
                       : "border-border hover:border-red-300"
-                  }`}
+                    }`}
                 >
                   <div className="flex flex-col items-center gap-3">
                     <div
-                      className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                        isCorrect === false
+                      className={`w-16 h-16 rounded-full flex items-center justify-center ${isCorrect === false
                           ? "bg-destructive"
                           : "bg-muted"
-                      }`}
+                        }`}
                     >
                       <ThumbsDown
-                        className={`w-8 h-8 ${
-                          isCorrect === false ? "text-white" : "text-muted-foreground"
-                        }`}
+                        className={`w-8 h-8 ${isCorrect === false ? "text-white" : "text-muted-foreground"
+                          }`}
                       />
                     </div>
                     <span
-                      className={`text-xl ${
-                        isCorrect === false ? "text-destructive" : "text-foreground"
-                      }`}
+                      className={`text-xl ${isCorrect === false ? "text-destructive" : "text-foreground"
+                        }`}
                     >
                       No, Incorrect
                     </span>
@@ -157,7 +149,7 @@ export function Feedback() {
                   id="actual-disease"
                   value={actualDisease}
                   onChange={(e) => setActualDisease(e.target.value)}
-                  className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="cursor-pointer w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   required={isCorrect === false}
                 >
                   <option value="">Select the actual condition</option>
@@ -202,7 +194,7 @@ export function Feedback() {
                 onChange={(e) => setAdditionalComments(e.target.value)}
                 placeholder="Share any additional thoughts or details that might help us improve our AI..."
                 rows={6}
-                className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               />
             </div>
 
@@ -218,18 +210,17 @@ export function Feedback() {
               <button
                 type="submit"
                 disabled={isCorrect === null}
-                className={`flex-1 py-4 rounded-lg transition-colors ${
-                  isCorrect === null
+                className={`flex-1 py-4 rounded-lg transition-colors ${isCorrect === null
                     ? "bg-muted text-muted-foreground cursor-not-allowed"
-                    : "bg-primary text-primary-foreground hover:bg-primary/90"
-                }`}
+                    : "cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
+                  }`}
               >
                 Submit Feedback
               </button>
               <button
                 type="button"
                 onClick={() => navigate("/results")}
-                className="px-8 py-4 bg-card border-2 border-border rounded-lg hover:bg-muted/30 transition-colors"
+                className="cursor-pointer px-8 py-4 bg-card border-2 border-border rounded-lg hover:bg-muted/30 transition-colors"
               >
                 Cancel
               </button>

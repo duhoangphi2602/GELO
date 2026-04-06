@@ -17,6 +17,9 @@ export function RuleEngine() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
 
+  // State quản lý danh sách các rule được tick chọn
+  const [selectedRules, setSelectedRules] = useState<number[]>([]);
+
   const [formData, setFormData] = useState({
     question: "",
     expectedAnswer: "",
@@ -145,6 +148,8 @@ export function RuleEngine() {
   const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this rule?")) {
       setRules(rules.filter((r) => r.id !== id));
+      // Xóa id khỏi danh sách selected nếu rule đó bị xóa
+      setSelectedRules(prev => prev.filter(selectedId => selectedId !== id));
     }
   };
 
@@ -165,6 +170,22 @@ export function RuleEngine() {
     return matchesSearch && matchesCategory;
   });
 
+  // Xử lý khi tick vào ô "Select All" ở tiêu đề bảng
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedRules(filteredRules.map(r => r.id));
+    } else {
+      setSelectedRules([]);
+    }
+  };
+
+  // Xử lý khi tick vào từng ô riêng lẻ
+  const handleSelectRule = (id: number) => {
+    setSelectedRules(prev =>
+      prev.includes(id) ? prev.filter(rId => rId !== id) : [...prev, id]
+    );
+  };
+
   return (
     <AdminLayout
       title="Rule Engine"
@@ -182,7 +203,7 @@ export function RuleEngine() {
                 placeholder="Search rules..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="cursor-text w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
             </div>
 
@@ -190,7 +211,7 @@ export function RuleEngine() {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="cursor-pointer px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
             >
               <option value="">All Categories</option>
               {diseaseCategories.map((cat) => (
@@ -202,17 +223,17 @@ export function RuleEngine() {
           </div>
 
           <div className="flex gap-2">
-            <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30">
+            <button className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 transition-colors">
               <Upload className="w-4 h-4" />
               Import
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30">
+            <button className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 transition-colors">
               <Download className="w-4 h-4" />
               Export
             </button>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               <Plus className="w-5 h-5" />
               Add Rule
@@ -266,7 +287,7 @@ export function RuleEngine() {
                   onChange={(e) =>
                     setFormData({ ...formData, question: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                   placeholder="e.g., Are you experiencing itching?"
                   required
                 />
@@ -283,7 +304,7 @@ export function RuleEngine() {
                   onChange={(e) =>
                     setFormData({ ...formData, expectedAnswer: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="cursor-pointer w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                   required
                 >
                   <option value="">Select answer...</option>
@@ -304,7 +325,7 @@ export function RuleEngine() {
                   onChange={(e) =>
                     setFormData({ ...formData, diseaseCategory: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="cursor-pointer w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                   required
                 >
                   <option value="">Select category...</option>
@@ -330,7 +351,7 @@ export function RuleEngine() {
                   onChange={(e) =>
                     setFormData({ ...formData, weight: Number(e.target.value) })
                   }
-                  className="w-full"
+                  className="cursor-pointer w-full"
                   style={{
                     background: `linear-gradient(to right, #0066CC 0%, #0066CC ${formData.weight}%, #e9ebef ${formData.weight}%, #e9ebef 100%)`,
                   }}
@@ -346,14 +367,14 @@ export function RuleEngine() {
               <div className="md:col-span-2 flex gap-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90"
+                  className="cursor-pointer flex-1 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-colors"
                 >
                   {editingId ? "Update" : "Add"} Rule
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-8 py-3 bg-card border-2 border-border rounded-lg hover:bg-muted/30"
+                  className="cursor-pointer px-8 py-3 bg-card border-2 border-border rounded-lg hover:bg-muted/30 transition-colors"
                 >
                   Cancel
                 </button>
@@ -369,7 +390,12 @@ export function RuleEngine() {
               <thead className="bg-muted/50 border-b-2 border-border">
                 <tr>
                   <th className="px-6 py-4 text-left w-12">
-                    <input type="checkbox" className="w-4 h-4" />
+                    <input
+                      type="checkbox"
+                      className="cursor-pointer w-4 h-4"
+                      checked={filteredRules.length > 0 && selectedRules.length === filteredRules.length}
+                      onChange={handleSelectAll}
+                    />
                   </th>
                   <th className="px-6 py-4 text-left">Survey Question</th>
                   <th className="px-6 py-4 text-center">Expected Answer</th>
@@ -381,22 +407,26 @@ export function RuleEngine() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredRules.map((rule) => (
-                  <tr key={rule.id} className="hover:bg-muted/20">
+                  <tr key={rule.id} className="hover:bg-muted/20 transition-colors">
                     <td className="px-6 py-4">
-                      <input type="checkbox" className="w-4 h-4" />
+                      <input
+                        type="checkbox"
+                        className="cursor-pointer w-4 h-4"
+                        checked={selectedRules.includes(rule.id)}
+                        onChange={() => handleSelectRule(rule.id)}
+                      />
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm">{rule.question}</p>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs ${
-                          rule.expectedAnswer === "Yes"
-                            ? "bg-green-100 text-green-800"
-                            : rule.expectedAnswer === "No"
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs ${rule.expectedAnswer === "Yes"
+                          ? "bg-green-100 text-green-800"
+                          : rule.expectedAnswer === "No"
                             ? "bg-red-100 text-red-800"
                             : "bg-yellow-100 text-yellow-800"
-                        }`}
+                          }`}
                       >
                         {rule.expectedAnswer}
                       </span>
@@ -420,11 +450,10 @@ export function RuleEngine() {
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => toggleActive(rule.id)}
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs ${
-                          rule.active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
+                        className={`cursor-pointer inline-flex items-center px-3 py-1 rounded-full text-xs transition-colors ${rule.active
+                          ? "bg-green-100 text-green-800 hover:bg-green-200"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          }`}
                       >
                         {rule.active ? "Active" : "Inactive"}
                       </button>
@@ -433,13 +462,13 @@ export function RuleEngine() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleEdit(rule)}
-                          className="p-2 hover:bg-muted rounded-lg text-primary"
+                          className="cursor-pointer p-2 hover:bg-muted rounded-lg text-primary transition-colors"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(rule.id)}
-                          className="p-2 hover:bg-destructive/10 rounded-lg text-destructive"
+                          className="cursor-pointer p-2 hover:bg-destructive/10 rounded-lg text-destructive transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -458,16 +487,16 @@ export function RuleEngine() {
             Showing {filteredRules.length} of {rules.length} rules
           </p>
           <div className="flex gap-2">
-            <button className="px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm">
+            <button className="cursor-pointer px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm transition-colors">
               Previous
             </button>
-            <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm">
+            <button className="cursor-pointer px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm transition-colors">
               1
             </button>
-            <button className="px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm">
+            <button className="cursor-pointer px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm transition-colors">
               2
             </button>
-            <button className="px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm">
+            <button className="cursor-pointer px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm transition-colors">
               Next
             </button>
           </div>
