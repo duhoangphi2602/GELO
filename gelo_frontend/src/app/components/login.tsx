@@ -16,10 +16,13 @@ export function Login() {
     e.preventDefault();
     try {
       const response = await axios.post("http://localhost:3000/auth/login", formData);
-      
+
       localStorage.setItem("role", response.data.role);
       if (response.data.patientId) {
         localStorage.setItem("patientId", response.data.patientId);
+      }
+      if (response.data.fullName) {
+        localStorage.setItem("fullName", response.data.fullName);
       }
 
       if (response.data.role === 'admin') {
@@ -46,9 +49,9 @@ export function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary mb-4">
             <Activity className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl mb-2">Welcome Back</h1>
+          <h1 className="text-3xl mb-2">Welcome to GELO</h1>
           <p className="text-muted-foreground">
-            Log in to access your HealthAI dashboard
+            Log in to access your GELO dashboard
           </p>
         </div>
 

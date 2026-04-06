@@ -20,6 +20,7 @@ model Account {
 model Patient {
   id          Int         @id @default(autoincrement()) @map("patient_id")
   accountId   Int         @unique @map("account_id")
+  fullName    String?     @db.VarChar(100) @map("full_name")
   age         Int?
   gender      String?     @db.VarChar(10)
   createdAt   DateTime    @default(now()) @map("created_at")

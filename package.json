@@ -1,0 +1,11 @@
+{
+  "name": "gelo-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -c \"cyan,magenta,yellow\" -n \"FRONTEND,BACKEND,AI_API \" \"npm run dev --prefix gelo_frontend\" \"npm run start:dev --prefix gelo_backend\" \"cd gelo_ai && uvicorn main:app --reload --port 8000\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

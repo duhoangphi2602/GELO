@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { Registration } from "./components/registration";
 import { Login } from "./components/login";
-import { PatientDashboard } from "./components/patient-dashboard";
+import { Dashboard } from "./components/dashboard";
 import { MedicalAssessment } from "./components/medical-assessment";
 import { DiagnosticResult } from "./components/diagnostic-result";
 import { PatientDiary } from "./components/patient-diary";
@@ -22,10 +22,10 @@ export const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    Component: PatientDashboard,
+    Component: Dashboard,
   },
   {
-    path: "/assessment",
+    path: "/scan",
     Component: MedicalAssessment,
   },
   {
@@ -33,8 +33,22 @@ export const router = createBrowserRouter([
     Component: DiagnosticResult,
   },
   {
-    path: "/diary",
+    path: "/history",
     Component: PatientDiary,
+  },
+  {
+    path: "/reports",
+    async lazy() {
+      const { Reports } = await import("./components/reports");
+      return { Component: Reports };
+    },
+  },
+  {
+    path: "/profile",
+    async lazy() {
+      const { Profile } = await import("./components/profile");
+      return { Component: Profile };
+    },
   },
   {
     path: "/feedback",

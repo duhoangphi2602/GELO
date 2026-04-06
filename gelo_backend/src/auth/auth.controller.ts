@@ -8,7 +8,7 @@ export class AuthController {
   @Post('register')
   async register(@Body() body: any) {
     // Gọi từ giao diện Registration lúc user bấm Đăng ký
-    return this.authService.register(body.username, body.email, body.password);
+    return this.authService.register(body);
   }
 
   @Post('login')

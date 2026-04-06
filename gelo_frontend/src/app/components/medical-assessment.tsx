@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Activity, Upload, AlertCircle, X } from "lucide-react";
+import { Upload, AlertCircle, X, FileSearch, CheckCircle2, ChevronRight, ActivitySquare } from "lucide-react";
 import axios from "axios";
+import { Layout } from "./layout/Layout";
 
 export function MedicalAssessment() {
   const navigate = useNavigate();
   const [selectedAngle, setSelectedAngle] = useState<string | null>(null);
-  const [showBlurryAlert, setShowBlurryAlert] = useState(false); // Changed to false by default
+  const [showBlurryAlert, setShowBlurryAlert] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   
   const [symptoms, setSymptoms] = useState({
@@ -49,7 +50,6 @@ export function MedicalAssessment() {
       const response = await axios.post("http://localhost:3000/scans/analyze", payload);
       
       if (response.data.scanId) {
-        // Lưu scanId vừa nhận để trang Result load đúng kết quả
         localStorage.setItem("currentScanId", response.data.scanId);
         navigate("/results"); 
       }
@@ -62,7 +62,7 @@ export function MedicalAssessment() {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const filesArr = Array.from(e.target.files).slice(0, 5); // Tối đa 5 ảnh
+      const filesArr = Array.from(e.target.files).slice(0, 5);
       setUploadedFiles(filesArr);
     }
   };
@@ -72,54 +72,46 @@ export function MedicalAssessment() {
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <Activity className="w-6 h-6 text-white" />
+    <Layout>
+      <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
+        
+        <div className="flex flex-col mb-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center border border-emerald-200">
+              <FileSearch className="w-5 h-5 text-emerald-600" />
             </div>
-            <div>
-              <h1 className="text-2xl">HealthAI Platform</h1>
-              <p className="text-sm text-muted-foreground">Medical Assessment</p>
-            </div>
+            <h2 className="text-2xl font-bold text-slate-800">AI Medical Assessment</h2>
           </div>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="px-4 py-2 text-primary hover:text-primary/80"
-          >
-            ← Back to Dashboard
-          </button>
+          <p className="text-slate-500">
+            Upload images and answer questions for an accurate AI-powered analysis.
+          </p>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-8 py-12">
-        <h2 className="text-3xl mb-2">AI Medical Assessment</h2>
-        <p className="text-muted-foreground mb-8">
-          Upload images and answer questions for AI-powered analysis
-        </p>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Left Column - Image Upload */}
-          <div className="space-y-6">
+          <div className="lg:col-span-2 space-y-6">
             {/* Upload Box */}
-            <div className="bg-card rounded-lg shadow-lg border border-border p-6">
-              <h3 className="mb-4">Upload Medical Images</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+              <h3 className="mb-4 text-sm font-semibold text-slate-700">Upload Medical Images</h3>
               
               {uploadedFiles.length > 0 ? (
-                <div className="border-2 border-border rounded-lg p-4 flex flex-col items-center justify-center bg-muted/10">
+                <div className="border-2 border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center bg-slate-50/50 relative group">
+                  <div className="absolute top-3 right-3 bg-white rounded-full p-1 shadow-sm border border-slate-100 z-10 cursor-pointer hover:bg-red-50 hover:text-red-500 transition-colors" onClick={() => setUploadedFiles([])}>
+                    <X className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
+                  </div>
                   <img 
                     src={URL.createObjectURL(uploadedFiles[0])} 
                     alt="Preview" 
-                    className="w-full max-h-64 object-contain rounded mb-4"
+                    className="w-full h-48 object-cover rounded-lg mb-4 border border-slate-200"
                   />
-                  <p className="text-center mb-2">
-                    {uploadedFiles.length} file(s) selected
-                  </p>
-                  <label htmlFor="file-upload" className="cursor-pointer text-primary hover:underline">
-                    Upload different photos
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <p className="text-sm font-semibold text-slate-700">
+                      {uploadedFiles.length} file(s) ready
+                    </p>
+                  </div>
+                  <label htmlFor="file-upload" className="cursor-pointer text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors bg-emerald-50 px-4 py-2 rounded-lg">
+                    Change photo
                   </label>
                   <input
                     id="file-upload"
@@ -133,15 +125,20 @@ export function MedicalAssessment() {
               ) : (
                 <label
                   htmlFor="file-upload"
-                  className="border-2 border-dashed border-border rounded-lg p-12 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors bg-muted/10"
+                  className="border-2 border-dashed border-slate-300 rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-all bg-slate-50/50 group"
                 >
-                  <Upload className="w-12 h-12 text-muted-foreground mb-4" />
-                  <p className="text-center mb-2">
-                    Drop your image here or click to browse
+                  <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Upload className="w-8 h-8 text-emerald-400 group-hover:text-emerald-500" />
+                  </div>
+                  <p className="text-center font-semibold text-slate-700 mb-1">
+                    Drop your image here
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    Supports: JPG, PNG (Max 5 files)
+                  <p className="text-xs font-medium text-slate-400 mb-6">
+                    Supports JPG, PNG (Max 5 files)
                   </p>
+                  <div className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg shadow-sm group-hover:border-emerald-200 group-hover:text-emerald-600 transition-colors">
+                    Browse Files
+                  </div>
                   <input
                     id="file-upload"
                     type="file"
@@ -155,218 +152,126 @@ export function MedicalAssessment() {
             </div>
 
             {/* Angle Selection Buttons */}
-            <div className="bg-card rounded-lg shadow-lg border border-border p-6">
-              <h3 className="mb-4">Select Image Angle</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <button
-                  onClick={() => setSelectedAngle("front")}
-                  className={`py-4 rounded-lg border-2 transition-colors ${
-                    selectedAngle === "front"
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  Front
-                </button>
-                <button
-                  onClick={() => setSelectedAngle("side")}
-                  className={`py-4 rounded-lg border-2 transition-colors ${
-                    selectedAngle === "side"
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  Side
-                </button>
-                <button
-                  onClick={() => setSelectedAngle("closeup")}
-                  className={`py-4 rounded-lg border-2 transition-colors ${
-                    selectedAngle === "closeup"
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  Close-up
-                </button>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+              <h3 className="mb-4 text-sm font-semibold text-slate-700">Select Image Angle</h3>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { id: "front", label: "Front" },
+                  { id: "side", label: "Side" },
+                  { id: "closeup", label: "Close-up" }
+                ].map((angle) => (
+                  <button
+                    key={angle.id}
+                    onClick={() => setSelectedAngle(angle.id)}
+                    className={`py-3 px-2 rounded-xl border-2 transition-all text-sm font-semibold ${
+                      selectedAngle === angle.id
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    {angle.label}
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Blurry Image Alert */}
             {showBlurryAlert && (
-              <div className="bg-destructive/10 border border-destructive rounded-lg p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 animate-in fade-in zoom-in-95 duration-300">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-destructive">
-                    <strong>Blurry Image Detected</strong>
+                  <p className="text-red-800 font-bold text-sm">
+                    Blurry Image Detected
                   </p>
-                  <p className="text-destructive text-sm mt-1">
-                    Please upload a clearer image for accurate analysis
+                  <p className="text-red-600 text-xs font-medium mt-1">
+                    Please upload a clearer image for accurate AI analysis.
                   </p>
                 </div>
                 <button
                   onClick={() => setShowBlurryAlert(false)}
-                  className="text-destructive hover:text-destructive/80"
+                  className="text-red-400 hover:text-red-600 bg-red-100/50 hover:bg-red-100 rounded-md p-1 transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             )}
           </div>
 
           {/* Right Column - Symptom Survey */}
-          <div className="space-y-6">
-            <div className="bg-card rounded-lg shadow-lg border border-border p-6">
-              <h3 className="mb-6">Symptom Survey</h3>
+          <div className="col-span-1 lg:col-span-3">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <ActivitySquare className="w-5 h-5 text-emerald-500" />
+                <h3 className="text-lg font-bold text-slate-800">Symptom Diagnostic Survey</h3>
+              </div>
               
-              <div className="space-y-6">
-                {/* Itching */}
-                <div>
-                  <label className="block mb-3">
-                    Are you experiencing itching?
-                  </label>
-                  <div className="flex gap-4">
-                    {["Yes", "No", "Unsure"].map((option) => (
-                      <label
-                        key={option}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input
-                          type="radio"
-                          name="itching"
-                          value={option}
-                          checked={symptoms.itching === option}
-                          onChange={(e) =>
-                            handleSymptomChange("itching", e.target.value)
-                          }
-                          className="w-4 h-4 text-primary accent-primary"
-                        />
-                        <span>{option}</span>
-                      </label>
-                    ))}
+              <div className="space-y-8">
+                {[
+                  { id: "itching", label: "Are you experiencing itching?" },
+                  { id: "redness", label: "Is there any redness or discoloration?" },
+                  { id: "swelling", label: "Do you notice any swelling?" },
+                  { id: "pain", label: "Are you experiencing pain or discomfort?" },
+                  { id: "discharge", label: "Is there any unusual discharge?" }
+                ].map((q) => (
+                  <div key={q.id} className="border-b border-slate-100 pb-6 last:border-0 last:pb-0">
+                    <label className="block mb-4 text-slate-700 font-semibold">
+                      {q.label}
+                    </label>
+                    <div className="flex flex-wrap gap-4">
+                      {["Yes", "No", "Unsure"].map((option) => (
+                        <label
+                          key={option}
+                          className={`flex items-center gap-2 cursor-pointer border rounded-lg px-4 py-2.5 transition-all
+                            ${(symptoms as any)[q.id] === option 
+                              ? 'border-emerald-500 bg-emerald-50/50 shadow-sm' 
+                              : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50'
+                            }
+                          `}
+                        >
+                          <input
+                            type="radio"
+                            name={q.id}
+                            value={option}
+                            checked={(symptoms as any)[q.id] === option}
+                            onChange={(e) =>
+                              handleSymptomChange(q.id, e.target.value)
+                            }
+                            className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500 accent-emerald-600"
+                          />
+                          <span className={`text-sm font-medium ${(symptoms as any)[q.id] === option ? 'text-emerald-800' : 'text-slate-600'}`}>
+                            {option}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                {/* Redness */}
-                <div>
-                  <label className="block mb-3">
-                    Is there any redness or discoloration?
-                  </label>
-                  <div className="flex gap-4">
-                    {["Yes", "No", "Unsure"].map((option) => (
-                      <label
-                        key={option}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input
-                          type="radio"
-                          name="redness"
-                          value={option}
-                          checked={symptoms.redness === option}
-                          onChange={(e) =>
-                            handleSymptomChange("redness", e.target.value)
-                          }
-                          className="w-4 h-4 text-primary accent-primary"
-                        />
-                        <span>{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Swelling */}
-                <div>
-                  <label className="block mb-3">
-                    Do you notice any swelling?
-                  </label>
-                  <div className="flex gap-4">
-                    {["Yes", "No", "Unsure"].map((option) => (
-                      <label
-                        key={option}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input
-                          type="radio"
-                          name="swelling"
-                          value={option}
-                          checked={symptoms.swelling === option}
-                          onChange={(e) =>
-                            handleSymptomChange("swelling", e.target.value)
-                          }
-                          className="w-4 h-4 text-primary accent-primary"
-                        />
-                        <span>{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Pain */}
-                <div>
-                  <label className="block mb-3">
-                    Are you experiencing pain or discomfort?
-                  </label>
-                  <div className="flex gap-4">
-                    {["Yes", "No", "Unsure"].map((option) => (
-                      <label
-                        key={option}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input
-                          type="radio"
-                          name="pain"
-                          value={option}
-                          checked={symptoms.pain === option}
-                          onChange={(e) =>
-                            handleSymptomChange("pain", e.target.value)
-                          }
-                          className="w-4 h-4 text-primary accent-primary"
-                        />
-                        <span>{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Discharge */}
-                <div>
-                  <label className="block mb-3">
-                    Is there any unusual discharge?
-                  </label>
-                  <div className="flex gap-4">
-                    {["Yes", "No", "Unsure"].map((option) => (
-                      <label
-                        key={option}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input
-                          type="radio"
-                          name="discharge"
-                          value={option}
-                          checked={symptoms.discharge === option}
-                          onChange={(e) =>
-                            handleSymptomChange("discharge", e.target.value)
-                          }
-                          className="w-4 h-4 text-primary accent-primary"
-                        />
-                        <span>{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                ))}
               </div>
 
               {/* Submit Button */}
-              <button
-                onClick={handleSubmitAssessment}
-                disabled={isSubmitting}
-                className="w-full bg-primary text-primary-foreground py-4 rounded-lg hover:bg-primary/90 transition-colors mt-8 disabled:opacity-50"
-              >
-                {isSubmitting ? "Processing AI Analysis..." : "Submit Assessment"}
-              </button>
+              <div className="mt-10 pt-6 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={handleSubmitAssessment}
+                  disabled={isSubmitting}
+                  className="px-8 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-sm focus:ring-4 focus:ring-emerald-500/20 disabled:bg-slate-300 disabled:shadow-none w-full sm:w-auto"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Processing AI Analysis...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Submit Assessment</span>
+                      <ChevronRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }

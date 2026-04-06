@@ -8,6 +8,7 @@ export function Registration() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
+    fullName: "",
     email: "",
     password: "",
     age: "",
@@ -36,27 +37,27 @@ export function Registration() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8">
+    <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500 mb-4 shadow-lg shadow-emerald-500/20">
             <Activity className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl mb-2">Create Account</h1>
-          <p className="text-muted-foreground">
-            Join our healthcare platform today
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">Create Account</h1>
+          <p className="text-slate-500">
+            Join the GELO healthcare platform today
           </p>
         </div>
 
         {/* Registration Form */}
-        <div className="bg-card rounded-lg shadow-lg border border-border p-8">
+        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Username */}
             <div>
               <label
                 htmlFor="username"
-                className="block mb-2 text-foreground"
+                className="block mb-2 text-sm font-medium text-slate-700"
               >
                 Username
               </label>
@@ -66,8 +67,28 @@ export function Registration() {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter your username"
+                className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
+                placeholder="Choose a username"
+                required
+              />
+            </div>
+            
+            {/* Full Name */}
+            <div>
+              <label
+                htmlFor="fullName"
+                className="block mb-2 text-sm font-medium text-slate-700"
+              >
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
+                placeholder="Enter your full name"
                 required
               />
             </div>
