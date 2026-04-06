@@ -32,7 +32,7 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10 shadow-sm">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-30 shadow-sm">
       <h2 className="text-xl font-bold text-slate-800 tracking-tight">{getPageTitle()}</h2>
       
       <div className="flex items-center gap-6">
