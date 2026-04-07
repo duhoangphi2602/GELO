@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "./admin-layout";
 import { Plus, Edit, Trash2, Search, Download, Upload } from "lucide-react";
+import axios from "axios";
 
 interface Rule {
   id: number;
@@ -16,6 +17,7 @@ export function RuleEngine() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [loading, setLoading] = useState(true);
 
   // State quản lý danh sách các rule được tick chọn
   const [selectedRules, setSelectedRules] = useState<number[]>([]);
@@ -27,100 +29,51 @@ export function RuleEngine() {
     diseaseCategory: "",
   });
 
-  // Mock rules data
-  const [rules, setRules] = useState<Rule[]>([
-    {
-      id: 1,
-      question: "Are you experiencing itching?",
-      expectedAnswer: "Yes",
-      weight: 85,
-      diseaseCategory: "Eczema",
-      active: true,
-    },
-    {
-      id: 2,
-      question: "Is there any redness or discoloration?",
-      expectedAnswer: "Yes",
-      weight: 75,
-      diseaseCategory: "Contact Dermatitis",
-      active: true,
-    },
-    {
-      id: 3,
-      question: "Do you notice any swelling?",
-      expectedAnswer: "Yes",
-      weight: 70,
-      diseaseCategory: "Contact Dermatitis",
-      active: true,
-    },
-    {
-      id: 4,
-      question: "Are you experiencing pain or discomfort?",
-      expectedAnswer: "Yes",
-      weight: 65,
-      diseaseCategory: "Psoriasis",
-      active: true,
-    },
-    {
-      id: 5,
-      question: "Is there any unusual discharge?",
-      expectedAnswer: "No",
-      weight: 80,
-      diseaseCategory: "Acne",
-      active: true,
-    },
-    {
-      id: 6,
-      question: "Do you have silvery scales on the affected area?",
-      expectedAnswer: "Yes",
-      weight: 90,
-      diseaseCategory: "Psoriasis",
-      active: true,
-    },
-    {
-      id: 7,
-      question: "Is the affected area dry and cracked?",
-      expectedAnswer: "Yes",
-      weight: 75,
-      diseaseCategory: "Eczema",
-      active: true,
-    },
-    {
-      id: 8,
-      question: "Do you have raised bumps or lesions?",
-      expectedAnswer: "Yes",
-      weight: 70,
-      diseaseCategory: "Acne",
-      active: true,
-    },
-  ]);
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [diseases, setDiseases] = useState<any[]>([]);
 
-  const diseaseCategories = [
-    "Contact Dermatitis",
-    "Eczema",
-    "Psoriasis",
-    "Acne",
-    "Rosacea",
-    "Fungal Infection",
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingId) {
-      setRules(
-        rules.map((r) =>
-          r.id === editingId ? { ...r, ...formData } : r
-        )
-      );
-    } else {
-      const newRule: Rule = {
-        id: rules.length + 1,
-        ...formData,
-        active: true,
-      };
-      setRules([...rules, newRule]);
+  const fetchRules = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get("http://localhost:3000/rules");
+      setRules(response.data);
+    } catch (error) {
+      console.error("Error fetching rules:", error);
+    } finally {
+      setLoading(false);
     }
-    resetForm();
+  };
+
+  const fetchDiseases = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/diseases");
+      setDiseases(response.data);
+    } catch (error) {
+      console.error("Error fetching diseases:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRules();
+    fetchDiseases();
+  }, []);
+
+  const diseaseCategories = diseases.map(d => d.name).filter(Boolean);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingId) {
+        await axios.patch(`http://localhost:3000/rules/${editingId}`, formData);
+      } else {
+        await axios.post("http://localhost:3000/rules", formData);
+      }
+      fetchRules();
+      resetForm();
+    } catch (error) {
+      console.error("Error saving rule:", error);
+      alert("Failed to save rule. Please try again.");
+    }
   };
 
   const resetForm = () => {
@@ -145,20 +98,28 @@ export function RuleEngine() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this rule?")) {
-      setRules(rules.filter((r) => r.id !== id));
-      // Xóa id khỏi danh sách selected nếu rule đó bị xóa
-      setSelectedRules(prev => prev.filter(selectedId => selectedId !== id));
+      try {
+        await axios.delete(`http://localhost:3000/rules/${id}`);
+        fetchRules();
+        setSelectedRules(prev => prev.filter(selectedId => selectedId !== id));
+      } catch (error) {
+        console.error("Error deleting rule:", error);
+      }
     }
   };
 
-  const toggleActive = (id: number) => {
-    setRules(
-      rules.map((r) =>
-        r.id === id ? { ...r, active: !r.active } : r
-      )
-    );
+  const toggleActive = async (id: number) => {
+    const rule = rules.find(r => r.id === id);
+    if (!rule) return;
+    
+    try {
+      await axios.patch(`http://localhost:3000/rules/${id}`, { active: !rule.active });
+      fetchRules();
+    } catch (error) {
+      console.error("Error toggling rule status:", error);
+    }
   };
 
   const filteredRules = rules.filter((r) => {

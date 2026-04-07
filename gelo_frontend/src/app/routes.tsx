@@ -12,6 +12,7 @@ import { AdviceConfiguration } from "./components/advice-configuration";
 import { RuleEngine } from "./components/rule-engine";
 import { PrivateRoute } from "./components/layout/PrivateRoute";
 import { AdminRoute } from "./components/layout/AdminRoute";
+import { AdminPatientList } from "./components/admin-patient-list";
 
 export const router = createBrowserRouter([
   // ─── Public routes (không cần đăng nhập) ───────────────────────────────────
@@ -84,6 +85,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin/rules",
         Component: RuleEngine,
+      },
+      {
+        path: "/admin/patients",
+        Component: AdminPatientList,
       },
     ],
   },

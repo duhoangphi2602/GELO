@@ -15,4 +15,27 @@ export class ScanController {
   async getPatientScans(@Param('patientId') patientId: string) {
     return this.scanService.getScansForPatient(parseInt(patientId, 10));
   }
+
+  @Get('admin/patients')
+  async getAdminPatients() {
+    return this.scanService.getAdminPatients();
+  }
+
+  @Get('admin/pending-reviews')
+  async getPendingReviews() {
+    return this.scanService.getPendingReviews();
+  }
+
+  @Get('admin/diseases')
+  async getDiseases() {
+    return this.scanService.getAllDiseases();
+  }
+
+  @Post('admin/review/:scanId')
+  async submitReview(
+    @Param('scanId') scanId: string,
+    @Body() body: { isCorrect: boolean; actualDiseaseId?: number; note?: string }
+  ) {
+    return this.scanService.submitReview(parseInt(scanId, 10), body);
+  }
 }

@@ -11,14 +11,7 @@ export function AdviceConfiguration() {
   const [savedMessage, setSavedMessage] = useState(false);
 
   const diseases = [
-    "Contact Dermatitis",
-    "Eczema",
-    "Psoriasis",
-    "Acne Vulgaris",
-    "Rosacea",
-    "Seborrheic Dermatitis",
-    "Fungal Infection",
-    "Bacterial Infection",
+    "Atopic Dermatitis",
   ];
 
   const categories = [
@@ -33,10 +26,10 @@ export function AdviceConfiguration() {
   };
 
   const loadExistingAdvice = () => {
-    if (selectedDisease === "Contact Dermatitis") {
-      setCareAdvice("• Apply a gentle, fragrance-free moisturizer twice daily to affected areas\n• Use mild, hypoallergenic soaps and avoid harsh chemicals\n• Consider over-the-counter hydrocortisone cream for inflammation\n• Keep the affected area clean and dry\n• Avoid scratching to prevent secondary infection");
-      setLifestyleAdvice("• Identify and avoid triggers (certain fabrics, detergents, or plants)\n• Wear breathable, loose-fitting cotton clothing\n• Maintain a healthy diet rich in anti-inflammatory foods\n• Stay hydrated by drinking plenty of water throughout the day\n• Manage stress through relaxation techniques or exercise");
-      setEmergencyWarnings("• Severe swelling or spreading rash\n• Signs of infection (fever, pus, increased warmth)\n• Difficulty breathing or swallowing\n• No improvement after 2 weeks of home treatment\n• Symptoms affecting large areas of your body");
+    if (selectedDisease === "Atopic Dermatitis") {
+      setCareAdvice("• Apply a gentle, fragrance-free moisturizer twice daily to affected areas\n• Use mild, hypoallergenic soaps and avoid harsh chemicals\n• Use lukewarm water for bathing, avoiding very hot water\n• Keep the affected area moisturized at all times to prevent cracks\n• Avoid scratching the area to prevent secondary bacterial infection");
+      setLifestyleAdvice("• Identify and avoid triggers such as specific detergents or dust mites\n• Wear breathable, loose-fitting cotton clothing to reduce skin friction\n• Keep your indoor environment at a stable, cool temperature\n• Maintain proper hydration by drinking plenty of water daily\n• Practice stress-reduction techniques like meditation or yoga");
+      setEmergencyWarnings("• Signs of skin infection (yellow crusts, pus, or extreme warmth)\n• Severe swelling, blistering, or a rapidly spreading red rash\n• High fever or chills accompanied by worsening skin condition\n• Inability to sleep or perform daily tasks due to intense itching\n• Symptoms not responding to initial home care after 2 weeks");
     }
   };
 

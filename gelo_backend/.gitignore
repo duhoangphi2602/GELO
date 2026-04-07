@@ -28,3 +28,6 @@ coverage/
 
 # Typescript
 *.tsbuildinfo
+
+# Prisma
+prisma/migrations

@@ -1,14 +1,18 @@
+// patient-diary.tsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { BookOpen, Save, CheckCircle2, AlertTriangle, BatteryCharging } from "lucide-react";
 import axios from "axios";
 import { Layout } from "./layout/Layout";
+import { useToastContext } from "./ui/ToastContext";
 
 export function PatientDiary() {
   const navigate = useNavigate();
+  const toast = useToastContext();
+
   const [recoveryLevel, setRecoveryLevel] = useState(5);
   const [notes, setNotes] = useState("");
-  const [savedMessage, setSavedMessage] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [diaries, setDiaries] = useState<any[]>([]);
 
   // Format today as YYYY-MM-DD for date input constraints
@@ -32,27 +36,30 @@ export function PatientDiary() {
 
   const handleSave = async () => {
     const patientId = localStorage.getItem("patientId");
-    const scanId = localStorage.getItem("currentScanId") || "1"; // Fallback if direct access
+    const scanId = localStorage.getItem("currentScanId") || "1";
 
     if (!patientId) {
-      alert("No patient ID found, please log in.");
+      toast.error("Not logged in", "No patient ID found. Please log in again.");
+      navigate("/");
       return;
     }
 
+    setSaving(true);
     try {
       await axios.post("http://localhost:3000/diary", {
         patientId: parseInt(patientId),
         scanId: parseInt(scanId),
         conditionScore: recoveryLevel,
         note: notes,
-        entryDate: entryDate // Send selected date
+        entryDate: entryDate,
       });
-      setSavedMessage(true);
-      setTimeout(() => setSavedMessage(false), 3000);
+      toast.success("Entry saved!", "Your diary entry has been recorded successfully.");
       setNotes("");
       fetchDiaries();
     } catch (error) {
-      alert("Failed to save diary entry");
+      toast.error("Save failed", "Could not save your diary entry. Please try again.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -62,8 +69,8 @@ export function PatientDiary() {
 
         <div className="flex flex-col mb-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center border border-emerald-200">
-              <BookOpen className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center border border-blue-200">
+              <BookOpen className="w-5 h-5 text-[#2a64ad]" />
             </div>
             <h2 className="text-2xl font-bold text-slate-800">Scan History & Diary</h2>
           </div>
@@ -71,14 +78,6 @@ export function PatientDiary() {
             Track your recovery progress and document your daily observations.
           </p>
         </div>
-
-        {/* Success Message */}
-        {savedMessage && (
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 flex items-center gap-3 animate-in slide-in-from-top-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            <p className="font-medium">Your diary entry has been saved successfully!</p>
-          </div>
-        )}
 
         <div className="space-y-6">
           {/* Top Row: Date & Level */}
@@ -91,7 +90,7 @@ export function PatientDiary() {
                 value={entryDate}
                 max={today}
                 onChange={(e) => setEntryDate(e.target.value)}
-                className="cursor-pointer w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800 font-medium"
+                className="cursor-pointer w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad] transition-all text-slate-800 font-medium"
               />
             </div>
 
@@ -100,7 +99,7 @@ export function PatientDiary() {
               <div className="flex items-center justify-between mb-6">
                 <label className="text-sm font-semibold text-slate-700">How do you feel today?</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl font-black text-emerald-500">{recoveryLevel}</span>
+                  <span className="text-3xl font-black text-[#2a64ad]">{recoveryLevel}</span>
                   <span className="text-slate-400 font-medium tracking-widest text-sm">/ 10</span>
                 </div>
               </div>
@@ -115,7 +114,7 @@ export function PatientDiary() {
                   onChange={(e) => setRecoveryLevel(Number(e.target.value))}
                   className="w-full h-3 rounded-lg appearance-none cursor-pointer slider-thumb shadow-inner"
                   style={{
-                    background: `linear-gradient(to right, #10b981 0%, #10b981 ${(recoveryLevel - 1) * 11.11}%, #f1f5f9 ${(recoveryLevel - 1) * 11.11}%, #f1f5f9 100%)`
+                    background: `linear-gradient(to right, #2a64ad 0%, #2a64ad ${(recoveryLevel - 1) * 11.11}%, #f1f5f9 ${(recoveryLevel - 1) * 11.11}%, #f1f5f9 100%)`
                   }}
                 />
 
@@ -138,17 +137,17 @@ export function PatientDiary() {
               <div className="mt-6">
                 {recoveryLevel <= 3 && (
                   <div className="flex items-center gap-2 text-red-600 bg-red-50 py-2.5 px-4 rounded-lg font-medium text-sm">
-                    <AlertTriangle className="w-4 h-4" /> Feeling worse - Consider consulting your doctor
+                    <AlertTriangle className="w-4 h-4" /> Feeling worse — Consider consulting your doctor
                   </div>
                 )}
                 {recoveryLevel > 3 && recoveryLevel <= 7 && (
                   <div className="flex items-center gap-2 text-amber-600 bg-amber-50 py-2.5 px-4 rounded-lg font-medium text-sm">
-                    <BatteryCharging className="w-4 h-4" /> Stable condition - Continue monitoring
+                    <BatteryCharging className="w-4 h-4" /> Stable condition — Continue monitoring
                   </div>
                 )}
                 {recoveryLevel > 7 && (
-                  <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 py-2.5 px-4 rounded-lg font-medium text-sm">
-                    <CheckCircle2 className="w-4 h-4" /> Great progress - Keep up the good work!
+                  <div className="flex items-center gap-2 text-[#2a64ad] bg-blue-50 py-2.5 px-4 rounded-lg font-medium text-sm">
+                    <CheckCircle2 className="w-4 h-4" /> Great progress — Keep up the good work!
                   </div>
                 )}
               </div>
@@ -167,7 +166,7 @@ export function PatientDiary() {
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Describe your symptoms, any changes you've noticed, medications taken, activities performed..."
                 rows={7}
-                className="cursor-text w-full flex-1 px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none text-slate-800"
+                className="cursor-text w-full flex-1 px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad] transition-all resize-none text-slate-800"
               />
               <p className="text-xs font-medium text-slate-400 mt-3 text-right">
                 {notes.length} characters
@@ -191,7 +190,7 @@ export function PatientDiary() {
                   <label key={symptom} className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-slate-50 rounded-lg transition-colors">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-emerald-500 rounded border-slate-300 focus:ring-emerald-500 transition-all cursor-pointer accent-emerald-500"
+                      className="w-4 h-4 rounded border-slate-300 focus:ring-[#2a64ad] transition-all cursor-pointer accent-[#2a64ad]"
                     />
                     <span className="text-sm text-slate-600 font-medium group-hover:text-slate-900 transition-colors">{symptom}</span>
                   </label>
@@ -204,10 +203,11 @@ export function PatientDiary() {
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             <button
               onClick={handleSave}
-              className="cursor-pointer px-8 py-3.5 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-emerald-500/20 sm:w-auto w-full"
+              disabled={saving}
+              className="cursor-pointer px-8 py-3.5 bg-[#2a64ad] text-white font-semibold rounded-xl hover:bg-[#1e4e8c] transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-blue-500/20 sm:w-auto w-full disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Save className="w-5 h-5 flex-shrink-0" />
-              Save Diary Entry
+              {saving ? "Saving..." : "Save Diary Entry"}
             </button>
             <button
               onClick={() => navigate("/dashboard")}
@@ -239,7 +239,7 @@ export function PatientDiary() {
                       </span>
                       <div className="flex items-center gap-2 mt-2 sm:mt-0">
                         <span className="font-medium text-slate-500">Condition Score:</span>
-                        <span className="px-2.5 py-1 bg-emerald-50/80 rounded-md font-bold text-emerald-600 border border-emerald-100/50">
+                        <span className="px-2.5 py-1 bg-blue-50/80 rounded-md font-bold text-[#2a64ad] border border-blue-100/50">
                           {diary.conditionScore} / 10
                         </span>
                       </div>
@@ -265,35 +265,29 @@ export function PatientDiary() {
           width: 24px;
           height: 24px;
           border-radius: 50%;
-          background: #10b981;
+          background: #2a64ad;
           cursor: pointer;
           border: 3px solid white;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           transition: background-color 0.2s, transform 0.1s;
         }
-        
         .slider-thumb::-webkit-slider-thumb:hover {
-          background: #059669;
+          background: #1e4e8c;
           transform: scale(1.1);
         }
-        
-        .slider-thumb::-webkit-slider-thumb:active {
-          cursor: grabbing;
-        }
-        
+        .slider-thumb::-webkit-slider-thumb:active { cursor: grabbing; }
         .slider-thumb::-moz-range-thumb {
           width: 24px;
           height: 24px;
           border-radius: 50%;
-          background: #10b981;
+          background: #2a64ad;
           cursor: pointer;
           border: 3px solid white;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           transition: background-color 0.2s, transform 0.1s;
         }
-        
         .slider-thumb::-moz-range-thumb:hover {
-          background: #059669;
+          background: #1e4e8c;
           transform: scale(1.1);
         }
       `}</style>

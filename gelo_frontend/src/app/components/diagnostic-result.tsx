@@ -3,9 +3,11 @@ import { useNavigate } from "react-router";
 import { Activity, CheckCircle, AlertTriangle, Heart, Stethoscope, ChevronRight, MessageSquareHeart } from "lucide-react";
 import axios from "axios";
 import { Layout } from "./layout/Layout";
+import { useToastContext } from "./ui/ToastContext";
 
 export function DiagnosticResult() {
   const navigate = useNavigate();
+  const toast = useToastContext();
   const [activeTab, setActiveTab] = useState<"care" | "lifestyle" | "warning">("care");
   const [resultData, setResultData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +15,7 @@ export function DiagnosticResult() {
   useEffect(() => {
     const scanId = localStorage.getItem("currentScanId");
     if (!scanId) {
-      alert("No assessment data found. Please run a scan first.");
+      toast.warning("No scan data found", "Please run a scan first before viewing results.");
       navigate("/dashboard");
       return;
     }
@@ -52,8 +54,8 @@ export function DiagnosticResult() {
 
         <div className="flex flex-col mb-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center border border-emerald-200">
-              <Stethoscope className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center border border-blue-200">
+              <Stethoscope className="w-5 h-5 text-[#2a64ad]" />
             </div>
             <h2 className="text-2xl font-bold text-slate-800">AI Diagnostic Report</h2>
           </div>
@@ -83,7 +85,7 @@ export function DiagnosticResult() {
           <div className="space-y-6">
             {/* Diagnosis */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-full -mr-8 -mt-8" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-8 -mt-8" />
               <h3 className="mb-2 text-sm font-semibold text-slate-500 relative z-10">Preliminary Diagnosis</h3>
               <p className="text-3xl font-black text-slate-800 mb-3 tracking-tight relative z-10">{diseaseName}</p>
               <p className="text-slate-600 leading-relaxed font-medium text-sm relative z-10">
@@ -96,7 +98,7 @@ export function DiagnosticResult() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-slate-700">Model Confidence Level</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-emerald-500 tracking-tight">{confidence}</span>
+                  <span className="text-3xl font-black text-[#2a64ad] tracking-tight">{confidence}</span>
                   <span className="text-lg font-bold text-slate-400">%</span>
                 </div>
               </div>
@@ -104,13 +106,13 @@ export function DiagnosticResult() {
               {/* Progress Bar */}
               <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner mb-4">
                 <div
-                  className="absolute inset-y-0 left-0 bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
+                  className="absolute inset-y-0 left-0 bg-[#2a64ad] rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${Math.max(0, confidence)}%` }}
                 />
               </div>
 
               <p className="text-xs font-medium text-slate-500 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
+                <CheckCircle className="w-4 h-4 text-[#2a64ad]" />
                 <span>
                   Our AI model analyzed your image with {confidence}% confidence.{' '}
                   {confidence === 0 ? "Default validation threshold." : "This indicates a highly reliable assessment."}
@@ -128,7 +130,7 @@ export function DiagnosticResult() {
               <button
                 onClick={() => setActiveTab("care")}
                 className={`cursor-pointer flex-1 py-4 px-6 flex items-center justify-center gap-2 text-sm font-bold transition-colors ${activeTab === "care"
-                  ? "bg-white text-emerald-600 border-t-2 border-t-emerald-500 shadow-sm"
+                  ? "bg-white text-[#2a64ad] border-t-2 border-t-[#2a64ad] shadow-sm"
                   : "text-slate-500 hover:text-slate-700 hover:bg-white/50 border-t-2 border-t-transparent"
                   }`}
               >
@@ -138,7 +140,7 @@ export function DiagnosticResult() {
               <button
                 onClick={() => setActiveTab("lifestyle")}
                 className={`cursor-pointer flex-1 py-4 px-6 flex items-center justify-center gap-2 text-sm font-bold transition-colors ${activeTab === "lifestyle"
-                  ? "bg-white text-emerald-600 border-t-2 border-t-emerald-500 shadow-sm"
+                  ? "bg-white text-[#2a64ad] border-t-2 border-t-[#2a64ad] shadow-sm"
                   : "text-slate-500 hover:text-slate-700 hover:bg-white/50 border-t-2 border-t-transparent"
                   }`}
               >
@@ -166,8 +168,8 @@ export function DiagnosticResult() {
                     {[
                       "Apply a gentle, fragrance-free moisturizer twice daily to affected areas",
                       "Use mild, hypoallergenic soaps and avoid harsh chemicals",
-                      "Consider over-the-counter hydrocortisone cream for inflammation",
-                      "Keep the affected area clean and dry at all times",
+                      "Use lukewarm water for bathing, avoiding very hot water",
+                      "Keep the affected area moisturized at all times to prevent cracks",
                       "Avoid scratching the area to prevent secondary bacterial infection"
                     ].map((text, i) => (
                       <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50/80 border border-slate-100 hover:border-emerald-200 transition-colors">
@@ -186,11 +188,11 @@ export function DiagnosticResult() {
                   <h3 className="text-lg font-bold text-slate-800 mb-6">Lifestyle Changes & Recommendations</h3>
                   <div className="grid gap-4">
                     {[
-                      "Identify and avoid triggers such as certain fabrics, detergents, or plants",
-                      "Wear breathable, loose-fitting cotton clothing to reduce friction",
-                      "Maintain a healthy diet rich in anti-inflammatory foods",
-                      "Stay completely hydrated by drinking plenty of water throughout the day",
-                      "Manage daily stress through relaxation techniques or gentle exercise"
+                      "Identify and avoid triggers such as specific detergents or dust mites",
+                      "Wear breathable, loose-fitting cotton clothing to reduce skin friction",
+                      "Keep your indoor environment at a stable, cool temperature",
+                      "Maintain proper hydration by drinking plenty of water daily",
+                      "Practice stress-reduction techniques like meditation or yoga"
                     ].map((text, i) => (
                       <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50/80 border border-slate-100 hover:border-emerald-200 transition-colors">
                         <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -215,11 +217,11 @@ export function DiagnosticResult() {
                   </div>
                   <div className="grid gap-4">
                     {[
-                      "Severe swelling, blistering, or a rapidly spreading rash",
-                      "Signs of severe infection (high fever, yellow pus, intensely hot to touch)",
-                      "Difficulty breathing, swallowing, or sudden facial swelling",
-                      "No improvement after 2 full weeks of standard home treatment",
-                      "Symptoms rapidly expanding to affect large areas of your body"
+                      "Signs of skin infection (yellow crusts, pus, or extreme warmth)",
+                      "Severe swelling, blistering, or a rapidly spreading red rash",
+                      "High fever or chills accompanied by worsening skin condition",
+                      "Inability to sleep or perform daily tasks due to intense itching",
+                      "Symptoms not responding to initial home care after 2 weeks"
                     ].map((text, i) => (
                       <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-red-50/30 border border-red-100 hover:border-red-200 transition-colors">
                         <div className="w-2 h-2 rounded-full bg-red-500 mt-2 flex-shrink-0" />
@@ -236,7 +238,7 @@ export function DiagnosticResult() {
           <div className="flex flex-col sm:flex-row gap-4 pt-4 pb-8">
             <button
               onClick={() => navigate("/history")}
-              className="cursor-pointer flex-1 bg-emerald-600 text-white font-bold py-4 px-6 rounded-xl hover:bg-emerald-700 transition-all shadow-sm hover:shadow-emerald-500/20 flex items-center justify-center gap-2"
+              className="cursor-pointer flex-1 bg-[#2a64ad] text-white font-bold py-4 px-6 rounded-xl hover:bg-[#1e4e8c] transition-all shadow-sm hover:shadow-blue-500/20 flex items-center justify-center gap-2"
             >
               <span>Start Recovery Diary</span>
               <ChevronRight className="w-5 h-5" />

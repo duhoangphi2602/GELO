@@ -1,35 +1,79 @@
 // medical-assessment.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Upload, AlertCircle, X, FileSearch, CheckCircle2, ChevronRight, ActivitySquare } from "lucide-react";
+import { Upload, AlertCircle, X, FileSearch, CheckCircle2, ChevronRight, ActivitySquare, Loader2 } from "lucide-react";
 import axios from "axios";
 import { Layout } from "./layout/Layout";
+import { useToastContext } from "./ui/ToastContext";
+
+interface Question {
+  id: number;
+  questionText: string;
+}
 
 export function MedicalAssessment() {
   const navigate = useNavigate();
+  const toast = useToastContext();
+
   const [selectedAngle, setSelectedAngle] = useState<string | null>(null);
   const [showBlurryAlert, setShowBlurryAlert] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(true);
 
-  const [symptoms, setSymptoms] = useState({
-    itching: "",
-    redness: "",
-    swelling: "",
-    pain: "",
-    discharge: "",
-  });
+  const [symptoms, setSymptoms] = useState<Record<string, string>>({});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/rules/active");
+        setQuestions(response.data);
+        
+        // Initialize symptoms state
+        const initialSymptoms: Record<string, string> = {};
+        response.data.forEach((q: Question) => {
+          initialSymptoms[q.id.toString()] = "";
+        });
+        setSymptoms(initialSymptoms);
+      } catch (error) {
+        console.error("Error fetching questions:", error);
+        toast.error("Failed to load survey", "Could not fetch diagnostic questions.");
+      } finally {
+        setLoadingQuestions(false);
+      }
+    };
+
+    fetchQuestions();
+  }, [toast]);
 
   const handleSubmitAssessment = async () => {
     const patientId = localStorage.getItem("patientId");
     if (!patientId) {
-      alert("You are not logged in! (No patientId found). Please register/login first.");
+      toast.error(
+        "Not logged in",
+        "No patient ID found. Please register or log in first."
+      );
+      navigate("/");
       return;
     }
 
     if (uploadedFiles.length === 0) {
-      alert("Error: At least 1 image is required to perform the scan!");
+      toast.warning(
+        "No image uploaded",
+        "At least 1 image is required to perform the scan."
+      );
+      return;
+    }
+
+    // Check if all questions are answered
+    const answeredCount = Object.values(symptoms).filter(v => v !== "").length;
+    if (questions.length > 0 && answeredCount < questions.length) {
+      toast.warning(
+        "Incomplete Survey",
+        `Please answer all ${questions.length} diagnostic questions before submitting.`
+      );
       return;
     }
 
@@ -42,25 +86,38 @@ export function MedicalAssessment() {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = () => resolve(reader.result as string);
-            reader.onerror = error => reject(error);
+            reader.onerror = (error) => reject(error);
           });
         finalImageUrl = await fileToBase64(uploadedFiles[0]);
       }
 
+      // Convert symptoms object { "qId": "Yes" } to array [ { questionId: "qId", answer: "Yes" } ]
+      const answersArray = Object.entries(symptoms).map(([questionId, answer]) => ({
+        questionId: parseInt(questionId),
+        answer,
+      }));
+
       const payload = {
         patientId: parseInt(patientId),
         imageUrl: finalImageUrl,
-        answers: symptoms
+        answers: answersArray,
       };
 
-      const response = await axios.post("http://localhost:3000/scans/analyze", payload);
+      const response = await axios.post(
+        "http://localhost:3000/scans/analyze",
+        payload
+      );
 
       if (response.data.scanId) {
         localStorage.setItem("currentScanId", response.data.scanId);
         navigate("/results");
       }
-    } catch (error) {
-      alert("Analysis failed! Check connection to backend.");
+    } catch (error: any) {
+      console.error("Submission error:", error);
+      toast.error(
+        "Analysis failed",
+        error.response?.data?.message || "Could not connect to the backend. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -73,8 +130,8 @@ export function MedicalAssessment() {
     }
   };
 
-  const handleSymptomChange = (symptom: string, value: string) => {
-    setSymptoms((prev) => ({ ...prev, [symptom]: value }));
+  const handleSymptomChange = (id: string, value: string) => {
+    setSymptoms((prev) => ({ ...prev, [id]: value }));
   };
 
   return (
@@ -83,13 +140,13 @@ export function MedicalAssessment() {
 
         <div className="flex flex-col mb-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center border border-emerald-200">
-              <FileSearch className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center border border-blue-200">
+              <FileSearch className="w-5 h-5 text-[#2a64ad]" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-800">AI Medical Assessment</h2>
+            <h2 className="text-2xl font-bold text-slate-800">AI Atopic Dermatitis Diagnosis</h2>
           </div>
           <p className="text-slate-500">
-            Upload images and answer questions for an accurate AI-powered analysis.
+            Specialized AI system for analyzing and identifying **Atopic Dermatitis** based on images and symptoms.
           </p>
         </div>
 
@@ -102,7 +159,10 @@ export function MedicalAssessment() {
 
               {uploadedFiles.length > 0 ? (
                 <div className="border-2 border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center bg-slate-50/50 relative group">
-                  <div className="absolute top-3 right-3 bg-white rounded-full p-1 shadow-sm border border-slate-100 z-10 cursor-pointer hover:bg-red-50 hover:text-red-500 hover:shadow-md transition-all" onClick={() => setUploadedFiles([])}>
+                  <div
+                    className="absolute top-3 right-3 bg-white rounded-full p-1 shadow-sm border border-slate-100 z-10 cursor-pointer hover:bg-red-50 hover:text-red-500 hover:shadow-md transition-all"
+                    onClick={() => setUploadedFiles([])}
+                  >
                     <X className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
                   </div>
                   <img
@@ -111,48 +171,33 @@ export function MedicalAssessment() {
                     className="w-full h-48 object-cover rounded-lg mb-4 border border-slate-200"
                   />
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-[#2a64ad]" />
                     <p className="text-sm font-semibold text-slate-700">
                       {uploadedFiles.length} file(s) ready
                     </p>
                   </div>
-                  <label htmlFor="file-upload" className="cursor-pointer text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100 transition-colors bg-emerald-50 px-4 py-2 rounded-lg">
+                  <label
+                    htmlFor="file-upload"
+                    className="cursor-pointer text-sm font-medium text-[#2a64ad] hover:text-[#1e4e8c] hover:bg-blue-100 transition-colors bg-blue-50 px-4 py-2 rounded-lg"
+                  >
                     Change photo
                   </label>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    multiple
-                    onChange={handleFileUpload}
-                  />
+                  <input id="file-upload" type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
                 </div>
               ) : (
                 <label
                   htmlFor="file-upload"
-                  className="border-2 border-dashed border-slate-300 rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 hover:shadow-md transition-all bg-slate-50/50 group"
+                  className="border-2 border-dashed border-slate-300 rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-[#2a64ad] hover:bg-blue-50/50 hover:shadow-md transition-all bg-slate-50/50 group"
                 >
                   <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <Upload className="w-8 h-8 text-emerald-400 group-hover:text-emerald-500" />
+                    <Upload className="w-8 h-8 text-blue-400 group-hover:text-[#2a64ad]" />
                   </div>
-                  <p className="text-center font-semibold text-slate-700 mb-1">
-                    Drop your image here
-                  </p>
-                  <p className="text-xs font-medium text-slate-400 mb-6">
-                    Supports JPG, PNG (Max 5 files)
-                  </p>
-                  <div className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg shadow-sm group-hover:border-emerald-200 group-hover:text-emerald-600 transition-colors">
+                  <p className="text-center font-semibold text-slate-700 mb-1">Drop your image here</p>
+                  <p className="text-xs font-medium text-slate-400 mb-6">Supports JPG, PNG (Max 5 files)</p>
+                  <div className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg shadow-sm group-hover:border-blue-200 group-hover:text-[#2a64ad] transition-colors">
                     Browse Files
                   </div>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    multiple
-                    onChange={handleFileUpload}
-                  />
+                  <input id="file-upload" type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
                 </label>
               )}
             </div>
@@ -164,15 +209,16 @@ export function MedicalAssessment() {
                 {[
                   { id: "front", label: "Front" },
                   { id: "side", label: "Side" },
-                  { id: "closeup", label: "Close-up" }
+                  { id: "closeup", label: "Close-up" },
                 ].map((angle) => (
                   <button
                     key={angle.id}
                     onClick={() => setSelectedAngle(angle.id)}
-                    className={`cursor-pointer py-3 px-2 rounded-xl border-2 transition-all text-sm font-semibold hover:shadow-md ${selectedAngle === angle.id
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-slate-50"
-                      }`}
+                    className={`cursor-pointer py-3 px-2 rounded-xl border-2 transition-all text-sm font-semibold hover:shadow-md ${
+                      selectedAngle === angle.id
+                        ? "border-[#2a64ad] bg-blue-50 text-[#2a64ad] shadow-sm"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-slate-50"
+                    }`}
                   >
                     {angle.label}
                   </button>
@@ -185,9 +231,7 @@ export function MedicalAssessment() {
               <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 animate-in fade-in zoom-in-95 duration-300">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-red-800 font-bold text-sm">
-                    Blurry Image Detected
-                  </p>
+                  <p className="text-red-800 font-bold text-sm">Blurry Image Detected</p>
                   <p className="text-red-600 text-xs font-medium mt-1">
                     Please upload a clearer image for accurate AI analysis.
                   </p>
@@ -206,51 +250,58 @@ export function MedicalAssessment() {
           <div className="col-span-1 lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8">
               <div className="flex items-center gap-3 mb-8">
-                <ActivitySquare className="w-5 h-5 text-emerald-500" />
+                <ActivitySquare className="w-5 h-5 text-[#2a64ad]" />
                 <h3 className="text-lg font-bold text-slate-800">Symptom Diagnostic Survey</h3>
               </div>
 
-              <div className="space-y-8">
-                {[
-                  { id: "itching", label: "Are you experiencing itching?" },
-                  { id: "redness", label: "Is there any redness or discoloration?" },
-                  { id: "swelling", label: "Do you notice any swelling?" },
-                  { id: "pain", label: "Are you experiencing pain or discomfort?" },
-                  { id: "discharge", label: "Is there any unusual discharge?" }
-                ].map((q) => (
-                  <div key={q.id} className="border-b border-slate-100 pb-6 last:border-0 last:pb-0">
-                    <label className="block mb-4 text-slate-700 font-semibold">
-                      {q.label}
-                    </label>
-                    <div className="flex flex-wrap gap-4">
-                      {["Yes", "No", "Unsure"].map((option) => (
-                        <label
-                          key={option}
-                          className={`flex items-center gap-2 cursor-pointer border rounded-lg px-4 py-2.5 transition-all hover:shadow-md
-                            ${(symptoms as any)[q.id] === option
-                              ? 'border-emerald-500 bg-emerald-50/50 shadow-sm'
-                              : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50'
-                            }
-                          `}
-                        >
-                          <input
-                            type="radio"
-                            name={q.id}
-                            value={option}
-                            checked={(symptoms as any)[q.id] === option}
-                            onChange={(e) =>
-                              handleSymptomChange(q.id, e.target.value)
-                            }
-                            className="cursor-pointer w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500 accent-emerald-600"
-                          />
-                          <span className={`text-sm font-medium ${(symptoms as any)[q.id] === option ? 'text-emerald-800' : 'text-slate-600'}`}>
-                            {option}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
+              <div className="space-y-8 min-h-[300px]">
+                {loadingQuestions ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                    <Loader2 className="w-8 h-8 animate-spin mb-4 text-[#2a64ad]" />
+                    <p className="text-sm font-medium">Loading specialist survey questions...</p>
                   </div>
-                ))}
+                ) : questions.length > 0 ? (
+                  questions.map((q) => (
+                    <div key={q.id} className="border-b border-slate-100 pb-6 last:border-0 last:pb-0">
+                      <label className="block mb-4 text-slate-700 font-semibold">{q.questionText}</label>
+                      <div className="flex flex-wrap gap-4">
+                        {["Yes", "No", "Unsure"].map((option) => (
+                          <label
+                            key={option}
+                            className={`flex items-center gap-2 cursor-pointer border rounded-lg px-4 py-2.5 transition-all hover:shadow-md ${
+                              symptoms[q.id.toString()] === option
+                                ? "border-[#2a64ad] bg-blue-50/50 shadow-sm"
+                                : "border-slate-200 hover:border-blue-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={q.id.toString()}
+                              value={option}
+                              checked={symptoms[q.id.toString()] === option}
+                              onChange={(e) => handleSymptomChange(q.id.toString(), e.target.value)}
+                              className="cursor-pointer w-4 h-4 text-[#2a64ad] border-slate-300 focus:ring-[#2a64ad] accent-[#2a64ad]"
+                            />
+                            <span
+                              className={`text-sm font-medium ${
+                                symptoms[q.id.toString()] === option
+                                  ? "text-[#2a64ad]"
+                                  : "text-slate-600"
+                              }`}
+                            >
+                              {option}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-slate-200 rounded-2xl">
+                    <CheckCircle2 className="w-12 h-12 mb-4 text-emerald-500 opacity-20" />
+                    <p className="text-sm font-medium">No specialized symptoms required for this analysis.</p>
+                  </div>
+                )}
               </div>
 
               {/* Submit Button */}
@@ -258,7 +309,7 @@ export function MedicalAssessment() {
                 <button
                   onClick={handleSubmitAssessment}
                   disabled={isSubmitting}
-                  className="cursor-pointer px-8 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-sm focus:ring-4 focus:ring-emerald-500/20 disabled:bg-slate-300 disabled:shadow-none disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                  className="cursor-pointer px-8 py-4 bg-[#2a64ad] text-white font-bold rounded-xl hover:bg-[#1e4e8c] hover:shadow-lg transition-all flex items-center justify-center gap-2 shadow-sm focus:ring-4 focus:ring-[#2a64ad]/20 disabled:bg-slate-300 disabled:shadow-none disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                 >
                   {isSubmitting ? (
                     <>

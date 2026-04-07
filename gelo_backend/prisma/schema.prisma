@@ -34,10 +34,13 @@ model Disease {
   id             Int       @id @default(autoincrement()) @map("disease_id")
   name           String?   @db.VarChar(100)
   description    String?   @db.Text
-  visualPattern  String?   @db.VarChar(100) @map("visual_pattern")
+  visualPattern  String?   @db.Text @map("visual_pattern")
   colorPattern   String?   @db.VarChar(100) @map("color_pattern")
   borderType     String?   @db.VarChar(100) @map("border_type")
   isContagious   Boolean?  @map("is_contagious")
+  hasBlister     Boolean?  @default(false) @map("has_blister")
+  hasScaling     Boolean?  @default(false) @map("has_scaling")
+  status         String?   @default("active") @db.VarChar(20)
 
   images         DiseaseImage[]
   rules          DiseaseRule[]
@@ -63,6 +66,7 @@ model DiseaseImage {
 model DiagnosticQuestion {
   id           Int      @id @default(autoincrement()) @map("question_id")
   questionText String?  @db.Text @map("question_text")
+  isActive     Boolean? @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at")
 
   rules        DiseaseRule[]
@@ -74,6 +78,7 @@ model DiseaseRule {
   questionId     Int?    @map("question_id")
   expectedAnswer Boolean? @map("expected_answer")
   weight         Float?
+  isActive       Boolean? @default(true) @map("is_active")
 
   disease        Disease?            @relation(fields: [diseaseId], references: [id])
   question       DiagnosticQuestion? @relation(fields: [questionId], references: [id])

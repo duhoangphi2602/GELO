@@ -136,7 +136,7 @@ export function Registration() {
         <div className="text-center px-8">
           {/* Animated checkmark circle */}
           <div
-            className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-emerald-500 mb-6 shadow-2xl shadow-emerald-500/30"
+            className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-[#2a64ad] mb-6 shadow-2xl shadow-[#2a64ad]/30"
             style={{ animation: "popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both" }}
           >
             <svg
@@ -176,7 +176,7 @@ export function Registration() {
             style={{ animation: "fadeSlideUp 0.5s ease 0.7s both" }}
           >
             <div
-              className="h-full bg-emerald-500 rounded-full"
+              className="h-full bg-[#2a64ad] rounded-full"
               style={{ animation: "progressBar 2.5s linear forwards" }}
             />
           </div>
@@ -211,7 +211,7 @@ export function Registration() {
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500 mb-4 shadow-lg shadow-emerald-500/20">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#2a64ad] mb-4 shadow-lg shadow-[#2a64ad]/20">
             <Activity className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-slate-800 mb-2">
@@ -248,7 +248,7 @@ export function Registration() {
                 onChange={handleChange}
                 className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.username
                   ? "border-red-400 focus:ring-red-200"
-                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  : "border-slate-200 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad]"
                   }`}
                 placeholder="Choose a username (min. 3 chars)"
               />
@@ -271,7 +271,7 @@ export function Registration() {
                 onChange={handleChange}
                 className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.fullName
                   ? "border-red-400 focus:ring-red-200"
-                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  : "border-slate-200 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad]"
                   }`}
                 placeholder="Enter your full name"
               />
@@ -294,7 +294,7 @@ export function Registration() {
                 onChange={handleChange}
                 className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.email
                   ? "border-red-400 focus:ring-red-200"
-                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  : "border-slate-200 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad]"
                   }`}
                 placeholder="Enter your email (e.g. user@example.com)"
               />
@@ -317,7 +317,7 @@ export function Registration() {
                 onChange={handleChange}
                 className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.password
                   ? "border-red-400 focus:ring-red-200"
-                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  : "border-slate-200 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad]"
                   }`}
                 placeholder="Create a password (min. 6 chars)"
               />
@@ -340,7 +340,7 @@ export function Registration() {
                 onChange={handleChange}
                 className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.age
                   ? "border-red-400 focus:ring-red-200"
-                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  : "border-slate-200 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad]"
                   }`}
                 placeholder="Enter your age (1–120)"
                 min="1"
@@ -364,7 +364,7 @@ export function Registration() {
                 onChange={handleChange}
                 className={`cursor-pointer hover:bg-slate-50 transition-colors w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.gender
                   ? "border-red-400 focus:ring-red-200"
-                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  : "border-slate-200 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad]"
                   }`}
               >
                 <option value="">Select gender</option>
@@ -380,7 +380,7 @@ export function Registration() {
             <button
               type="submit"
               disabled={loading}
-              className="cursor-pointer w-full bg-emerald-500 text-white py-3 rounded-xl hover:bg-emerald-600 hover:shadow-md transition-all mt-6 font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+              className="cursor-pointer w-full bg-[#2a64ad] text-white py-3 rounded-xl hover:bg-[#2a64ad] hover:shadow-md transition-all mt-6 font-medium disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? "Creating account..." : "Create Account"}
             </button>
@@ -390,7 +390,7 @@ export function Registration() {
             Already have an account?{" "}
             <button
               onClick={() => navigate("/")}
-              className="cursor-pointer text-emerald-600 hover:underline font-medium"
+              className="cursor-pointer text-[#2a64ad] hover:underline font-medium"
             >
               Sign in
             </button>

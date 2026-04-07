@@ -84,11 +84,11 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
 
           <div className="pt-4 mt-4 border-t border-border">
             <button
-              onClick={() => navigate("/dashboard")}
-              className="cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted/50 text-foreground transition-colors"
+              onClick={() => navigate("/admin/patients")}
+              className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive("/admin/patients") ? "bg-primary text-primary-foreground" : "hover:bg-muted/50 text-foreground"}`}
             >
               <Users className="w-5 h-5" />
-              <span>Patient Portal</span>
+              <span>Patient Management</span>
             </button>
           </div>
         </nav>

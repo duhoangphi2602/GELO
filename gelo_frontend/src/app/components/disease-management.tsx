@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "./admin-layout";
-import { Plus, Edit, Trash2, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
+import axios from "axios";
 
 interface Disease {
   id: number;
@@ -16,6 +17,7 @@ export function DiseaseManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -25,65 +27,43 @@ export function DiseaseManagement() {
     hasScaling: false,
   });
 
-  // Mock diseases data
-  const [diseases, setDiseases] = useState<Disease[]>([
-    {
-      id: 1,
-      name: "Contact Dermatitis",
-      description: "Inflammatory skin reaction caused by contact with allergens or irritants",
-      patterns: "Redness, swelling, itching at contact site",
-      hasBlister: true,
-      hasScaling: false,
-      status: "active",
-    },
-    {
-      id: 2,
-      name: "Eczema",
-      description: "Chronic inflammatory skin condition causing dry, itchy patches",
-      patterns: "Dry patches, redness, intense itching, thickened skin",
-      hasBlister: false,
-      hasScaling: true,
-      status: "active",
-    },
-    {
-      id: 3,
-      name: "Psoriasis",
-      description: "Autoimmune condition causing rapid skin cell buildup",
-      patterns: "Silvery scales, red patches, dry cracked skin",
-      hasBlister: false,
-      hasScaling: true,
-      status: "active",
-    },
-    {
-      id: 4,
-      name: "Acne Vulgaris",
-      description: "Common skin condition affecting hair follicles and oil glands",
-      patterns: "Pimples, blackheads, whiteheads, cysts",
-      hasBlister: false,
-      hasScaling: false,
-      status: "active",
-    },
-  ]);
+  const [diseases, setDiseases] = useState<Disease[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingId) {
-      // Update existing disease
-      setDiseases(diseases.map(d =>
-        d.id === editingId
-          ? { ...d, ...formData }
-          : d
-      ));
-    } else {
-      // Add new disease
-      const newDisease: Disease = {
-        id: diseases.length + 1,
-        ...formData,
-        status: "active",
-      };
-      setDiseases([...diseases, newDisease]);
+  const fetchDiseases = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get("http://localhost:3000/diseases");
+      // Map visualPattern to patterns for the UI
+      const mappedDiseases = response.data.map((d: any) => ({
+        ...d,
+        patterns: d.visualPattern || "",
+      }));
+      setDiseases(mappedDiseases);
+    } catch (error) {
+      console.error("Error fetching diseases:", error);
+    } finally {
+      setLoading(false);
     }
-    resetForm();
+  };
+
+  useEffect(() => {
+    fetchDiseases();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingId) {
+        await axios.patch(`http://localhost:3000/diseases/${editingId}`, formData);
+      } else {
+        await axios.post("http://localhost:3000/diseases", formData);
+      }
+      fetchDiseases();
+      resetForm();
+    } catch (error) {
+      console.error("Error saving disease:", error);
+      alert("Failed to save disease. Please try again.");
+    }
   };
 
   const resetForm = () => {
@@ -110,9 +90,15 @@ export function DiseaseManagement() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this disease?")) {
-      setDiseases(diseases.filter(d => d.id !== id));
+  const handleDelete = async (id: number) => {
+    if (confirm("Are you sure you want to delete this disease? This might affect associated rules.")) {
+      try {
+        await axios.delete(`http://localhost:3000/diseases/${id}`);
+        fetchDiseases();
+      } catch (error) {
+        console.error("Error deleting disease:", error);
+        alert("Failed to delete disease. It might be linked to existing rules.");
+      }
     }
   };
 

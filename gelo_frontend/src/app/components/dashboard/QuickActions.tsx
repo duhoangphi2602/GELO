@@ -12,16 +12,16 @@ export function QuickActions() {
       {/* Start New Scan CTA - Prominent */}
       <div
         onClick={() => navigate("/scan")}
-        className="bg-emerald-600 rounded-xl p-5 mb-4 text-white cursor-pointer hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-500/20 group relative overflow-hidden flex flex-col"
+        className="bg-[#2a64ad] rounded-xl p-5 mb-4 text-white cursor-pointer hover:bg-[#1e4e8c] transition-colors shadow-md shadow-blue-500/20 group relative overflow-hidden flex flex-col"
       >
         <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
         <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4 relative z-10 backdrop-blur-sm">
           <ActivitySquare className="w-6 h-6 text-white" />
         </div>
         <h4 className="font-bold text-lg mb-1 relative z-10">Start New AI Scan</h4>
-        <p className="text-emerald-50 text-xs font-medium mb-4 relative z-10">Upload medical images for instant analysis</p>
+        <p className="text-blue-100 text-xs font-medium mb-4 relative z-10">Upload medical images for instant analysis</p>
 
-        <button className="cursor-pointer flex items-center gap-1 font-bold text-sm bg-white text-emerald-600 py-2.5 px-4 rounded-lg w-fit mt-auto relative z-10 shadow-sm">
+        <button className="cursor-pointer flex items-center gap-1 font-bold text-sm bg-white text-[#2a64ad] py-2.5 px-4 rounded-lg w-fit mt-auto relative z-10 shadow-sm">
           Go to Scan Page <ChevronRight className="w-4 h-4" />
         </button>
       </div>
