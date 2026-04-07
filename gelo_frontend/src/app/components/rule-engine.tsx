@@ -211,6 +211,7 @@ export function RuleEngine() {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
+              aria-label="Filter rules by disease category"
               className="cursor-pointer px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
             >
               <option value="">All Categories</option>
@@ -392,6 +393,8 @@ export function RuleEngine() {
                   <th className="px-6 py-4 text-left w-12">
                     <input
                       type="checkbox"
+                      title="Select all rules"
+                      aria-label="Select all rules"
                       className="cursor-pointer w-4 h-4"
                       checked={filteredRules.length > 0 && selectedRules.length === filteredRules.length}
                       onChange={handleSelectAll}
@@ -411,6 +414,8 @@ export function RuleEngine() {
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
+                        title={`Select rule ${rule.id}`}
+                        aria-label={`Select rule ${rule.id}`}
                         className="cursor-pointer w-4 h-4"
                         checked={selectedRules.includes(rule.id)}
                         onChange={() => handleSelectRule(rule.id)}
@@ -461,14 +466,18 @@ export function RuleEngine() {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button
+                          type="button"
                           onClick={() => handleEdit(rule)}
                           className="cursor-pointer p-2 hover:bg-muted rounded-lg text-primary transition-colors"
+                          aria-label="Edit rule"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(rule.id)}
                           className="cursor-pointer p-2 hover:bg-destructive/10 rounded-lg text-destructive transition-colors"
+                          title="Delete rule"
+                          aria-label="Delete rule"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

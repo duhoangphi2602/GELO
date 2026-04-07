@@ -1,9 +1,29 @@
 // registration.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Activity } from "lucide-react";
-
+import { Activity, AlertCircle } from "lucide-react";
 import axios from "axios";
+
+// Validation helpers
+const validateEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+const validatePassword = (password: string) => password.length >= 6;
+
+const validateAge = (age: string) => {
+  const n = parseInt(age, 10);
+  return !isNaN(n) && n >= 1 && n <= 120;
+};
+
+interface FieldErrors {
+  username?: string;
+  fullName?: string;
+  email?: string;
+  password?: string;
+  age?: string;
+  gender?: string;
+  general?: string;
+}
 
 export function Registration() {
   const navigate = useNavigate();
@@ -16,17 +36,78 @@ export function Registration() {
     gender: "",
   });
 
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+
+  // Run client-side validation, return errors object
+  const validate = (): FieldErrors => {
+    const e: FieldErrors = {};
+
+    if (!formData.username.trim()) {
+      e.username = "Username is required.";
+    } else if (formData.username.trim().length < 3) {
+      e.username = "Username must be at least 3 characters.";
+    }
+
+    if (!formData.fullName.trim()) {
+      e.fullName = "Full name is required.";
+    }
+
+    if (!formData.email.trim()) {
+      e.email = "Email is required.";
+    } else if (!validateEmail(formData.email)) {
+      e.email = "Invalid email format (e.g. user@example.com).";
+    }
+
+    if (!formData.password) {
+      e.password = "Password is required.";
+    } else if (!validatePassword(formData.password)) {
+      e.password = "Password must be at least 6 characters.";
+    }
+
+    if (!formData.age) {
+      e.age = "Age is required.";
+    } else if (!validateAge(formData.age)) {
+      e.age = "Age must be between 1 and 120.";
+    }
+
+    if (!formData.gender) {
+      e.gender = "Please select a gender.";
+    }
+
+    return e;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSuccessMsg("");
+
+    // Client-side validation first
+    const clientErrors = validate();
+    if (Object.keys(clientErrors).length > 0) {
+      setErrors(clientErrors);
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
     try {
-      const response = await axios.post("http://localhost:3000/auth/register", formData);
+      const response = await axios.post(
+        "http://localhost:3000/auth/register",
+        formData
+      );
       if (response.data.patientId) {
-        alert("Account created successfully! Please log in.");
-        navigate("/login");
+        setSuccessMsg("success");
+        setTimeout(() => navigate("/"), 2500);
       }
     } catch (error: any) {
-      const backendMsg = error.response?.data?.message || error.message;
-      alert("Registration failed! " + backendMsg);
+      const backendMsg =
+        error.response?.data?.message || error.message || "Unknown error";
+      // Show backend error as general error
+      setErrors({ general: "Registration failed: " + backendMsg });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,8 +116,96 @@ export function Registration() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear the error for this field when user starts typing
+    setErrors((prev) => ({ ...prev, [name]: undefined, general: undefined }));
   };
 
+  // Reusable field error component
+  const FieldError = ({ msg }: { msg?: string }) =>
+    msg ? (
+      <p className="flex items-center gap-1 mt-1 text-xs text-red-600">
+        <AlertCircle className="w-3 h-3 flex-shrink-0" />
+        {msg}
+      </p>
+    ) : null;
+
+  // ── Màn hình thành công toàn trang ──────────────────────────────────────
+  if (successMsg === "success") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center px-8">
+          {/* Animated checkmark circle */}
+          <div
+            className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-emerald-500 mb-6 shadow-2xl shadow-emerald-500/30"
+            style={{ animation: "popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both" }}
+          >
+            <svg
+              className="w-12 h-12 text-white"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
+              style={{ animation: "drawCheck 0.4s ease 0.3s both" }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
+          <h2
+            className="text-3xl font-bold text-slate-800 mb-3"
+            style={{ animation: "fadeSlideUp 0.5s ease 0.4s both" }}
+          >
+            Account Created!
+          </h2>
+          <p
+            className="text-slate-500 text-lg mb-2"
+            style={{ animation: "fadeSlideUp 0.5s ease 0.55s both" }}
+          >
+            Your GELO account has been set up successfully.
+          </p>
+          <p
+            className="text-slate-400 text-sm"
+            style={{ animation: "fadeSlideUp 0.5s ease 0.65s both" }}
+          >
+            Redirecting you to login...
+          </p>
+
+          {/* Progress bar */}
+          <div
+            className="mt-8 h-1 w-48 mx-auto rounded-full bg-slate-200 overflow-hidden"
+            style={{ animation: "fadeSlideUp 0.5s ease 0.7s both" }}
+          >
+            <div
+              className="h-full bg-emerald-500 rounded-full"
+              style={{ animation: "progressBar 2.5s linear forwards" }}
+            />
+          </div>
+        </div>
+
+        {/* Keyframe animations injected inline */}
+        <style>{`
+          @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+          }
+          @keyframes drawCheck {
+            from { opacity: 0; transform: scale(0.5); }
+            to   { opacity: 1; transform: scale(1); }
+          }
+          @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes progressBar {
+            from { width: 0%; }
+            to   { width: 100%; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // ── Form đăng ký ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
       <div className="w-full max-w-md">
@@ -45,22 +214,31 @@ export function Registration() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500 mb-4 shadow-lg shadow-emerald-500/20">
             <Activity className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">Create Account</h1>
-          <p className="text-slate-500">
-            Join the GELO healthcare platform today
-          </p>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">
+            Create Account
+          </h1>
+          <p className="text-slate-500">Join the GELO healthcare platform today</p>
         </div>
 
         {/* Registration Form */}
         <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
+
+          {/* General error banner */}
+          {errors.general && (
+            <div className="mb-5 flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>{errors.general}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {/* Username */}
             <div>
               <label
                 htmlFor="username"
-                className="block mb-2 text-sm font-medium text-slate-700"
+                className="block mb-1 text-sm font-medium text-slate-700"
               >
-                Username
+                Username <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -68,19 +246,22 @@ export function Registration() {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                className="cursor-text w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
-                placeholder="Choose a username"
-                required
+                className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.username
+                  ? "border-red-400 focus:ring-red-200"
+                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  }`}
+                placeholder="Choose a username (min. 3 chars)"
               />
+              <FieldError msg={errors.username} />
             </div>
 
             {/* Full Name */}
             <div>
               <label
                 htmlFor="fullName"
-                className="block mb-2 text-sm font-medium text-slate-700"
+                className="block mb-1 text-sm font-medium text-slate-700"
               >
-                Full Name
+                Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -88,16 +269,22 @@ export function Registration() {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
-                className="cursor-text w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
+                className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.fullName
+                  ? "border-red-400 focus:ring-red-200"
+                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  }`}
                 placeholder="Enter your full name"
-                required
               />
+              <FieldError msg={errors.fullName} />
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block mb-2 text-foreground">
-                Email
+              <label
+                htmlFor="email"
+                className="block mb-1 text-sm font-medium text-slate-700"
+              >
+                Email <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -105,19 +292,22 @@ export function Registration() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter your email"
-                required
+                className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.email
+                  ? "border-red-400 focus:ring-red-200"
+                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  }`}
+                placeholder="Enter your email (e.g. user@example.com)"
               />
+              <FieldError msg={errors.email} />
             </div>
 
             {/* Password */}
             <div>
               <label
                 htmlFor="password"
-                className="block mb-2 text-foreground"
+                className="block mb-1 text-sm font-medium text-slate-700"
               >
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"
@@ -125,16 +315,22 @@ export function Registration() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Create a password"
-                required
+                className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.password
+                  ? "border-red-400 focus:ring-red-200"
+                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  }`}
+                placeholder="Create a password (min. 6 chars)"
               />
+              <FieldError msg={errors.password} />
             </div>
 
             {/* Age */}
             <div>
-              <label htmlFor="age" className="block mb-2 text-foreground">
-                Age
+              <label
+                htmlFor="age"
+                className="block mb-1 text-sm font-medium text-slate-700"
+              >
+                Age <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -142,26 +338,34 @@ export function Registration() {
                 name="age"
                 value={formData.age}
                 onChange={handleChange}
-                className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter your age"
-                required
+                className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.age
+                  ? "border-red-400 focus:ring-red-200"
+                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  }`}
+                placeholder="Enter your age (1–120)"
                 min="1"
                 max="120"
               />
+              <FieldError msg={errors.age} />
             </div>
 
             {/* Gender */}
             <div>
-              <label htmlFor="gender" className="block mb-2 text-foreground">
-                Gender
+              <label
+                htmlFor="gender"
+                className="block mb-1 text-sm font-medium text-slate-700"
+              >
+                Gender <span className="text-red-500">*</span>
               </label>
               <select
                 id="gender"
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
-                className="cursor-pointer hover:bg-slate-50 transition-colors w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                required
+                className={`cursor-pointer hover:bg-slate-50 transition-colors w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.gender
+                  ? "border-red-400 focus:ring-red-200"
+                  : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  }`}
               >
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
@@ -169,22 +373,24 @@ export function Registration() {
                 <option value="other">Other</option>
                 <option value="prefer-not-to-say">Prefer not to say</option>
               </select>
+              <FieldError msg={errors.gender} />
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
-              className="cursor-pointer w-full bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 hover:shadow-md transition-all mt-6"
+              disabled={loading}
+              className="cursor-pointer w-full bg-emerald-500 text-white py-3 rounded-xl hover:bg-emerald-600 hover:shadow-md transition-all mt-6 font-medium disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Register
+              {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
 
-          <p className="text-center text-muted-foreground mt-6">
+          <p className="text-center text-slate-500 mt-6 text-sm">
             Already have an account?{" "}
             <button
               onClick={() => navigate("/")}
-              className="cursor-pointer text-primary hover:underline"
+              className="cursor-pointer text-emerald-600 hover:underline font-medium"
             >
               Sign in
             </button>
