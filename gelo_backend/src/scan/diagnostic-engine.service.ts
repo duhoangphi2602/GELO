@@ -62,15 +62,15 @@ export class DiagnosticEngineService {
       });
     }
 
-    const normalizedRuleScore = maxRuleScore > 0 ? (ruleScore / maxRuleScore) : 0;
-    const finalScore = (aiScore * AI_WEIGHT) + (normalizedRuleScore * RULE_WEIGHT);
+    const normalizedRuleScore = maxRuleScore > 0 ? (ruleScore / maxRuleScore) * 100 : 0;
+    const finalScore = (aiScore * 100 * AI_WEIGHT) + (normalizedRuleScore * RULE_WEIGHT);
 
     let decision = 'unknown';
     if (isEmergency) {
       decision = 'emergency';
-    } else if (finalScore >= 0.70) {
+    } else if (finalScore >= 70) {
       decision = 'positive';
-    } else if (finalScore >= 0.50) {
+    } else if (finalScore >= 50) {
       decision = 'uncertain';
     }
 

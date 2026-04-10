@@ -89,16 +89,13 @@ export class ScanService {
       });
     }
 
-    let validDiseaseId: number | null = null;
-
-    if (diagnosticStatus === 'DISEASE') {
-      const aiDisease = mockDiseaseId ? await this.prisma.disease.findUnique({ where: { id: mockDiseaseId } }) : null;
-      validDiseaseId = aiDisease ? mockDiseaseId : dbDisease.id;
-
-      if (!aiDisease) {
-        this.logger.warn(
-          `AI returned disease_id=${mockDiseaseId} which does not exist in DB. Falling back to disease_id=${dbDisease.id}.`
-        );
+    // 4. Determine which disease to evaluate rules for
+    // If AI found a specific disease, use it. Otherwise, default to Atopic Dermatitis (ID=1).
+    let validDiseaseId: number = dbDisease.id;
+    if (diagnosticStatus === 'DISEASE' && mockDiseaseId) {
+      const aiDisease = await this.prisma.disease.findUnique({ where: { id: mockDiseaseId } });
+      if (aiDisease) {
+        validDiseaseId = mockDiseaseId;
       }
     }
 
@@ -119,7 +116,7 @@ export class ScanService {
           scanId: scan.id,
           diagnosticStatus: diagnosticStatus,
           diseaseId: validDiseaseId,
-          confidence: mockConfidence,
+          confidence: mockConfidence * 100,
           modelVersion: modelVer
         }
       });
@@ -141,11 +138,12 @@ export class ScanService {
 
       // 6.3 Save Diagnosis Result
       const predictedId = engineResult.decision === 'positive' || engineResult.decision === 'emergency' ? validDiseaseId : null;
+      const finalStatus = (engineResult.decision === 'positive' || engineResult.decision === 'emergency') ? 'DISEASE' : diagnosticStatus;
 
       return await tx.diagnosisResult.create({
         data: {
           scanId: scan.id,
-          diagnosticStatus: diagnosticStatus,
+          diagnosticStatus: finalStatus,
           predictedDiseaseId: predictedId,
           finalDiseaseId: predictedId,
           isEmergency: engineResult.isEmergency,
@@ -238,7 +236,7 @@ export class ScanService {
   }
 
   /** Trả về các scan có AI confidence thấp hơn ngưỡng (mặc định < 0.6) chưa được admin review */
-  async getPendingReviews(threshold = 0.6) {
+  async getPendingReviews(threshold = 60) {
     const predictions = await this.prisma.prediction.findMany({
       where: { confidence: { lt: threshold } },
       orderBy: { createdAt: 'desc' },

@@ -31,22 +31,26 @@ export function MedicalAssessment() {
         const response = await api.get("/rules/active");
         setQuestions(response.data);
         
-        // Initialize symptoms state
-        const initialSymptoms: Record<string, string> = {};
-        response.data.forEach((q: Question) => {
-          initialSymptoms[q.id.toString()] = "";
+        // Initialize symptoms state while preserving existing answers
+        setSymptoms(prev => {
+          const newSymptoms = { ...prev };
+          response.data.forEach((q: Question) => {
+            const qId = q.id.toString();
+            if (newSymptoms[qId] === undefined) {
+              newSymptoms[qId] = "";
+            }
+          });
+          return newSymptoms;
         });
-        setSymptoms(initialSymptoms);
       } catch (error) {
         console.error("Error fetching questions:", error);
-        toast.error("Failed to load survey", "Could not fetch diagnostic questions.");
       } finally {
         setLoadingQuestions(false);
       }
     };
 
     fetchQuestions();
-  }, [toast]);
+  }, []); // Remove toast dependency to prevent re-fetch on toast updates
 
   const handleSubmitAssessment = async () => {
     const patientId = localStorage.getItem("patientId");
