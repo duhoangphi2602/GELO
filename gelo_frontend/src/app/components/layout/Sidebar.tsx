@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router";
-import { LayoutDashboard, FileUp, History, FileBarChart, User, Settings } from "lucide-react";
+import { LayoutDashboard, FileUp, History, FileBarChart, User } from "lucide-react";
 
 export function Sidebar() {
   const location = useLocation();
@@ -8,9 +8,8 @@ export function Sidebar() {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "New Scan", href: "/scan", icon: FileUp },
     { name: "Scan History", href: "/history", icon: History },
-    { name: "Reports", href: "/reports", icon: FileBarChart },
+    { name: "Diary Tracking", href: "/diary", icon: FileBarChart },
     { name: "Profile", href: "/profile", icon: User },
-    { name: "Settings", href: "/settings", icon: Settings },
   ];
 
   return (

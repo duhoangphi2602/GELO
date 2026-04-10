@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "./admin-layout";
+import api from "../lib/api";
 import { TrendingUp, Users, FileCheck, AlertCircle, Clock, ChevronRight, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { AdminReviewModal } from "./admin-review-modal";
 
@@ -8,7 +9,11 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedScan, setSelectedScan] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [patientCount, setPatientCount] = useState(0);
+  const [dashboardStats, setDashboardStats] = useState({
+    totalDiagnoses: 0,
+    totalPatients: 0,
+    modelAccuracy: 100
+  });
   const [selectedDisease, setSelectedDisease] = useState("Atopic Dermatitis");
   const [careAdvice, setCareAdvice] = useState("");
   const [lifestyleAdvice, setLifestyleAdvice] = useState("");
@@ -22,23 +27,22 @@ export function AdminDashboard() {
     }
   };
 
-  const fetchDashboardData = () => {
+  const fetchDashboardData = async () => {
     setLoading(true);
-    
-    // Fetch Pending Reviews
-    fetch("http://localhost:3000/scans/admin/pending-reviews")
-      .then(res => res.json())
-      .then(data => setPendingReviews(data))
-      .catch(err => console.error("Error fetching reviews", err));
-
-    // Fetch Patients for stats
-    fetch("http://localhost:3000/scans/admin/patients")
-      .then(res => res.json())
-      .then(data => {
-        setPatientCount(data.length);
-      })
-      .catch(err => console.error("Error fetching patients", err))
-      .finally(() => setLoading(false));
+    try {
+      const [reviewsRes, patientsRes, statsRes] = await Promise.all([
+        api.get("/scans/admin/pending-reviews"),
+        api.get("/scans/admin/patients"),
+        api.get("/scans/admin/stats")
+      ]);
+      setPendingReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
+      if (statsRes.data) setDashboardStats(statsRes.data);
+    } catch (err) {
+      console.error("Error fetching dashboard data", err);
+      setPendingReviews([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -62,30 +66,30 @@ export function AdminDashboard() {
   const stats = [
     {
       label: "Total Diagnoses",
-      value: "1,280", // Could be dynamic if we add more endpoints
-      change: "+4.5%",
+      value: dashboardStats.totalDiagnoses.toString(),
+      change: "Tracking",
       trend: "up",
       icon: FileCheck,
     },
     {
       label: "Total Patients",
-      value: patientCount.toString(),
-      change: "+12.3%",
+      value: dashboardStats.totalPatients.toString(),
+      change: "Tracking",
       trend: "up",
       icon: Users,
     },
     {
       label: "Model Accuracy",
-      value: "92.1%",
-      change: "+1.2%",
+      value: `${dashboardStats.modelAccuracy.toFixed(1)}%`,
+      change: "From feedback",
       trend: "up",
       icon: TrendingUp,
     },
     {
       label: "Pending Reviews",
-      value: pendingReviews.length.toString(),
-      change: pendingReviews.length > 5 ? "+14%" : "-2.5%",
-      trend: pendingReviews.length > 5 ? "up" : "down",
+      value: (pendingReviews?.length || 0).toString(),
+      change: (pendingReviews?.length || 0) > 5 ? "+14%" : "-2.5%",
+      trend: (pendingReviews?.length || 0) > 5 ? "up" : "down",
       icon: AlertCircle,
     },
   ];
@@ -132,7 +136,7 @@ export function AdminDashboard() {
                 Pending AI Reviews
               </h3>
               <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100">
-                {pendingReviews.length} Cases Need Review
+                {pendingReviews?.length || 0} Cases Need Review
               </span>
             </div>
 
@@ -157,7 +161,7 @@ export function AdminDashboard() {
                           <td className="px-6 py-4"><div className="h-8 bg-muted rounded w-16 ml-auto"></div></td>
                         </tr>
                       ))
-                    ) : pendingReviews.length > 0 ? (
+                    ) : (pendingReviews?.length || 0) > 0 ? (
                       pendingReviews.map((scan) => (
                         <tr key={scan.scanId} className="group hover:bg-muted/30 transition-colors">
                           <td className="px-6 py-4">
@@ -227,20 +231,20 @@ export function AdminDashboard() {
                 <div>
                    <div className="flex items-center justify-between text-sm mb-2">
                       <span className="text-muted-foreground font-medium underline font-bold underline-offset-4 decoration-[#2a64ad]/30">Atopic Dermatitis Precision</span>
-                      <span className="font-bold text-[#2a64ad]">94.2%</span>
+                      <span className="font-bold text-[#2a64ad]">{dashboardStats.modelAccuracy.toFixed(1)}%</span>
                    </div>
                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="w-[94%] h-full bg-[#2a64ad]" />
+                      <div className="h-full bg-[#2a64ad]" style={{ width: `${dashboardStats.modelAccuracy}%` }} />
                    </div>
                 </div>
 
                 <div>
                    <div className="flex items-center justify-between text-sm mb-2">
                       <span className="text-muted-foreground font-medium">Model Recall Rate</span>
-                      <span className="font-bold text-emerald-500">88.5%</span>
+                      <span className="font-bold text-emerald-500">{Math.max(0, dashboardStats.modelAccuracy - 5).toFixed(1)}%</span>
                    </div>
                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="w-[88%] h-full bg-emerald-500" />
+                      <div className="h-full bg-emerald-500" style={{ width: `${Math.max(0, dashboardStats.modelAccuracy - 5)}%` }} />
                    </div>
                 </div>
 

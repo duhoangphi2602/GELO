@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { BookOpen, Save, CheckCircle2, AlertTriangle, BatteryCharging } from "lucide-react";
-import axios from "axios";
+import api from "../lib/api";
 import { Layout } from "./layout/Layout";
 import { useToastContext } from "./ui/ToastContext";
 
@@ -23,10 +23,11 @@ export function PatientDiary() {
     const patientId = localStorage.getItem("patientId");
     if (!patientId) return;
     try {
-      const res = await axios.get(`http://localhost:3000/diary/${patientId}`);
-      setDiaries(res.data || []);
+      const res = await api.get(`/diary/${patientId}`);
+      setDiaries(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       console.error(e);
+      setDiaries([]);
     }
   };
 
@@ -46,7 +47,7 @@ export function PatientDiary() {
 
     setSaving(true);
     try {
-      await axios.post("http://localhost:3000/diary", {
+      await api.post("/diary", {
         patientId: parseInt(patientId),
         scanId: parseInt(scanId),
         conditionScore: recoveryLevel,
@@ -72,7 +73,7 @@ export function PatientDiary() {
             <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center border border-blue-200">
               <BookOpen className="w-5 h-5 text-[#2a64ad]" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-800">Scan History & Diary</h2>
+            <h2 className="text-2xl font-bold text-slate-800">Patient Diary Tracking</h2>
           </div>
           <p className="text-slate-500">
             Track your recovery progress and document your daily observations.
@@ -224,9 +225,9 @@ export function PatientDiary() {
               <p className="text-sm font-medium text-slate-500">{diaries.length} records</p>
             </div>
 
-            {diaries.length > 0 ? (
+            {(diaries || []).length > 0 ? (
               <div className="grid gap-4">
-                {diaries.map((diary: any, idx) => (
+                {(diaries || []).map((diary: any, idx) => (
                   <div key={idx} className="bg-white border border-slate-200/60 shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 text-sm">
                       <span className="font-bold text-slate-700">

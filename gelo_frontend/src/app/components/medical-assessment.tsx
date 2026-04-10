@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Upload, AlertCircle, X, FileSearch, CheckCircle2, ChevronRight, ActivitySquare, Loader2 } from "lucide-react";
-import axios from "axios";
+import api from "../lib/api";
 import { Layout } from "./layout/Layout";
 import { useToastContext } from "./ui/ToastContext";
 
@@ -28,7 +28,7 @@ export function MedicalAssessment() {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/rules/active");
+        const response = await api.get("/rules/active");
         setQuestions(response.data);
         
         // Initialize symptoms state
@@ -79,16 +79,12 @@ export function MedicalAssessment() {
 
     setIsSubmitting(true);
     try {
-      let finalImageUrl = "https://example.com/uploaded-skin-image.jpg";
+      const formData = new FormData();
+      
       if (uploadedFiles.length > 0) {
-        const fileToBase64 = (file: File): Promise<string> =>
-          new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = (error) => reject(error);
-          });
-        finalImageUrl = await fileToBase64(uploadedFiles[0]);
+        uploadedFiles.forEach(file => {
+          formData.append("images", file);
+        });
       }
 
       // Convert symptoms object { "qId": "Yes" } to array [ { questionId: "qId", answer: "Yes" } ]
@@ -96,17 +92,11 @@ export function MedicalAssessment() {
         questionId: parseInt(questionId),
         answer,
       }));
+      formData.append("answers", JSON.stringify(answersArray));
 
-      const payload = {
-        patientId: parseInt(patientId),
-        imageUrl: finalImageUrl,
-        answers: answersArray,
-      };
-
-      const response = await axios.post(
-        "http://localhost:3000/scans/analyze",
-        payload
-      );
+      const response = await api.post("/scans/analyze", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       if (response.data.scanId) {
         localStorage.setItem("currentScanId", response.data.scanId);
@@ -125,7 +115,7 @@ export function MedicalAssessment() {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const filesArr = Array.from(e.target.files).slice(0, 5);
+      const filesArr = Array.from(e.target.files).slice(0, 3);
       setUploadedFiles(filesArr);
     }
   };
@@ -165,11 +155,16 @@ export function MedicalAssessment() {
                   >
                     <X className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
                   </div>
-                  <img
-                    src={URL.createObjectURL(uploadedFiles[0])}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg mb-4 border border-slate-200"
-                  />
+                  <div className="flex flex-wrap gap-3 justify-center mb-4">
+                    {uploadedFiles.map((file, idx) => (
+                      <img
+                        key={idx}
+                        src={URL.createObjectURL(file)}
+                        alt={`Preview ${idx + 1}`}
+                        className="w-24 h-24 object-cover rounded-lg border border-slate-200 shadow-sm"
+                      />
+                    ))}
+                  </div>
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle2 className="w-4 h-4 text-[#2a64ad]" />
                     <p className="text-sm font-semibold text-slate-700">
@@ -193,7 +188,7 @@ export function MedicalAssessment() {
                     <Upload className="w-8 h-8 text-blue-400 group-hover:text-[#2a64ad]" />
                   </div>
                   <p className="text-center font-semibold text-slate-700 mb-1">Drop your image here</p>
-                  <p className="text-xs font-medium text-slate-400 mb-6">Supports JPG, PNG (Max 5 files)</p>
+                  <p className="text-xs font-medium text-slate-400 mb-6">Supports JPG, PNG (Max 3 files)</p>
                   <div className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg shadow-sm group-hover:border-blue-200 group-hover:text-[#2a64ad] transition-colors">
                     Browse Files
                   </div>

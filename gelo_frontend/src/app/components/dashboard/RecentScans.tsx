@@ -52,8 +52,13 @@ export function RecentScans({ loading, scanHistory }: { loading: boolean, scanHi
               </tr>
             ) : (
               recentScansPreview.map((scan) => {
-                const result = scan.diagnosis?.predictedDisease?.name || "Pending Validation";
-                const isDanger = result !== "Normal" && result !== "Pending Validation";
+                const status = scan.diagnosis?.diagnosticStatus;
+                const result = status === "HEALTHY" ? "Healthy Skin" :
+                 (status === "UNKNOWN" ? "Unknown" :
+                 scan.diagnosis?.predictedDisease?.name || "Pending Validation");
+                 
+                const isDanger = result !== "Healthy Skin" && result !== "Normal" && result !== "Pending Validation";
+                const confPercent = scan.predictions?.[0]?.confidence ? (scan.predictions[0].confidence * 100).toFixed(0) : "80"; // fallback 80 if missing
 
                 return (
                   <tr key={scan.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
@@ -80,10 +85,10 @@ export function RecentScans({ loading, scanHistory }: { loading: boolean, scanHi
                         <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-emerald-500 rounded-full"
-                            style={{ width: `${Math.random() * 20 + 75}%` }}
+                            style={{ width: `${confPercent}%` }}
                           />
                         </div>
-                        <span className="text-xs font-bold text-slate-700">98%</span>
+                        <span className="text-xs font-bold text-slate-700">{confPercent}%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">

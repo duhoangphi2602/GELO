@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, CheckCircle2, AlertTriangle, Info, Image as ImageIcon, Activity } from "lucide-react";
 import { useToast } from "../hooks/useToast";
+import api from "../lib/api";
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -18,15 +19,14 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
   const { toast } = useToast();
   const [diseases, setDiseases] = useState<Disease[]>([]);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [actualDiseaseId, setActualDiseaseId] = useState<number | "">("");
+  const [actualDiseaseId, setActualDiseaseId] = useState<string | number>("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      fetch("http://localhost:3000/scans/admin/diseases")
-        .then(res => res.json())
-        .then(data => setDiseases(data))
+      api.get("/scans/admin/diseases")
+        .then(res => setDiseases(Array.isArray(res.data) ? res.data : []))
         .catch(err => console.error("Failed to fetch diseases", err));
       
       // Reset form
@@ -50,25 +50,18 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
 
     setSubmitting(true);
     try {
-      const response = await fetch(`http://localhost:3000/scans/admin/review/${scan.scanId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          isCorrect,
-          actualDiseaseId: isCorrect ? undefined : Number(actualDiseaseId),
-          note
-        })
+      await api.post(`/scans/admin/review/${scan.scanId}`, {
+        isCorrect,
+        actualDiseaseId: (isCorrect || actualDiseaseId === "HEALTHY" || !actualDiseaseId) ? undefined : Number(actualDiseaseId),
+        actualStatus: actualDiseaseId === "HEALTHY" ? "HEALTHY" : undefined,
+        note
       });
 
-      if (response.ok) {
-        toast.success("Review submitted successfully");
-        onReviewSuccess();
-        onClose();
-      } else {
-        toast.error("Failed to submit review");
-      }
+      toast.success("Review submitted successfully");
+      onReviewSuccess();
+      onClose();
     } catch (error) {
-      toast.error("An error occurred during submission");
+      toast.error("Failed to submit review");
     } finally {
       setSubmitting(false);
     }
@@ -187,11 +180,12 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                   <label className="text-sm font-medium mb-2 block">Correct Diagnosis</label>
                   <select
                     value={actualDiseaseId.toString()}
-                    onChange={(e) => setActualDiseaseId(e.target.value ? Number(e.target.value) : "")}
+                    onChange={(e) => setActualDiseaseId(e.target.value === "HEALTHY" ? "HEALTHY" : (e.target.value ? Number(e.target.value) : ""))}
                     className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad] transition-all"
                   >
-                    <option value="">Select the correct disease...</option>
-                    {diseases.map(d => (
+                    <option value="">Select the correct diagnosis...</option>
+                    <option value="HEALTHY" className="font-bold text-green-700">Healthy Skin (No Disease)</option>
+                    {(diseases || []).map(d => (
                       <option key={d.id} value={d.id.toString()}>{d.name}</option>
                     ))}
                   </select>

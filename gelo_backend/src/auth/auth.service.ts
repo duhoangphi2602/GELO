@@ -1,10 +1,16 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
+  // ─── REGISTER ─────────────────────────────────────────────────────────────────
   async register(body: any) {
     const { username, email, password, fullName, age, gender } = body;
 
@@ -23,28 +29,31 @@ export class AuthService {
       throw new BadRequestException('Age must be between 1 and 120.');
     }
 
-    // --- Kiểm tra username/email đã tồn tại chưa (riêng từng cái để báo lỗi chính xác) ---
+    // --- Kiểm tra duplicate ---
     const existingByEmail = await this.prisma.account.findFirst({
-      where: { email },
+      where: { email: email.trim().toLowerCase() },
     });
     if (existingByEmail) {
-      throw new BadRequestException('This email is already registered. Please use a different email.');
+      throw new BadRequestException('This email is already registered.');
     }
 
     const existingByUsername = await this.prisma.account.findFirst({
-      where: { username },
+      where: { username: username.trim() },
     });
     if (existingByUsername) {
-      throw new BadRequestException('This username is already taken. Please choose another one.');
+      throw new BadRequestException('This username is already taken.');
     }
 
-    // --- Tạo Account & Patient cùng lúc nhờ Prisma Nested Writes ---
+    // --- Hash password với bcrypt (salt rounds = 10) ---
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // --- Tạo Account & Patient ---
     const account = await this.prisma.account.create({
       data: {
         username: username.trim(),
         email: email.trim().toLowerCase(),
-        passwordHash: password, // TODO: Replace with bcrypt.hash(password, 10) in production
-        role: email.trim().toLowerCase().includes('admin') ? 'admin' : 'patient',
+        passwordHash: hashedPassword,
+        role: 'patient', // Mặc định luôn là patient. Admin tạo qua seed.
         patient: {
           create: {
             fullName: fullName?.trim() || username.trim(),
@@ -63,20 +72,13 @@ export class AuthService {
     };
   }
 
-  /**
-   * Login bằng email HOẶC username.
-   * Frontend gửi field `identifier` (có thể là email hoặc username) và `password`.
-   *
-   * Cách hoạt động:
-   * - Prisma tìm account với OR: [{ email: identifier }, { username: identifier }]
-   * - Nếu tìm thấy và password khớp → trả về thông tin user
-   * - Nếu không → throw 401
-   */
+  // ─── LOGIN ────────────────────────────────────────────────────────────────────
   async login(identifier: string, password: string) {
     if (!identifier || !password) {
-      throw new BadRequestException('Identifier and password are required.');
+      throw new BadRequestException('Email/username and password are required.');
     }
 
+    // Tìm account bằng email HOẶC username
     const account = await this.prisma.account.findFirst({
       where: {
         OR: [
@@ -87,15 +89,82 @@ export class AuthService {
       include: { patient: true },
     });
 
-    if (!account || account.passwordHash !== password) {
-      throw new BadRequestException('Invalid credentials. Please check your email/username and password.');
+    if (!account) {
+      throw new UnauthorizedException('Invalid credentials.');
     }
+
+    // So sánh password bằng bcrypt
+    const isPasswordValid = await bcrypt.compare(password, account.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials.');
+    }
+
+    // Tạo JWT token
+    const payload = {
+      sub: account.id,
+      role: account.role,
+      patientId: account.patient?.id,
+    };
+
+    const accessToken = this.jwtService.sign(payload);
 
     return {
       message: 'Login successful',
+      accessToken,
       patientId: account.patient?.id,
       role: account.role,
       fullName: account.patient?.fullName || account.username,
     };
+  }
+
+  // ─── SEED DB FOR TEST ────────────────────────────────────────────────────────
+  async seedDb() {
+    // Admin
+    const adminHash = await bcrypt.hash('password123', 10);
+    await this.prisma.account.upsert({
+      where: { username: 'admin' },
+      update: {},
+      create: {
+        username: 'admin',
+        email: 'admin@healthai.com',
+        passwordHash: adminHash,
+        role: 'admin',
+      },
+    });
+
+    // Patient
+    const patientHash = await bcrypt.hash('patient123', 10);
+    await this.prisma.account.upsert({
+      where: { username: 'patient' },
+      update: {},
+      create: {
+        username: 'patient',
+        email: 'patient@healthai.com',
+        passwordHash: patientHash,
+        role: 'patient',
+        patient: {
+          create: {
+            fullName: 'Demo Patient',
+            age: 30,
+            gender: 'Other',
+          }
+        }
+      },
+    });
+
+    // Disease
+    try {
+      await this.prisma.disease.create({
+        data: {
+          id: 1,
+          name: 'Atopic Dermatitis',
+          description: 'A chronic condition that makes your skin red and itchy.',
+          visualPattern: 'Red, dry, itchy patches',
+          status: 'active',
+        }
+      });
+    } catch(e) { } // Ignore if already seeded
+
+    return { message: 'Seed Complete' };
   }
 }

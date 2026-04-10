@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -16,7 +16,10 @@ export class ResultService {
         scan: {
           include: { 
             images: true, 
-            predictions: true // Include predictions to get confidence 
+            predictions: true,
+            ruleScoreLogs: {
+              include: { question: true }
+            }
           } 
         }
       }
@@ -28,6 +31,10 @@ export class ResultService {
       scanId: result.scanId,
       scannedAt: result.createdAt,
       isEmergency: result.isEmergency,
+      decision: result.decision || 'unknown',
+      normalizedScore: result.normalizedScore !== null ? Math.round(result.normalizedScore * 100) : 0,
+      ruleScore: result.ruleScore,
+      maxRuleScore: result.maxRuleScore,
       disease: result.predictedDisease?.name || 'Unknown',
       description: result.predictedDisease?.description,
       images: result.scan.images.map(img => img.imageUrl),
@@ -36,7 +43,39 @@ export class ResultService {
         type: ad.adviceType,
         title: ad.title,
         content: ad.content
-      })) || []
+      })) || [],
+      logs: result.scan.ruleScoreLogs.map(log => ({
+        questionText: log.question.questionText,
+        patientAnswer: log.patientAnswer,
+        expectedAnswer: log.expectedAnswer ? 'Yes' : 'No',
+        isMatch: log.isMatch,
+        scoreContribution: log.scoreContribution,
+        weight: log.weight
+      }))
     };
+  }
+
+  async submitFeedback(scanId: number, body: { isCorrect: boolean; note?: string }) {
+    // 1. Verify scan and diagnosis exist
+    const diagnosis = await this.prisma.diagnosisResult.findUnique({
+      where: { scanId }
+    });
+
+    if (!diagnosis) {
+      throw new NotFoundException('Diagnosis result not found to apply feedback.');
+    }
+
+    // 2. Create FeedbackLog
+    return await this.prisma.feedbackLog.create({
+      data: {
+        scanId,
+        diagnosticStatus: diagnosis.diagnosticStatus,
+        predictedDiseaseId: diagnosis.predictedDiseaseId,
+        isCorrect: body.isCorrect,
+        note: body.note || 'User self-feedback',
+        // In this simplified 1-disease version, if it's correct, actual = predicted.
+        actualDiseaseId: body.isCorrect ? diagnosis.predictedDiseaseId : null,
+      }
+    });
   }
 }

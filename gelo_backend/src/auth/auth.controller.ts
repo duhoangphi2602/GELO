@@ -15,4 +15,9 @@ export class AuthController {
     // Nhận `identifier` (email hoặc username) và `password` từ frontend
     return this.authService.login(body.identifier, body.password);
   }
+
+  @Post('seed')
+  async seed() {
+    return this.authService.seedDb();
+  }
 }

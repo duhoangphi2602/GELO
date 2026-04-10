@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "./admin-layout";
 import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
-import axios from "axios";
+import api from "../lib/api";
 
 interface Disease {
   id: number;
@@ -32,7 +32,11 @@ export function DiseaseManagement() {
   const fetchDiseases = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:3000/diseases");
+      const response = await api.get("/diseases");
+      if (!Array.isArray(response.data)) {
+         setDiseases([]);
+         return;
+      }
       // Map visualPattern to patterns for the UI
       const mappedDiseases = response.data.map((d: any) => ({
         ...d,
@@ -41,6 +45,7 @@ export function DiseaseManagement() {
       setDiseases(mappedDiseases);
     } catch (error) {
       console.error("Error fetching diseases:", error);
+      setDiseases([]);
     } finally {
       setLoading(false);
     }
@@ -54,9 +59,9 @@ export function DiseaseManagement() {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.patch(`http://localhost:3000/diseases/${editingId}`, formData);
+        await api.patch(`/diseases/${editingId}`, formData);
       } else {
-        await axios.post("http://localhost:3000/diseases", formData);
+        await api.post("/diseases", formData);
       }
       fetchDiseases();
       resetForm();
@@ -93,7 +98,7 @@ export function DiseaseManagement() {
   const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this disease? This might affect associated rules.")) {
       try {
-        await axios.delete(`http://localhost:3000/diseases/${id}`);
+        await api.delete(`/diseases/${id}`);
         fetchDiseases();
       } catch (error) {
         console.error("Error deleting disease:", error);
@@ -102,7 +107,7 @@ export function DiseaseManagement() {
     }
   };
 
-  const filteredDiseases = diseases.filter(d =>
+  const filteredDiseases = (diseases || []).filter(d =>
     d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     d.description.toLowerCase().includes(searchQuery.toLowerCase())
   );

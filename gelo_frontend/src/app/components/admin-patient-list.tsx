@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { AdminLayout } from "./admin-layout";
+import api from "../lib/api";
 import { 
   Search, 
   User, 
@@ -41,14 +42,14 @@ export function AdminPatientList() {
   });
 
   useEffect(() => {
-    fetch("http://localhost:3000/scans/admin/patients")
-      .then((res) => res.json())
-      .then((data) => {
-        setPatients(data);
+    api.get("/scans/admin/patients")
+      .then((res) => {
+        setPatients(Array.isArray(res.data) ? res.data : []);
         setLoading(false);
       })
       .catch((err) => {
         console.error("Failed to fetch patients:", err);
+        setPatients([]);
         setLoading(false);
       });
   }, []);
@@ -64,7 +65,7 @@ export function AdminPatientList() {
   };
 
   const processedPatients = useMemo(() => {
-    let result = [...patients];
+    let result = [...(patients || [])];
 
     // 1. Filter by Search Term
     if (searchTerm) {
@@ -154,7 +155,7 @@ export function AdminPatientList() {
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[#2a64ad]/5 border border-[#2a64ad]/20 rounded-xl">
               <Users className="w-4 h-4 text-[#2a64ad]" />
               <span className="text-sm font-bold text-[#2a64ad]">
-                {processedPatients.length} <span className="font-medium text-slate-500">/{patients.length}</span>
+                {processedPatients?.length || 0} <span className="font-medium text-slate-500">/{(patients || []).length}</span>
               </span>
             </div>
           </div>

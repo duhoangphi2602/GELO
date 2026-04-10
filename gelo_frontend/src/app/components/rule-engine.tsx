@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "./admin-layout";
 import { Plus, Edit, Trash2, Search, Download, Upload } from "lucide-react";
-import axios from "axios";
+import api from "../lib/api";
 
 interface Rule {
   id: number;
@@ -35,10 +35,11 @@ export function RuleEngine() {
   const fetchRules = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:3000/rules");
-      setRules(response.data);
+      const response = await api.get("/rules");
+      setRules(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error fetching rules:", error);
+      setRules([]);
     } finally {
       setLoading(false);
     }
@@ -46,10 +47,11 @@ export function RuleEngine() {
 
   const fetchDiseases = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/diseases");
-      setDiseases(response.data);
+      const response = await api.get("/diseases");
+      setDiseases(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error fetching diseases:", error);
+      setDiseases([]);
     }
   };
 
@@ -64,9 +66,9 @@ export function RuleEngine() {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.patch(`http://localhost:3000/rules/${editingId}`, formData);
+        await api.patch(`/rules/${editingId}`, formData);
       } else {
-        await axios.post("http://localhost:3000/rules", formData);
+        await api.post("/rules", formData);
       }
       fetchRules();
       resetForm();
@@ -101,7 +103,7 @@ export function RuleEngine() {
   const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this rule?")) {
       try {
-        await axios.delete(`http://localhost:3000/rules/${id}`);
+        await api.delete(`/rules/${id}`);
         fetchRules();
         setSelectedRules(prev => prev.filter(selectedId => selectedId !== id));
       } catch (error) {
@@ -115,14 +117,14 @@ export function RuleEngine() {
     if (!rule) return;
     
     try {
-      await axios.patch(`http://localhost:3000/rules/${id}`, { active: !rule.active });
+      await api.patch(`/rules/${id}`, { active: !rule.active });
       fetchRules();
     } catch (error) {
       console.error("Error toggling rule status:", error);
     }
   };
 
-  const filteredRules = rules.filter((r) => {
+  const filteredRules = (rules || []).filter((r) => {
     const matchesSearch =
       r.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.diseaseCategory.toLowerCase().includes(searchQuery.toLowerCase());
@@ -207,25 +209,25 @@ export function RuleEngine() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-card rounded-lg border border-border p-4">
             <p className="text-sm text-muted-foreground mb-1">Total Rules</p>
-            <p className="text-2xl">{rules.length}</p>
+            <p className="text-2xl">{(rules || []).length}</p>
           </div>
           <div className="bg-card rounded-lg border border-border p-4">
             <p className="text-sm text-muted-foreground mb-1">Active Rules</p>
             <p className="text-2xl text-green-600">
-              {rules.filter((r) => r.active).length}
+              {(rules || []).filter((r) => r.active).length}
             </p>
           </div>
           <div className="bg-card rounded-lg border border-border p-4">
             <p className="text-sm text-muted-foreground mb-1">Avg Weight</p>
             <p className="text-2xl">
               {Math.round(
-                rules.reduce((sum, r) => sum + r.weight, 0) / rules.length
+                (rules || []).reduce((sum, r) => sum + r.weight, 0) / Math.max((rules || []).length, 1)
               )}
             </p>
           </div>
           <div className="bg-card rounded-lg border border-border p-4">
             <p className="text-sm text-muted-foreground mb-1">Categories</p>
-            <p className="text-2xl">{diseaseCategories.length}</p>
+            <p className="text-2xl">{(diseaseCategories || []).length}</p>
           </div>
         </div>
 
@@ -451,26 +453,7 @@ export function RuleEngine() {
           </div>
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredRules.length} of {rules.length} rules
-          </p>
-          <div className="flex gap-2">
-            <button className="cursor-pointer px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm transition-colors">
-              Previous
-            </button>
-            <button className="cursor-pointer px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm transition-colors">
-              1
-            </button>
-            <button className="cursor-pointer px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm transition-colors">
-              2
-            </button>
-            <button className="cursor-pointer px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted/30 text-sm transition-colors">
-              Next
-            </button>
-          </div>
-        </div>
+        {/* No Pagination needed for rules list */}
       </div>
     </AdminLayout>
   );

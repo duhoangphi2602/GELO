@@ -37,7 +37,12 @@ export function Login() {
         password: formData.password,
       });
 
-      localStorage.setItem("role", response.data.role);
+      if (response.data.accessToken) {
+        localStorage.setItem("accessToken", response.data.accessToken);
+      }
+      if (response.data.role) {
+        localStorage.setItem("role", response.data.role);
+      }
       if (response.data.patientId) {
         localStorage.setItem("patientId", response.data.patientId);
       }
