@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "./admin-layout";
 import api from "../lib/api";
-import { TrendingUp, Users, FileCheck, AlertCircle, Clock, ChevronRight, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { TrendingUp, Users, FileCheck, AlertCircle, Clock, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { AdminReviewModal } from "./admin-review-modal";
 
 export function AdminDashboard() {
@@ -19,7 +19,7 @@ export function AdminDashboard() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [reviewsRes, patientsRes, statsRes] = await Promise.all([
+      const [reviewsRes, _, statsRes] = await Promise.all([
         api.get("/scans/admin/pending-reviews"),
         api.get("/scans/admin/patients"),
         api.get("/scans/admin/stats")

@@ -18,7 +18,6 @@ export function RuleEngine() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
-  const [loading, setLoading] = useState(true);
   const formRef = useRef<HTMLDivElement>(null);
 
   // State quản lý danh sách các rule được tick chọn
@@ -36,15 +35,12 @@ export function RuleEngine() {
   const [diseases, setDiseases] = useState<any[]>([]);
 
   const fetchRules = async () => {
-    setLoading(true);
     try {
       const response = await api.get("/rules");
       setRules(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error fetching rules:", error);
       setRules([]);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -125,7 +121,7 @@ export function RuleEngine() {
   const toggleActive = async (id: number) => {
     const rule = rules.find(r => r.id === id);
     if (!rule) return;
-    
+
     try {
       await api.patch(`/rules/${id}`, { active: !rule.active });
       fetchRules();
