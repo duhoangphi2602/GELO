@@ -27,7 +27,7 @@ export class RuleService {
     });
   }
 
-  async createRule(data: { question: string; diseaseCategory: string; expectedAnswer: string; weight: number }) {
+  async createRule(data: { question: string; diseaseCategory: string; expectedAnswer: string; weight: number; isEmergency?: boolean }) {
     // 1. Find the disease by name (since the user selects from existing diseases)
     let disease = await this.prisma.disease.findFirst({
       where: { name: data.diseaseCategory },
@@ -40,11 +40,12 @@ export class RuleService {
       });
     }
 
-    // 2. Create the question
+    // 2. Create the question with emergency flag
     const question = await (this.prisma.diagnosticQuestion as any).create({
       data: {
         questionText: data.question,
         isActive: true,
+        isEmergency: data.isEmergency ?? false,
       },
     });
 
@@ -61,27 +62,27 @@ export class RuleService {
   }
 
   async updateRule(id: number, data: any) {
-    // Simple update for now; in a real app, this would be more complex
-    if (data.active !== undefined) {
+    // Patching logic
+    const updateData: any = {};
+    if (data.active !== undefined) updateData.isActive = data.active;
+    if (data.question !== undefined) updateData.questionText = data.question;
+    if (data.isEmergency !== undefined) updateData.isEmergency = data.isEmergency;
+
+    if (Object.keys(updateData).length > 0) {
       await (this.prisma.diagnosticQuestion as any).update({
         where: { id },
-        data: { isActive: data.active },
+        data: updateData,
       });
-      
-      // Also update associated disease rules
-      await (this.prisma.diseaseRule as any).updateMany({
-        where: { questionId: id },
-        data: { isActive: data.active },
-      });
+
+      // If toggling active status, also update associated disease rules
+      if (data.active !== undefined) {
+        await (this.prisma.diseaseRule as any).updateMany({
+          where: { questionId: id },
+          data: { isActive: data.active },
+        });
+      }
     }
     
-    if (data.question !== undefined) {
-      await this.prisma.diagnosticQuestion.update({
-        where: { id },
-        data: { questionText: data.question },
-      });
-    }
-
     return { success: true };
   }
 

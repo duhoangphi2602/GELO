@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { DiagnosticStatus, UserRole } from '@prisma/client';
 
 @Injectable()
 export class ResultService {
   constructor(private prisma: PrismaService) {}
 
-  async getDiagnosticResult(scanId: number) {
+  async getDiagnosticResult(scanId: number, patientId: number, role: UserRole) {
     // Tìm kết quả Diagnosis kết nối chéo (JOIN) sang bảng Disease và Scan
     const result = await this.prisma.diagnosisResult.findUnique({
       where: { scanId },
@@ -26,6 +27,11 @@ export class ResultService {
     });
 
     if (!result) throw new NotFoundException('Diagnostic result not found for this scan ID');
+
+    // SECURITY CHECK: Chỉ chính chủ hoặc Admin mới được xem
+    if (role !== UserRole.ADMIN && result.scan.patientId !== patientId) {
+      throw new ForbiddenException('You do not have permission to view this diagnostic result.');
+    }
 
     return {
       scanId: result.scanId,
@@ -55,14 +61,20 @@ export class ResultService {
     };
   }
 
-  async submitFeedback(scanId: number, body: { isCorrect: boolean; note?: string }) {
+  async submitFeedback(scanId: number, body: { isCorrect: boolean; note?: string }, patientId: number) {
     // 1. Verify scan and diagnosis exist
     const diagnosis = await this.prisma.diagnosisResult.findUnique({
-      where: { scanId }
+      where: { scanId },
+      include: { scan: true }
     });
 
     if (!diagnosis) {
       throw new NotFoundException('Diagnosis result not found to apply feedback.');
+    }
+
+    // SECURITY CHECK: Bệnh nhân chỉ được feedback cho scan của mình
+    if (diagnosis.scan.patientId !== patientId) {
+      throw new ForbiddenException('You can only submit feedback for your own diagnostic results.');
     }
 
     // 2. Create FeedbackLog
@@ -78,7 +90,7 @@ export class ResultService {
     });
 
     // 3. Nếu người dùng xác nhận đúng (isCorrect) và chẩn đoán là Bệnh -> Lưu vào làm dữ liệu huấn luyện
-    if (body.isCorrect && diagnosis.diagnosticStatus === 'DISEASE' && diagnosis.predictedDiseaseId) {
+    if (body.isCorrect && diagnosis.diagnosticStatus === DiagnosticStatus.DISEASE && diagnosis.predictedDiseaseId) {
       // Kiểm tra xem đã có trong DiseaseImage chưa để tránh trùng lặp
       const alreadySaved = await this.prisma.diseaseImage.findFirst({
         where: { scanId, diseaseId: diagnosis.predictedDiseaseId }

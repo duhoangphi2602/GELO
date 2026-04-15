@@ -12,20 +12,9 @@ export function AdminDashboard() {
   const [dashboardStats, setDashboardStats] = useState({
     totalDiagnoses: 0,
     totalPatients: 0,
-    modelAccuracy: 100
+    modelAccuracy: 100,
+    diseaseStats: [] as any[]
   });
-  const [selectedDisease, setSelectedDisease] = useState("Atopic Dermatitis");
-  const [careAdvice, setCareAdvice] = useState("");
-  const [lifestyleAdvice, setLifestyleAdvice] = useState("");
-  const [emergencyWarnings, setEmergencyWarnings] = useState("");
-
-  const loadExistingAdvice = () => {
-    if (selectedDisease === "Atopic Dermatitis") {
-      setCareAdvice("• Apply a gentle, fragrance-free moisturizer twice daily to affected areas\n• Use mild, hypoallergenic soaps and avoid harsh chemicals\n• Use lukewarm water for bathing, not hot water\n• Avoid scratching the skin to prevent secondary infection\n• Wear soft, breathable cotton clothing");
-      setLifestyleAdvice("• Identify and avoid triggers (specific detergents, dust, or pets)\n• Keep indoor environment cool and at a stable humidity\n• Manage stress through relaxation techniques\n• Stay hydrated by drinking plenty of water\n• Avoid food allergens that may cause flare-ups");
-      setEmergencyWarnings("• Signs of skin infection (yellow crusts, pus, or extreme warmth)\n• Severe swelling or rapidly spreading rash\n• High fever accompanied by skin flare-ups\n• Difficulty sleeping due to intense itching\n• No improvement after 2 weeks of compliant home care");
-    }
-  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -47,7 +36,6 @@ export function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-    loadExistingAdvice();
   }, []);
 
   const openReview = (scan: any) => {
@@ -58,10 +46,6 @@ export function AdminDashboard() {
   const handleReviewSuccess = () => {
     fetchDashboardData();
   };
-
-  const diseases = [
-    "Atopic Dermatitis",
-  ];
 
   const stats = [
     {
@@ -153,7 +137,7 @@ export function AdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {loading ? (
-                       Array.from({ length: 4 }).map((_, i) => (
+                      Array.from({ length: 4 }).map((_, i) => (
                         <tr key={i} className="animate-pulse">
                           <td className="px-6 py-4"><div className="h-10 bg-muted rounded w-32"></div></td>
                           <td className="px-6 py-4"><div className="h-5 bg-muted rounded w-24"></div></td>
@@ -193,15 +177,15 @@ export function AdminDashboard() {
                                 {(scan.confidence * 100).toFixed(0)}%
                               </span>
                               <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-                                <div 
-                                  className={`h-full ${scan.confidence < 0.6 ? 'bg-rose-500' : 'bg-amber-500'}`} 
+                                <div
+                                  className={`h-full ${scan.confidence < 0.6 ? 'bg-rose-500' : 'bg-amber-500'}`}
                                   style={{ width: `${scan.confidence * 100}%` }}
                                 />
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <button 
+                            <button
                               onClick={() => openReview(scan)}
                               className="px-4 py-1.5 text-xs font-bold bg-[#2a64ad] text-white rounded-lg hover:bg-[#1e4e8c] transition-all shadow-md shadow-blue-500/10 active:scale-95"
                             >
@@ -226,54 +210,39 @@ export function AdminDashboard() {
 
           {/* Sidebar Area: System Status */}
           <div className="space-y-6">
-             <h3 className="text-xl font-bold px-2">Diagnostic Performance</h3>
-             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
-                <div>
-                   <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-muted-foreground font-medium underline font-bold underline-offset-4 decoration-[#2a64ad]/30">Atopic Dermatitis Precision</span>
-                      <span className="font-bold text-[#2a64ad]">{dashboardStats.modelAccuracy.toFixed(1)}%</span>
-                   </div>
-                   <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-[#2a64ad]" style={{ width: `${dashboardStats.modelAccuracy}%` }} />
-                   </div>
+            <h3 className="text-xl font-bold px-2">Diagnostic Performance</h3>
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
+              {dashboardStats.diseaseStats.map((d: any) => (
+                <div key={d.diseaseId}>
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-muted-foreground font-medium underline font-bold underline-offset-4 decoration-[#2a64ad]/30">
+                      {d.name} Precision
+                    </span>
+                    <span className="font-bold text-[#2a64ad]">{d.accuracy.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-[#2a64ad]" style={{ width: `${d.accuracy}%` }} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">Based on {d.totalReviews} human-verified cases</p>
                 </div>
+              ))}
 
-                <div>
-                   <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-muted-foreground font-medium">Model Recall Rate</span>
-                      <span className="font-bold text-emerald-500">{Math.max(0, dashboardStats.modelAccuracy - 5).toFixed(1)}%</span>
-                   </div>
-                   <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500" style={{ width: `${Math.max(0, dashboardStats.modelAccuracy - 5)}%` }} />
-                   </div>
-                </div>
+              {dashboardStats.diseaseStats.length === 0 && (
+                <p className="text-sm text-muted-foreground italic">Gathering diagnostic data...</p>
+              )}
 
-                <div className="pt-4 border-t border-border">
-                   <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-4">Focused Analysis</h4>
-                   <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                      The core AI model is currently specialized for **Atopic Dermatitis** with a high sensitivity toward pediatric cases.
-                   </p>
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-muted/30 p-3 rounded-xl border border-border/50">
-                         <p className="text-[10px] text-muted-foreground font-bold uppercase mb-1">Weekly Scans</p>
-                         <p className="text-xl font-black">426</p>
-                      </div>
-                      <div className="bg-muted/30 p-3 rounded-xl border border-border/50">
-                         <p className="text-[10px] text-muted-foreground font-bold uppercase mb-1">New Positives</p>
-                         <p className="text-xl font-black">12</p>
-                      </div>
-                   </div>
-                </div>
-
-                <button className="w-full py-3 bg-muted hover:bg-muted/80 text-foreground font-bold text-sm rounded-xl transition-all border border-border group flex items-center justify-center gap-2">
-                    Advanced Analytics <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-                </button>
-             </div>
+              <div className="pt-4 border-t border-border">
+                <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-4">Focused Analysis</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  The AI engine accuracy is continuously refined through expert clinician feedback across all supported dermatological categories.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <AdminReviewModal 
+      <AdminReviewModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         scan={selectedScan}

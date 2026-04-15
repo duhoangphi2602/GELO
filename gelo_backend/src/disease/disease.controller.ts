@@ -2,10 +2,11 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { DiseaseService } from './disease.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { Roles } from '../auth/auth.decorator';
+import { UserRole } from '@prisma/client';
 
 @Controller('diseases')
 @UseGuards(JwtAuthGuard)
-@Roles('admin')
+@Roles(UserRole.ADMIN)
 export class DiseaseController {
   constructor(private readonly diseaseService: DiseaseService) {}
 

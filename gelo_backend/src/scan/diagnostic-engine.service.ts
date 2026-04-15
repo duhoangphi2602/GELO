@@ -23,7 +23,7 @@ export class DiagnosticEngineService {
     answers: AnswerInput[],
     rules: RuleWithQuestion[]
   ) {
-    // Current mapping as agreed: Rule=100%, AI=0% (since AI is just mock)
+    // Current mapping: Rule=100%, AI=0% (Configurable via env)
     const AI_WEIGHT = Number(process.env.AI_WEIGHT || 0.0);
     const RULE_WEIGHT = Number(process.env.RULE_WEIGHT || 1.0);
 

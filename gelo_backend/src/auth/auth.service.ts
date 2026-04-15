@@ -2,32 +2,19 @@ import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { UserRole, Gender } from '@prisma/client';
+import { RegisterDto, UpdateProfileDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   // ─── REGISTER ─────────────────────────────────────────────────────────────────
-  async register(body: any) {
-    const { username, email, password, fullName, age, gender } = body;
-
-    // --- Server-side validation ---
-    if (!username || username.trim().length < 3) {
-      throw new BadRequestException('Username must be at least 3 characters.');
-    }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      throw new BadRequestException('Invalid email format.');
-    }
-    if (!password || password.length < 6) {
-      throw new BadRequestException('Password must be at least 6 characters.');
-    }
-    const parsedAge = age ? parseInt(age, 10) : null;
-    if (parsedAge !== null && (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120)) {
-      throw new BadRequestException('Age must be between 1 and 120.');
-    }
+  async register(registerDto: RegisterDto) {
+    const { username, email, password, fullName, age, gender } = registerDto;
 
     // --- Kiểm tra duplicate ---
     const existingByEmail = await this.prisma.account.findFirst({
@@ -53,12 +40,12 @@ export class AuthService {
         username: username.trim(),
         email: email.trim().toLowerCase(),
         passwordHash: hashedPassword,
-        role: 'patient', // Mặc định luôn là patient. Admin tạo qua seed.
+        role: UserRole.PATIENT, // Mặc định luôn là PATIENT
         patient: {
           create: {
             fullName: fullName?.trim() || username.trim(),
-            age: parsedAge ?? 25,
-            gender: gender || 'unknown',
+            age: age ?? 25,
+            gender: gender || Gender.UNKNOWN,
           },
         },
       },
@@ -74,10 +61,6 @@ export class AuthService {
 
   // ─── LOGIN ────────────────────────────────────────────────────────────────────
   async login(identifier: string, password: string) {
-    if (!identifier || !password) {
-      throw new BadRequestException('Email/username and password are required.');
-    }
-
     // Tìm account bằng email HOẶC username
     const account = await this.prisma.account.findFirst({
       where: {
@@ -117,51 +100,55 @@ export class AuthService {
     };
   }
 
-  // ─── SEED DB FOR TEST ────────────────────────────────────────────────────────
-  async seedDb() {
-    // Admin
-    const adminHash = await bcrypt.hash('password123', 10);
-    await this.prisma.account.upsert({
-      where: { username: 'admin' },
-      update: {},
-      create: {
-        username: 'admin',
-        email: 'admin@healthai.com',
-        passwordHash: adminHash,
-        role: 'admin',
-      },
+  // ─── GET PROFILE ─────────────────────────────────────────────────────────────
+  async getProfile(accountId: number) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+      include: { patient: true },
     });
+    if (!account) throw new UnauthorizedException('Account not found');
 
-    // Patient
-    const patientHash = await bcrypt.hash('patient123', 10);
-    await this.prisma.account.upsert({
-      where: { username: 'patient' },
-      update: {},
-      create: {
-        username: 'patient',
-        email: 'patient@healthai.com',
-        passwordHash: patientHash,
-        role: 'patient',
-        patient: {
-          create: {
-            fullName: 'Demo Patient',
-            age: 30,
-            gender: 'Other',
-          }
-        }
-      },
-    });
+    const { passwordHash, ...safeAccount } = account;
+    return safeAccount;
+  }
 
-    try {
-      await this.prisma.disease.create({
-        data: {
-          id: 1,
-          name: 'Atopic Dermatitis',
-          description: 'A chronic condition that makes your skin red and itchy.',
+  // ─── UPDATE PROFILE ──────────────────────────────────────────────────────────
+  async updateProfile(accountId: number, updateProfileDto: UpdateProfileDto) {
+    const { fullName, email, password } = updateProfileDto;
+
+    // 1. Cập nhật Account (Email & Password)
+    const updateAccountData: any = {};
+    if (email) {
+      // Kiểm tra trùng email nếu email thay đổi
+      const existing = await this.prisma.account.findFirst({
+        where: {
+          email: email.trim().toLowerCase(),
+          NOT: { id: accountId }
         }
       });
-    } catch(e) { } // Ignore if already seeded
+      if (existing) throw new BadRequestException('Email already in use');
+      updateAccountData.email = email.trim().toLowerCase();
+    }
 
-    return { message: 'Seed Complete' };
+    if (password) {
+      updateAccountData.passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    // 2. Cập nhật Patient (Full Name)
+    const updatePatientData: any = {};
+    if (fullName) updatePatientData.fullName = fullName.trim();
+
+    // Thực hiện Update
+    await this.prisma.account.update({
+      where: { id: accountId },
+      data: {
+        ...updateAccountData,
+        patient: Object.keys(updatePatientData).length > 0 ? {
+          update: updatePatientData
+        } : undefined
+      }
+    });
+
+    return this.getProfile(accountId);
   }
 }

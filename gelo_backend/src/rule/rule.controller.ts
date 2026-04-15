@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { RuleService } from './rule.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { Roles } from '../auth/auth.decorator';
+import { UserRole } from '@prisma/client';
 
 @Controller('rules')
 export class RuleController {
@@ -9,7 +10,7 @@ export class RuleController {
 
   // Admin: danh sách rules đầy đủ
   @Get()
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
   async findAll() {
     const questions: any = await this.ruleService.getAllRules();
@@ -22,6 +23,7 @@ export class RuleController {
         weight: rule ? rule.weight : 0,
         diseaseCategory: rule?.disease?.name || 'Unknown',
         active: q.isActive,
+        isEmergency: q.isEmergency,
       };
     });
   }
@@ -34,21 +36,21 @@ export class RuleController {
   }
 
   @Post()
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
   async create(@Body() createRuleDto: any) {
     return this.ruleService.createRule(createRuleDto);
   }
 
   @Patch(':id')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
   async update(@Param('id') id: string, @Body() updateDto: any) {
     return this.ruleService.updateRule(+id, updateDto);
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
   async remove(@Param('id') id: string) {
     return this.ruleService.deleteRule(+id);

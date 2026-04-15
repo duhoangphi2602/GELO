@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, ParseIntPipe, UseGuards, ForbiddenException } from '@nestjs/common';
 import { DiaryService } from './diary.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/auth.decorator';
@@ -24,7 +24,7 @@ export class DiaryController {
   ) {
     // Chỉ cho phép xem diary của chính mình
     if (tokenPatientId !== patientId) {
-      return { message: 'You can only view your own diary.' };
+      throw new ForbiddenException('You can only view your own diary history.');
     }
     return this.diaryService.getPatientDiaries(patientId);
   }

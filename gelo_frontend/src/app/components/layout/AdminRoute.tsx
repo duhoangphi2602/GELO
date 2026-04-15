@@ -13,7 +13,7 @@ export function AdminRoute() {
     return <Navigate to="/" replace />;
   }
 
-  if (role !== "admin") {
+  if (role !== "ADMIN") {
     // Đã đăng nhập nhưng là patient, không được vào trang admin
     return <Navigate to="/dashboard" replace />;
   }

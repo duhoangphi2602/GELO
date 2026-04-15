@@ -1,7 +1,8 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DiagnosticEngineService } from './diagnostic-engine.service';
 import { cloudinary } from '../common/cloudinary.config';
+import { DiagnosticStatus } from '@prisma/client';
 
 @Injectable()
 export class ScanService {
@@ -29,35 +30,46 @@ export class ScanService {
     // 2. GỌI SANG AI SERVICE (FASTAPI)
     let aiDiseaseId: number | null = null;
     let aiConfidence = 0.0;
-    let modelVer = 'v2.0-b3-mock';
-    let diagnosticStatus = 'UNKNOWN';
+    let modelVer = 'v1.0.0';
+    let diagnosticStatus: DiagnosticStatus = DiagnosticStatus.UNKNOWN;
 
     try {
       const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+      const apiKey = process.env.INTERNAL_API_KEY || '';
+
       const aiResponse = await fetch(`${aiUrl}/ai/predict`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Api-Key': apiKey,
+        },
         body: JSON.stringify({ image_urls: imageUrls, scan_id: scan.id })
       });
 
-      if (aiResponse.ok) {
-        const result = await aiResponse.json();
-        const rawId = result.disease_id;
-
-        // Nếu AI trả về 0 hoặc null -> UNKNOWN
-        if (rawId === 0 || !rawId) {
-          aiDiseaseId = null;
-          diagnosticStatus = 'UNKNOWN';
-        } else {
-          aiDiseaseId = rawId;
-          diagnosticStatus = result.diagnosticStatus || 'DISEASE';
-        }
-
-        aiConfidence = result.confidence;
-        modelVer = result.model_version || modelVer;
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        this.logger.error(`AI Service returned error (${aiResponse.status}): ${errorText}`);
+        throw new ServiceUnavailableException('AI Diagnostic Service is currently unavailable or returned an error.');
       }
+
+      const result = await aiResponse.json();
+      const rawId = result.disease_id;
+
+      // Nếu AI trả về 0 hoặc null -> UNKNOWN
+      if (rawId === 0 || !rawId) {
+        aiDiseaseId = null;
+        diagnosticStatus = DiagnosticStatus.UNKNOWN;
+      } else {
+        aiDiseaseId = rawId;
+        diagnosticStatus = (result.diagnosticStatus as DiagnosticStatus) || DiagnosticStatus.DISEASE;
+      }
+
+      aiConfidence = result.confidence;
+      modelVer = result.model_version || modelVer;
     } catch (error) {
-      this.logger.error(`AI Service unreachable: ${error.message}`);
+      this.logger.error(`AI Service communication failure: ${error.message}`);
+      if (error instanceof ServiceUnavailableException) throw error;
+      throw new ServiceUnavailableException('AI Diagnostic Service is unreachable. Please try again later.');
     }
 
     // 4. Lưu lại dự đoán ban đầu
@@ -75,7 +87,7 @@ export class ScanService {
     // Nếu AI đoán được bệnh -> Lấy rules của bệnh đó.
     // Nếu AI không đoán được -> Lấy rules của "General Inquiry" (Mặc định ID=1 hoặc category chung)
     let questionsDiseaseId = aiDiseaseId;
-    if (!questionsDiseaseId || diagnosticStatus !== 'DISEASE') {
+    if (!questionsDiseaseId || diagnosticStatus !== DiagnosticStatus.DISEASE) {
       // Fallback: Nếu AI không nhận diện được bệnh cụ thể, dùng bệnh đầu tiên trong DB làm bộ khảo sát mặc định
       const fallbackDisease = await this.prisma.disease.findFirst({ orderBy: { id: 'asc' } });
       questionsDiseaseId = fallbackDisease?.id || null;
@@ -104,17 +116,17 @@ export class ScanService {
   }
 
   /** Phase 2: Nhận câu trả lời, tính điểm Hybrid và chốt kết quả */
-  async completeScan(scanId: number, answers: any[]) {
-    this.logger.log(`Phase 2: Completing scan ${scanId} with answers`);
+  async completeScan(scanId: number, answers: any[], patientId: number) {
+    this.logger.log(`Phase 2: Completing scan ${scanId} for patient ${patientId} with answers`);
 
-    // 1. Lấy lại Scan và Prediction
-    const scan = await this.prisma.skinScan.findUnique({
-      where: { id: scanId },
+    // 1. Lấy lại Scan và Prediction, đảm bảo quyền sở hữu
+    const scan = await this.prisma.skinScan.findFirst({
+      where: { id: scanId, patientId: patientId },
       include: { predictions: { orderBy: { createdAt: 'desc' }, take: 1 } }
     });
 
     if (!scan || scan.predictions.length === 0) {
-      throw new BadRequestException('Scan or Prediction not found');
+      throw new BadRequestException('Scan not found or access denied');
     }
 
     const prediction = scan.predictions[0];
@@ -148,7 +160,7 @@ export class ScanService {
       }
 
       // Tạo DiagnosisResult
-      const finalStatus = (engineResult.decision === 'positive' || engineResult.decision === 'emergency') ? 'DISEASE' : prediction.diagnosticStatus;
+      const finalStatus = (engineResult.decision === 'positive' || engineResult.decision === 'emergency') ? DiagnosticStatus.DISEASE : prediction.diagnosticStatus;
 
       const result = await tx.diagnosisResult.create({
         data: {
@@ -230,9 +242,9 @@ export class ScanService {
       username: p.account?.username,
       totalScans: p._count.skinScans,
       totalDiaries: p._count.diaries,
-      lastScanDisease: p.skinScans[0]?.diagnosis?.diagnosticStatus === 'HEALTHY'
+      lastScanDisease: p.skinScans[0]?.diagnosis?.diagnosticStatus === DiagnosticStatus.HEALTHY
         ? 'Healthy'
-        : p.skinScans[0]?.diagnosis?.diagnosticStatus === 'UNKNOWN'
+        : p.skinScans[0]?.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
           ? 'Unknown'
           : (p.skinScans[0]?.diagnosis?.predictedDisease?.name ?? null),
       lastScanDate: p.skinScans[0]?.createdAt ?? null,
@@ -243,21 +255,42 @@ export class ScanService {
     const totalDiagnoses = await this.prisma.skinScan.count();
     const totalPatients = await this.prisma.patient.count();
 
-    // Accuracy based on feedback
-    const feedbacks = await this.prisma.feedbackLog.findMany({
-      select: { isCorrect: true }
+    // 1. Lấy tất cả bệnh đang có trong hệ thống
+    const diseases = await this.prisma.disease.findMany({
+      select: {
+        id: true,
+        name: true,
+        feedbackPredicted: {
+          select: { isCorrect: true }
+        }
+      }
     });
 
-    let modelAccuracy = 100.0;
-    if (feedbacks.length > 0) {
-      const correctCount = feedbacks.filter(f => f.isCorrect).length;
-      modelAccuracy = (correctCount / feedbacks.length) * 100;
-    }
+    // 2. Tính toán hiệu suất cho từng bệnh (Precision)
+    const diseaseStats = diseases.map(d => {
+      const totalReviews = d.feedbackPredicted.length;
+      const correctCount = d.feedbackPredicted.filter(f => f.isCorrect).length;
+      const accuracy = totalReviews > 0 ? (correctCount / totalReviews) * 100 : 100.0; // Mặc định 100 nếu chưa có data
+
+      return {
+        diseaseId: d.id,
+        name: d.name,
+        totalReviews,
+        correctCount,
+        accuracy
+      };
+    });
+
+    // 3. Tính độ chính xác tổng quát của Model (chỉ tính trên những ca đã được review)
+    const totalReviews = diseaseStats.reduce((sum, d) => sum + d.totalReviews, 0);
+    const totalCorrect = diseaseStats.reduce((sum, d) => sum + d.correctCount, 0);
+    const modelAccuracy = totalReviews > 0 ? (totalCorrect / totalReviews) * 100 : 100.0;
 
     return {
       totalDiagnoses,
       totalPatients,
-      modelAccuracy
+      modelAccuracy,
+      diseaseStats // Trả về thêm mảng stats chi tiết
     };
   }
 
@@ -291,7 +324,7 @@ export class ScanService {
         patientId: p.scan?.patient?.id,
         patientName: p.scan?.patient?.fullName,
         imageUrl: p.scan?.images?.[0]?.imageUrl ?? null,
-        predictedDisease: p.diagnosticStatus === 'HEALTHY' ? 'Healthy' : p.diagnosticStatus === 'UNKNOWN' ? 'Unknown' : (p.disease?.name ?? 'Unknown'),
+        predictedDisease: p.diagnosticStatus === DiagnosticStatus.HEALTHY ? 'Healthy' : p.diagnosticStatus === DiagnosticStatus.UNKNOWN ? 'Unknown' : (p.disease?.name ?? 'Unknown'),
         diagnosisId: p.scan?.diagnosis?.id ?? null,
       }));
   }
@@ -307,7 +340,7 @@ export class ScanService {
         where: { scanId },
         data: {
           finalDiseaseId: body.actualDiseaseId || null,
-          diagnosticStatus: body.actualStatus || (body.actualDiseaseId ? 'DISEASE' : diagnosis.diagnosticStatus)
+          diagnosticStatus: (body.actualStatus as DiagnosticStatus) || (body.actualDiseaseId ? DiagnosticStatus.DISEASE : diagnosis.diagnosticStatus)
         }
       });
     }
@@ -316,7 +349,7 @@ export class ScanService {
     const feedback = await this.prisma.feedbackLog.create({
       data: {
         scanId,
-        diagnosticStatus: body.actualStatus || diagnosis.diagnosticStatus,
+        diagnosticStatus: (body.actualStatus as DiagnosticStatus) || diagnosis.diagnosticStatus,
         predictedDiseaseId: diagnosis.predictedDiseaseId,
         actualDiseaseId: body.isCorrect ? diagnosis.predictedDiseaseId : (body.actualDiseaseId || null),
         isCorrect: body.isCorrect,
@@ -339,19 +372,24 @@ export class ScanService {
     if (imageUrls.length === 0) return;
 
     try {
-      const deletePromises = imageUrls.map((url) => {
+      const deletePromises = imageUrls.map(async (url) => {
         const urlParts = url.split('/');
         const fileNameWithExt = urlParts[urlParts.length - 1];
         const fileName = fileNameWithExt.split('.')[0];
         const publicId = `gelo/scans/${fileName}`;
 
-        this.logger.log(`Deleting Cloudinary asset: ${publicId}`);
-        return cloudinary.uploader.destroy(publicId);
+        try {
+          this.logger.log(`Deleting Cloudinary asset: ${publicId}`);
+          await cloudinary.uploader.destroy(publicId);
+        } catch (err) {
+          this.logger.error(`Failed to delete asset ${publicId}: ${err.message}`);
+          // Không throw lỗi ở đây để tránh làm gián đoạn việc xóa các ảnh khác
+        }
       });
 
       await Promise.all(deletePromises);
     } catch (error) {
-      this.logger.error(`Failed to delete one or more Cloudinary assets: ${error.message}`);
+      this.logger.error(`Unexpected error during Cloudinary cleanup: ${error.message}`);
     }
   }
 

@@ -1,53 +1,37 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "./admin-layout";
-import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Search } from "lucide-react";
 import api from "../lib/api";
 
 interface Disease {
   id: number;
   name: string;
   description: string;
-  patterns: string;
-  hasBlister: boolean;
-  hasScaling: boolean;
-  status: "active" | "inactive";
 }
 
 export function DiseaseManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    patterns: "",
-    hasBlister: false,
-    hasScaling: false,
   });
 
   const [diseases, setDiseases] = useState<Disease[]>([]);
 
   const fetchDiseases = async () => {
-    setLoading(true);
     try {
       const response = await api.get("/diseases");
       if (!Array.isArray(response.data)) {
-         setDiseases([]);
-         return;
+        setDiseases([]);
+        return;
       }
-      // Map visualPattern to patterns for the UI
-      const mappedDiseases = response.data.map((d: any) => ({
-        ...d,
-        patterns: d.visualPattern || "",
-      }));
-      setDiseases(mappedDiseases);
+      setDiseases(response.data);
     } catch (error) {
       console.error("Error fetching diseases:", error);
       setDiseases([]);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -75,9 +59,6 @@ export function DiseaseManagement() {
     setFormData({
       name: "",
       description: "",
-      patterns: "",
-      hasBlister: false,
-      hasScaling: false,
     });
     setShowForm(false);
     setEditingId(null);
@@ -87,9 +68,6 @@ export function DiseaseManagement() {
     setFormData({
       name: disease.name,
       description: disease.description,
-      patterns: disease.patterns,
-      hasBlister: disease.hasBlister,
-      hasScaling: disease.hasScaling,
     });
     setEditingId(disease.id);
     setShowForm(true);
@@ -149,10 +127,6 @@ export function DiseaseManagement() {
                     <tr>
                       <th className="px-6 py-4 text-left">Disease Name</th>
                       <th className="px-6 py-4 text-left">Description</th>
-                      <th className="px-6 py-4 text-left">Key Patterns</th>
-                      <th className="px-6 py-4 text-center">Blister</th>
-                      <th className="px-6 py-4 text-center">Scaling</th>
-                      <th className="px-6 py-4 text-center">Status</th>
                       <th className="px-6 py-4 text-center">Actions</th>
                     </tr>
                   </thead>
@@ -166,38 +140,6 @@ export function DiseaseManagement() {
                           <p className="text-sm text-muted-foreground line-clamp-2">
                             {disease.description}
                           </p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {disease.patterns}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {disease.hasBlister ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs">
-                              Yes
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-xs">
-                              No
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {disease.hasScaling ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs">
-                              Yes
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-xs">
-                              No
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs">
-                            {disease.status}
-                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-2">
@@ -262,49 +204,6 @@ export function DiseaseManagement() {
                       placeholder="Brief medical description..."
                       required
                     />
-                  </div>
-
-                  {/* Patterns */}
-                  <div>
-                    <label htmlFor="patterns" className="block mb-2 text-sm">
-                      Key Patterns *
-                    </label>
-                    <textarea
-                      id="patterns"
-                      value={formData.patterns}
-                      onChange={(e) => setFormData({ ...formData, patterns: e.target.value })}
-                      rows={3}
-                      className="cursor-text w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm transition-colors"
-                      placeholder="Common visual patterns..."
-                      required
-                    />
-                  </div>
-
-                  {/* Characteristics Checkboxes */}
-                  <div className="space-y-3 pt-2">
-                    <label className="block text-sm mb-3">
-                      Physical Characteristics
-                    </label>
-
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.hasBlister}
-                        onChange={(e) => setFormData({ ...formData, hasBlister: e.target.checked })}
-                        className="cursor-pointer w-5 h-5 text-primary accent-primary rounded"
-                      />
-                      <span className="text-sm">Has Blisters</span>
-                    </label>
-
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.hasScaling}
-                        onChange={(e) => setFormData({ ...formData, hasScaling: e.target.checked })}
-                        className="cursor-pointer w-5 h-5 text-primary accent-primary rounded"
-                      />
-                      <span className="text-sm">Has Scaling</span>
-                    </label>
                   </div>
 
                   {/* Form Actions */}

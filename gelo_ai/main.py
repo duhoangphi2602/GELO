@@ -5,14 +5,32 @@ import os
 from typing import Optional, List
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Security, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
 
 from ml.model_loader import load_model_package
 from ml.predictor import predictor
 from ml.preprocessing import download_and_preprocess
 from ml.exceptions import DownloadError, InvalidImageError, ModelNotLoadedError
+
+# Internal Security
+API_KEY = os.getenv("INTERNAL_API_KEY")
+if not API_KEY:
+    # In a production environment, this should probably raise an error.
+    # For now, we log a critical warning.
+    logging.getLogger("api").warning("INTERNAL_API_KEY is not set! API will be inaccessible.")
+
+api_key_header = APIKeyHeader(name="X-Internal-Api-Key", auto_error=False)
+
+async def verify_api_key(api_key: str = Security(api_key_header)):
+    if not API_KEY or api_key != API_KEY:
+        raise HTTPException(
+            status_code=403,
+            detail="Could not validate internal credentials"
+        )
+    return api_key
 
 # Setup basic logging
 logging.basicConfig(
@@ -43,11 +61,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Gelo AI Diagnostic Service", lifespan=lifespan)
 
-# Allow CORS for NestJS backend
+# Allow CORS for NestJS backend & Frontend
 backend_url = os.getenv("BACKEND_URL", "http://localhost:3000")
+cors_origin = os.getenv("CORS_ORIGIN", "http://localhost:5173")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[backend_url, "http://localhost:5173"],
+    allow_origins=[backend_url, cors_origin],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -75,7 +94,7 @@ async def health_check():
         "model_version": predictor.version
     }
 
-@app.post("/ai/predict")
+@app.post("/ai/predict", dependencies=[Depends(verify_api_key)])
 async def predict(body: PredictRequest):
     if not predictor.is_ready:
         raise HTTPException(status_code=503, detail="AI Service is currently initializing or model failed to load.")

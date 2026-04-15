@@ -1,7 +1,7 @@
 // medical-assessment.tsx
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Upload, AlertCircle, X, FileSearch, CheckCircle2, ChevronRight, ActivitySquare, Loader2, Image as ImageIcon } from "lucide-react";
+import { Upload, AlertCircle, X, FileSearch, CheckCircle2, ActivitySquare, Loader2, Image as ImageIcon } from "lucide-react";
 import api from "../lib/api";
 import { Layout } from "./layout/Layout";
 import { useToastContext } from "./ui/ToastContext";
@@ -55,7 +55,6 @@ export function MedicalAssessment() {
         }
 
         const score = diff / (size * size);
-        console.log("Sharpness score:", score);
         // Lower score means less contrast/sharper edges = likely blurry
         const threshold = Number(import.meta.env.VITE_BLUR_THRESHOLD || 8);
         resolve(score < threshold);

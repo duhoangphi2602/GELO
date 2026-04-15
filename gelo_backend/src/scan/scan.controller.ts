@@ -7,6 +7,8 @@ import { ScanService } from './scan.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser, Roles } from '../auth/auth.decorator';
 import { cloudinaryStorage } from '../common/cloudinary.config';
+import { UserRole } from '@prisma/client';
+import { CompleteScanDto } from './dto/scan.dto';
 
 // ─── Multer config: Upload thẳng lên Cloudinary ─────────────────────────────
 const multerOptions = {
@@ -26,7 +28,7 @@ export class ScanController {
 
   // ─── Patient Phase 1: Upload ảnh & AI phân tích sơ bộ ────────────────────
   @Post('initiate')
-  @Roles('patient')
+  @Roles(UserRole.PATIENT)
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FilesInterceptor('images', 3, multerOptions))
   async initiateScan(
@@ -47,17 +49,18 @@ export class ScanController {
 
   // ─── Patient Phase 2: Gửi câu trả lời & Chốt kết quả ──────────────────────
   @Post('complete/:scanId')
-  @Roles('patient')
+  @Roles(UserRole.PATIENT)
   @UseGuards(JwtAuthGuard)
   async completeScan(
+    @CurrentUser('patientId') patientId: number,
     @Param('scanId') scanId: string,
-    @Body('answers') answers: any[],
+    @Body() completeScanDto: CompleteScanDto,
   ) {
-    if (!answers || !Array.isArray(answers)) {
-      throw new BadRequestException('Answers array is required.');
-    }
-
-    return this.scanService.completeScan(parseInt(scanId, 10), answers);
+    return this.scanService.completeScan(
+      parseInt(scanId, 10),
+      completeScanDto.answers,
+      patientId
+    );
   }
 
   // ─── Patient: Lịch sử scan ─────────────────────────────────────────────
@@ -99,7 +102,7 @@ export class ScanController {
 
   // ─── Admin: Stats cho Dashboard ──────────────────────────────────────────
   @Get('admin/stats')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
   async getAdminStats() {
     return this.scanService.getAdminStats();
@@ -107,7 +110,7 @@ export class ScanController {
 
   // ─── Admin: Danh sách bệnh nhân ────────────────────────────────────────
   @Get('admin/patients')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
   async getAdminPatients() {
     return this.scanService.getAdminPatients();
@@ -115,7 +118,7 @@ export class ScanController {
 
   // ─── Admin: Scan cần review ─────────────────────────────────────────────
   @Get('admin/pending-reviews')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
   async getPendingReviews() {
     return this.scanService.getPendingReviews();
@@ -123,7 +126,7 @@ export class ScanController {
 
   // ─── Admin: Danh sách bệnh ─────────────────────────────────────────────
   @Get('admin/diseases')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
   async getDiseases() {
     return this.scanService.getAllDiseases();
@@ -131,7 +134,7 @@ export class ScanController {
 
   // ─── Admin: Submit review ───────────────────────────────────────────────
   @Post('admin/review/:scanId')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
   async submitReview(
     @Param('scanId') scanId: string,

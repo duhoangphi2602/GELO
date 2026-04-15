@@ -83,7 +83,7 @@ export function DiagnosticResult() {
     if (decision === 'emergency') return "A critical symptom was flagged during your assessment. Please seek immediate professional medical attention.";
     if (decision === 'positive') return description;
     if (decision === 'uncertain') return "Our AI and your reported symptoms show mixed signals. We highly recommend consulting a dermatologist for an accurate physical assessment.";
-    return "Your symptoms and image do not strongly map to our supported conditions (Atopic Dermatitis). Please consult a medical professional.";
+    return `Your symptoms and image do not strongly map to our currently supported skin conditions. Please consult a medical professional.`;
   };
 
   return (
@@ -255,7 +255,7 @@ export function DiagnosticResult() {
               {activeTab === "logs" && (
                 <div className="animate-in slide-in-from-bottom-2 duration-300">
                   <h3 className="text-lg font-bold text-slate-800 mb-2">How we reached this conclusion</h3>
-                  <p className="text-slate-500 text-sm mb-6 font-medium">The system cross-referenced your answers with medical guidelines for Atopic Dermatitis.</p>
+                  <p className="text-slate-500 text-sm mb-6 font-medium">The system cross-referenced your answers with medical guidelines for {disease}.</p>
                   
                   <div className="grid gap-3">
                     {logs.map((log: any, i: number) => (

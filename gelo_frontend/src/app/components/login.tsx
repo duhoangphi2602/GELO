@@ -52,7 +52,7 @@ export function Login() {
         localStorage.setItem("fullName", response.data.fullName);
       }
 
-      if (response.data.role === "admin") {
+      if (response.data.role === "ADMIN") {
         navigate("/admin/dashboard");
       } else {
         navigate("/dashboard");

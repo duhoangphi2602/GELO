@@ -1,23 +1,35 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './auth.guard';
+import { CurrentUser } from './auth.decorator';
+import { RegisterDto, LoginDto, UpdateProfileDto } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() body: any) {
-    return this.authService.register(body);
+  async register(@Body() registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
   }
 
   @Post('login')
-  async login(@Body() body: any) {
-    // Nhận `identifier` (email hoặc username) và `password` từ frontend
-    return this.authService.login(body.identifier, body.password);
+  async login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto.identifier, loginDto.password);
   }
 
-  @Post('seed')
-  async seed() {
-    return this.authService.seedDb();
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  async getProfile(@CurrentUser('accountId') accountId: number) {
+    return this.authService.getProfile(accountId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  async updateProfile(
+    @CurrentUser('accountId') accountId: number,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(accountId, updateProfileDto);
   }
 }

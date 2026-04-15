@@ -9,14 +9,12 @@ logger = logging.getLogger("predictor")
 # Configuration for the new AI-First flow
 THRESHOLD = 0.70  # Adjusted for better sensitivity in screening
 
-# Internal Mapping to match the DB Master Seed IDs
-# ID 1: Atopic Dermatitis
-# ID 2: Ringworm (Tinea Corporis)
-# ID 0: Unknown / Unrelated
+# Internal Mapping to match the DB Master Seed IDs & labels.json of v1
 DEFAULT_LABELS = {
-    "0": {"id": 0, "status": "UNKNOWN", "name": "Unknown/Unrelated"},
-    "1": {"id": 1, "status": "DISEASE", "name": "Atopic Dermatitis"},
-    "2": {"id": 2, "status": "DISEASE", "name": "Ringworm"},
+    "0": {"id": 1, "status": "DISEASE", "name": "Atopic Dermatitis"},
+    "1": {"id": 2, "status": "DISEASE", "name": "Vascular Tumors"},
+    "2": {"id": 3, "status": "DISEASE", "name": "Melanoma Skin Cancer / Nevi / Moles"},
+    "3": {"id": 4, "status": "DISEASE", "name": "Bullous Disease"},
 }
 
 class PredictorService:
@@ -32,11 +30,12 @@ class PredictorService:
     def version(self):
         if self._package:
             return os.path.basename(self._package.version_dir.rstrip('/\\'))
-        return "v2.0-engine-only"
+        return "v1.0.0-engine"
 
     @property
     def config(self):
-        return self._package.config if self._package else {"num_classes": 3}
+        # We match the efficientnet_v2_s architecture with 4 classes
+        return self._package.config if self._package else {"num_classes": 4}
 
     @property
     def is_ready(self):
@@ -53,12 +52,9 @@ class PredictorService:
         is_mock = self._package is None or self._package.model == "mock"
 
         if is_mock:
-            # Mocking a batch output score
+            # Mocking a batch output score for 4 classes (Uniform distribution to avoid bias)
             N = tensor_input.shape[0]
-            # Mocking specific disease detection based on image batch metadata or random
-            # Just mimicking a 100% logic for testing:
-            # We return index 1 (AD) for now as default mock
-            prob_tensor = torch.tensor([[0.05, 0.85, 0.10] for _ in range(N)])
+            prob_tensor = torch.tensor([[0.25, 0.25, 0.25, 0.25] for _ in range(N)])
         else:
             with torch.no_grad():
                 model = self._package.model
@@ -95,7 +91,8 @@ class PredictorService:
             status = mapping.get("status", "DISEASE")
             name = mapping.get("name", "Unknown")
         else:
-            disease_id = predicted_idx
+            # Fallback if index not in map
+            disease_id = predicted_idx + 1 # Assuming IDs start at 1 if node index is disease rank
             status = "DISEASE"
             name = "Unknown"
 

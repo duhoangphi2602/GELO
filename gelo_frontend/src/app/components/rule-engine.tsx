@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AdminLayout } from "./admin-layout";
 import { Plus, Edit, Trash2, Search, Download, Upload } from "lucide-react";
 import api from "../lib/api";
@@ -10,6 +10,7 @@ interface Rule {
   weight: number;
   diseaseCategory: string;
   active: boolean;
+  isEmergency: boolean;
 }
 
 export function RuleEngine() {
@@ -18,6 +19,7 @@ export function RuleEngine() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [loading, setLoading] = useState(true);
+  const formRef = useRef<HTMLDivElement>(null);
 
   // State quản lý danh sách các rule được tick chọn
   const [selectedRules, setSelectedRules] = useState<number[]>([]);
@@ -27,6 +29,7 @@ export function RuleEngine() {
     expectedAnswer: "",
     weight: 50,
     diseaseCategory: "",
+    isEmergency: false,
   });
 
   const [rules, setRules] = useState<Rule[]>([]);
@@ -84,6 +87,7 @@ export function RuleEngine() {
       expectedAnswer: "",
       weight: 50,
       diseaseCategory: "",
+      isEmergency: false,
     });
     setShowForm(false);
     setEditingId(null);
@@ -95,9 +99,15 @@ export function RuleEngine() {
       expectedAnswer: rule.expectedAnswer,
       weight: rule.weight,
       diseaseCategory: rule.diseaseCategory,
+      isEmergency: rule.isEmergency,
     });
     setEditingId(rule.id);
     setShowForm(true);
+
+    // UX: Scroll to form
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
   };
 
   const handleDelete = async (id: number) => {
@@ -196,11 +206,18 @@ export function RuleEngine() {
               Export
             </button>
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => {
+                setShowForm(!showForm);
+                if (!showForm) {
+                  setTimeout(() => {
+                    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }, 100);
+                }
+              }}
               className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               <Plus className="w-5 h-5" />
-              Add Rule
+              {showForm ? "Close Form" : "Add Rule"}
             </button>
           </div>
         </div>
@@ -233,9 +250,10 @@ export function RuleEngine() {
 
         {/* Form Modal */}
         {showForm && (
-          <div className="bg-card rounded-lg border-2 border-primary p-6">
-            <h3 className="mb-6">
+          <div ref={formRef} className="bg-card rounded-lg border-2 border-primary p-6 animate-in slide-in-from-top duration-300">
+            <h3 className="mb-6 flex items-center gap-2">
               {editingId ? "Edit Rule" : "Add New Rule"}
+              {formData.isEmergency && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase font-bold">Emergency Mode</span>}
             </h3>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -302,7 +320,7 @@ export function RuleEngine() {
               </div>
 
               {/* Weight Score */}
-              <div className="md:col-span-2">
+              <div>
                 <label htmlFor="weight" className="block mb-2">
                   Weight Score: {formData.weight}
                 </label>
@@ -321,10 +339,25 @@ export function RuleEngine() {
                   }}
                 />
                 <div className="flex justify-between text-sm text-muted-foreground mt-2">
-                  <span>0 (Low Impact)</span>
-                  <span>50 (Medium)</span>
-                  <span>100 (High Impact)</span>
+                  <span>0 (Low)</span>
+                  <span>100 (High)</span>
                 </div>
+              </div>
+
+              {/* Emergency Toggle */}
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-3 cursor-pointer p-4 rounded-xl border-2 border-dashed border-border hover:border-red-200 transition-colors w-full group">
+                  <input
+                    type="checkbox"
+                    checked={formData.isEmergency}
+                    onChange={(e) => setFormData({ ...formData, isEmergency: e.target.checked })}
+                    className="cursor-pointer w-6 h-6 text-red-600 accent-red-600 rounded"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold group-hover:text-red-700">Flag as Emergency</span>
+                    <span className="text-[10px] text-muted-foreground italic">Triggers urgent alert if matched</span>
+                  </div>
+                </label>
               </div>
 
               {/* Form Actions */}
@@ -367,6 +400,7 @@ export function RuleEngine() {
                   <th className="px-6 py-4 text-center">Expected Answer</th>
                   <th className="px-6 py-4 text-left">Disease Category</th>
                   <th className="px-6 py-4 text-center">Weight Score</th>
+                  <th className="px-6 py-4 text-center">Type</th>
                   <th className="px-6 py-4 text-center">Status</th>
                   <th className="px-6 py-4 text-center">Actions</th>
                 </tr>
@@ -414,6 +448,17 @@ export function RuleEngine() {
                         </div>
                         <span className="text-sm w-10 text-right">{rule.weight}</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {rule.isEmergency ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold uppercase animate-pulse border border-red-200">
+                          Emergency
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold uppercase border border-blue-100">
+                          Standard
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button

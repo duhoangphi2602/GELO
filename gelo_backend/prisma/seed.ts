@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole, Gender } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -33,7 +33,7 @@ async function main() {
       username: 'admin',
       email: 'admin@healthai.com',
       passwordHash: adminPasswordHash,
-      role: 'admin',
+      role: UserRole.ADMIN,
     },
   });
 
@@ -45,9 +45,9 @@ async function main() {
       username: 'patient',
       email: 'patient@healthai.com',
       passwordHash: patientPasswordHash,
-      role: 'patient',
+      role: UserRole.PATIENT,
       patient: {
-        create: { fullName: 'Demo Patient', age: 30, gender: 'Other' }
+        create: { fullName: 'Demo Patient', age: 30, gender: Gender.OTHER }
       }
     },
   });

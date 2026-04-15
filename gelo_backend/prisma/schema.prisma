@@ -11,7 +11,7 @@ model Account {
   username     String   @unique @db.VarChar(100)
   email        String   @unique @db.VarChar(255)
   passwordHash String   @map("password_hash") @db.VarChar(255)
-  role         String   @default("patient") @db.VarChar(20)
+  role         UserRole @default(PATIENT)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
   patient      Patient?
@@ -22,9 +22,9 @@ model Patient {
   accountId Int         @unique @map("account_id")
   fullName  String?     @map("full_name") @db.VarChar(100)
   age       Int?
-  gender    String?     @db.VarChar(10)
+  gender    Gender?     @default(UNKNOWN)
   createdAt DateTime    @default(now()) @map("created_at")
-  account   Account     @relation(fields: [accountId], references: [id])
+  account   Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
   diaries   SkinDiary[]
   skinScans SkinScan[]
 }
@@ -49,7 +49,7 @@ model DiseaseImage {
   imageUrl  String?  @map("image_url")
   createdAt DateTime @default(now()) @map("created_at")
   scanId    Int?     @map("scan_id")
-  disease   Disease? @relation(fields: [diseaseId], references: [id])
+  disease   Disease? @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
 }
 
 model DiagnosticQuestion {
@@ -69,8 +69,8 @@ model DiseaseRule {
   expectedAnswer Boolean?            @map("expected_answer")
   weight         Float?
   isActive       Boolean?            @default(true) @map("is_active")
-  disease        Disease?            @relation(fields: [diseaseId], references: [id])
-  question       DiagnosticQuestion? @relation(fields: [questionId], references: [id])
+  disease        Disease?            @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  question       DiagnosticQuestion? @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model DiseaseAdvice {
@@ -80,7 +80,7 @@ model DiseaseAdvice {
   title      String?  @db.VarChar(255)
   content    String?
   priority   Int?
-  disease    Disease? @relation(fields: [diseaseId], references: [id])
+  disease    Disease? @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
 }
 
 model SkinScan {
@@ -93,7 +93,7 @@ model SkinScan {
   ruleScoreLogs RuleScoreLog[]
   images        ScanImage[]
   diaries       SkinDiary[]
-  patient       Patient          @relation(fields: [patientId], references: [id])
+  patient       Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
 }
 
 model ScanImage {
@@ -101,50 +101,50 @@ model ScanImage {
   scanId    Int      @map("scan_id")
   imageUrl  String   @map("image_url") @db.VarChar(500)
   createdAt DateTime @default(now()) @map("created_at")
-  scan      SkinScan @relation(fields: [scanId], references: [id])
+  scan      SkinScan @relation(fields: [scanId], references: [id], onDelete: Cascade)
 }
 
 model Prediction {
-  id               Int       @id @default(autoincrement()) @map("prediction_id")
-  scanId           Int?      @map("scan_id")
-  diseaseId        Int?      @map("disease_id")
+  id               Int              @id @default(autoincrement()) @map("prediction_id")
+  scanId           Int?             @map("scan_id")
+  diseaseId        Int?             @map("disease_id")
   confidence       Float?
-  modelVersion     String?   @map("model_version") @db.VarChar(255)
-  createdAt        DateTime  @default(now()) @map("created_at")
-  diagnosticStatus String    @default("DISEASE") @map("diagnostic_status") @db.VarChar(50)
-  disease          Disease?  @relation(fields: [diseaseId], references: [id])
-  scan             SkinScan? @relation(fields: [scanId], references: [id])
+  modelVersion     String?          @map("model_version") @db.VarChar(255)
+  createdAt        DateTime         @default(now()) @map("created_at")
+  diagnosticStatus DiagnosticStatus @default(DISEASE) @map("diagnostic_status")
+  disease          Disease?  @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  scan             SkinScan? @relation(fields: [scanId], references: [id], onDelete: Cascade)
 }
 
 model DiagnosisResult {
-  id                 Int      @id @default(autoincrement()) @map("result_id")
-  scanId             Int      @unique @map("scan_id")
-  predictedDiseaseId Int?     @map("predicted_disease_id")
-  finalDiseaseId     Int?     @map("final_disease_id")
-  isEmergency        Boolean? @map("is_emergency")
-  createdAt          DateTime @default(now()) @map("created_at")
-  decision           String?  @db.VarChar(50)
-  maxRuleScore       Float?   @map("max_rule_score")
-  normalizedScore    Float?   @map("normalized_score")
-  ruleScore          Float?   @map("rule_score")
-  diagnosticStatus   String   @default("DISEASE") @map("diagnostic_status") @db.VarChar(20)
-  finalDisease       Disease? @relation("FinalDisease", fields: [finalDiseaseId], references: [id])
-  predictedDisease   Disease? @relation("PredictedDisease", fields: [predictedDiseaseId], references: [id])
-  scan               SkinScan @relation(fields: [scanId], references: [id])
+  id                 Int              @id @default(autoincrement()) @map("result_id")
+  scanId             Int              @unique @map("scan_id")
+  predictedDiseaseId Int?             @map("predicted_disease_id")
+  finalDiseaseId     Int?             @map("final_disease_id")
+  isEmergency        Boolean?         @map("is_emergency")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  decision           String?          @db.VarChar(50)
+  maxRuleScore       Float?           @map("max_rule_score")
+  normalizedScore    Float?           @map("normalized_score")
+  ruleScore          Float?           @map("rule_score")
+  diagnosticStatus   DiagnosticStatus @default(DISEASE) @map("diagnostic_status")
+  finalDisease       Disease? @relation("FinalDisease", fields: [finalDiseaseId], references: [id], onDelete: Cascade)
+  predictedDisease   Disease? @relation("PredictedDisease", fields: [predictedDiseaseId], references: [id], onDelete: Cascade)
+  scan               SkinScan @relation(fields: [scanId], references: [id], onDelete: Cascade)
 }
 
 model FeedbackLog {
-  id                 Int       @id @default(autoincrement()) @map("feedback_id")
-  scanId             Int?      @map("scan_id")
-  predictedDiseaseId Int?      @map("predicted_disease_id")
-  actualDiseaseId    Int?      @map("actual_disease_id")
-  isCorrect          Boolean?  @map("is_correct")
+  id                 Int              @id @default(autoincrement()) @map("feedback_id")
+  scanId             Int?             @map("scan_id")
+  predictedDiseaseId Int?             @map("predicted_disease_id")
+  actualDiseaseId    Int?             @map("actual_disease_id")
+  isCorrect          Boolean?         @map("is_correct")
   note               String?
-  createdAt          DateTime  @default(now()) @map("created_at")
-  diagnosticStatus   String    @default("DISEASE") @map("diagnostic_status") @db.VarChar(20)
-  actualDisease      Disease?  @relation("ActualDiseaseFeedback", fields: [actualDiseaseId], references: [id])
-  predictedDisease   Disease?  @relation("PredictedDiseaseFeedback", fields: [predictedDiseaseId], references: [id])
-  scan               SkinScan? @relation(fields: [scanId], references: [id])
+  createdAt          DateTime         @default(now()) @map("created_at")
+  diagnosticStatus   DiagnosticStatus @default(DISEASE) @map("diagnostic_status")
+  actualDisease      Disease?  @relation("ActualDiseaseFeedback", fields: [actualDiseaseId], references: [id], onDelete: Cascade)
+  predictedDisease   Disease?  @relation("PredictedDiseaseFeedback", fields: [predictedDiseaseId], references: [id], onDelete: Cascade)
+  scan               SkinScan? @relation(fields: [scanId], references: [id], onDelete: Cascade)
 }
 
 model SkinDiary {
@@ -154,8 +154,8 @@ model SkinDiary {
   conditionScore Int?      @map("condition_score")
   note           String?
   createdAt      DateTime  @default(now()) @map("created_at")
-  patient        Patient   @relation(fields: [patientId], references: [id])
-  scan           SkinScan? @relation(fields: [scanId], references: [id])
+  patient        Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  scan           SkinScan? @relation(fields: [scanId], references: [id], onDelete: Cascade)
 }
 
 model RuleScoreLog {
@@ -168,8 +168,26 @@ model RuleScoreLog {
   weight            Float
   scoreContribution Float              @map("score_contribution")
   createdAt         DateTime           @default(now()) @map("created_at")
-  question          DiagnosticQuestion @relation(fields: [questionId], references: [id])
-  scan              SkinScan           @relation(fields: [scanId], references: [id])
+  question          DiagnosticQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  scan              SkinScan           @relation(fields: [scanId], references: [id], onDelete: Cascade)
 
   @@index([scanId])
+}
+
+enum UserRole {
+  ADMIN
+  PATIENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNKNOWN
+}
+
+enum DiagnosticStatus {
+  DISEASE
+  HEALTHY
+  UNKNOWN
 }

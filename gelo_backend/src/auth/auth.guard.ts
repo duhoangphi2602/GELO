@@ -37,7 +37,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    if (!requiredRoles.includes(user.role)) {
+    const hasRole = requiredRoles.some((role) => role.toUpperCase() === user.role.toUpperCase());
+
+    if (!hasRole) {
       throw new ForbiddenException(
         `Access denied. Required role: ${requiredRoles.join(' or ')}. Your role: ${user.role}`,
       );
