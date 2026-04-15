@@ -1,6 +1,7 @@
 import logging
 import time
 import asyncio
+import os
 from typing import Optional, List
 from contextlib import asynccontextmanager
 
@@ -25,11 +26,16 @@ logger = logging.getLogger("api")
 async def lifespan(app: FastAPI):
     # PRELOAD MODEL PACKAGE
     try:
-        package = load_model_package(version="v1")
-        predictor.set_package(package)
-        logger.info("FastAPI ready to receive predict requests.")
+        # Check if v1 exists before loading
+        base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_package", "v1")
+        if os.path.exists(base_dir):
+            package = load_model_package(version="v1")
+            predictor.set_package(package)
+            logger.info("FastAPI ready with model package v1.")
+        else:
+            logger.warning("No model package found at startup. AI Service running in Engine-Only (Mock) mode.")
     except Exception as e:
-        logger.error(f"Critical error on startup: {e}")
+        logger.error(f"Error during package initialization: {e}")
         
     yield
     # Cleanup resources (if any)
@@ -38,9 +44,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Gelo AI Diagnostic Service", lifespan=lifespan)
 
 # Allow CORS for NestJS backend
+backend_url = os.getenv("BACKEND_URL", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[backend_url, "http://localhost:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -74,7 +81,7 @@ async def predict(body: PredictRequest):
         raise HTTPException(status_code=503, detail="AI Service is currently initializing or model failed to load.")
         
     # Standardize URLs (Support Cloudinary or local paths)
-    host = "http://localhost:3000"
+    host = os.getenv("BACKEND_URL", "http://localhost:3000")
     full_urls = []
     for url in body.image_urls:
         if url.startswith("http"):

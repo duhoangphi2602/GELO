@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { Layout } from "./layout/Layout";
 import { ThumbsUp, ThumbsDown, Send, CheckCircle2, AlertCircle } from "lucide-react";
+import api from "../lib/api";
 
 export function Feedback() {
   const [searchParams] = useSearchParams();
@@ -28,23 +29,14 @@ export function Feedback() {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:3000/results/${scanId}/feedback`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ isCorrect, note })
+      const response = await api.post(`/results/${scanId}/feedback`, {
+        isCorrect,
+        note
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to submit feedback. Please try again later.");
-      }
 
       setSubmitted(true);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }

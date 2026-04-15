@@ -22,39 +22,42 @@ const multerOptions = {
 
 @Controller('scans')
 export class ScanController {
-  constructor(private readonly scanService: ScanService) {}
+  constructor(private readonly scanService: ScanService) { }
 
-  // ─── Patient: Upload ảnh + phân tích ────────────────────────────────────
-  @Post('analyze')
+  // ─── Patient Phase 1: Upload ảnh & AI phân tích sơ bộ ────────────────────
+  @Post('initiate')
   @Roles('patient')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FilesInterceptor('images', 3, multerOptions))
-  async analyzeSkin(
+  async initiateScan(
     @CurrentUser('patientId') patientId: number,
     @UploadedFiles() files: Express.Multer.File[],
-    @Body('answers') answersRaw: string,
   ) {
     if (!patientId) {
-      throw new BadRequestException('Patient profile required. If you are an admin, please use a patient account for scanning.');
+      throw new BadRequestException('Patient profile required.');
     }
 
     if (!files || files.length === 0) {
-      throw new BadRequestException('At least one image file is required. Send as multipart/form-data with field name "images".');
+      throw new BadRequestException('At least one image file is required.');
     }
 
-    // Parse answers JSON string từ FormData
-    let answers: any[] = [];
-    if (answersRaw) {
-      try {
-        answers = JSON.parse(answersRaw);
-      } catch {
-        throw new BadRequestException('Invalid answers format. Must be a JSON array.');
-      }
-    }
-
-    // Cloudinary trả về URL qua req.file.path (secure_url)
     const imageUrls = files.map((f: any) => f.path);
-    return this.scanService.processScan(patientId, imageUrls, answers);
+    return this.scanService.initiateScan(patientId, imageUrls);
+  }
+
+  // ─── Patient Phase 2: Gửi câu trả lời & Chốt kết quả ──────────────────────
+  @Post('complete/:scanId')
+  @Roles('patient')
+  @UseGuards(JwtAuthGuard)
+  async completeScan(
+    @Param('scanId') scanId: string,
+    @Body('answers') answers: any[],
+  ) {
+    if (!answers || !Array.isArray(answers)) {
+      throw new BadRequestException('Answers array is required.');
+    }
+
+    return this.scanService.completeScan(parseInt(scanId, 10), answers);
   }
 
   // ─── Patient: Lịch sử scan ─────────────────────────────────────────────
@@ -80,6 +83,18 @@ export class ScanController {
     @Param('scanId') scanId: string,
   ) {
     return this.scanService.deleteScan(tokenPatientId, parseInt(scanId, 10));
+  }
+
+  // ─── Patient: Xoá toàn bộ lịch sử scan ──────────────────────────────────────
+  @Delete('history/all')
+  @UseGuards(JwtAuthGuard)
+  async deleteAllScans(
+    @CurrentUser('patientId') tokenPatientId: number,
+  ) {
+    if (!tokenPatientId) {
+      throw new BadRequestException('Patient profile required.');
+    }
+    return this.scanService.deleteAllScans(tokenPatientId);
   }
 
   // ─── Admin: Stats cho Dashboard ──────────────────────────────────────────

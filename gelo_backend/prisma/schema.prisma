@@ -1,9 +1,9 @@
-datasource db {
-  provider = "postgresql"
-}
-
 generator client {
   provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
 }
 
 model Account {
@@ -14,194 +14,162 @@ model Account {
   role         String   @default("patient") @db.VarChar(20)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
-
-  patient Patient?
+  patient      Patient?
 }
 
 model Patient {
-  id        Int      @id @default(autoincrement()) @map("patient_id")
-  accountId Int      @unique @map("account_id")
-  fullName  String?  @map("full_name") @db.VarChar(100)
+  id        Int         @id @default(autoincrement()) @map("patient_id")
+  accountId Int         @unique @map("account_id")
+  fullName  String?     @map("full_name") @db.VarChar(100)
   age       Int?
-  gender    String?  @db.VarChar(10)
-  createdAt DateTime @default(now()) @map("created_at")
-
+  gender    String?     @db.VarChar(10)
+  createdAt DateTime    @default(now()) @map("created_at")
   account   Account     @relation(fields: [accountId], references: [id])
-  skinScans SkinScan[]
   diaries   SkinDiary[]
+  skinScans SkinScan[]
 }
 
 model Disease {
-  id            Int      @id @default(autoincrement()) @map("disease_id")
-  name          String   @unique @db.VarChar(100)
-  description   String?  @db.Text
-  visualPattern String?  @map("visual_pattern") @db.Text
-  colorPattern  String?  @map("color_pattern") @db.VarChar(100)
-  borderType    String?  @map("border_type") @db.VarChar(100)
-  isContagious  Boolean? @map("is_contagious")
-  hasBlister    Boolean? @default(false) @map("has_blister")
-  hasScaling    Boolean? @default(false) @map("has_scaling")
-  status        String?  @default("active") @db.VarChar(20)
-
-  images      DiseaseImage[]
-  rules       DiseaseRule[]
-  advices     DiseaseAdvice[]
-  predictions Prediction[]
-
-  diagnosisPredicted DiagnosisResult[] @relation("PredictedDisease")
+  id                 Int               @id @default(autoincrement()) @map("disease_id")
+  name               String            @unique @db.VarChar(100)
+  description        String?
   diagnosisFinal     DiagnosisResult[] @relation("FinalDisease")
-  feedbackPredicted  FeedbackLog[]     @relation("PredictedDiseaseFeedback")
+  diagnosisPredicted DiagnosisResult[] @relation("PredictedDisease")
+  advices            DiseaseAdvice[]
+  images             DiseaseImage[]
+  rules              DiseaseRule[]
   feedbackActual     FeedbackLog[]     @relation("ActualDiseaseFeedback")
+  feedbackPredicted  FeedbackLog[]     @relation("PredictedDiseaseFeedback")
+  predictions        Prediction[]
 }
 
 model DiseaseImage {
   id        Int      @id @default(autoincrement()) @map("image_id")
   diseaseId Int?     @map("disease_id")
-  imageUrl  String?  @map("image_url") @db.Text
-  source    String?  @db.VarChar(50)
+  imageUrl  String?  @map("image_url")
   createdAt DateTime @default(now()) @map("created_at")
-
-  disease Disease? @relation(fields: [diseaseId], references: [id])
+  scanId    Int?     @map("scan_id")
+  disease   Disease? @relation(fields: [diseaseId], references: [id])
 }
 
 model DiagnosticQuestion {
-  id           Int      @id @default(autoincrement()) @map("question_id")
-  questionText String?  @map("question_text") @db.Text
-  isActive     Boolean? @default(true) @map("is_active")
-  isEmergency  Boolean? @default(false) @map("is_emergency")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  rules     DiseaseRule[]
-  scoreLogs RuleScoreLog[]
+  id           Int            @id @default(autoincrement()) @map("question_id")
+  questionText String?        @map("question_text")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  isActive     Boolean?       @default(true) @map("is_active")
+  isEmergency  Boolean?       @default(false) @map("is_emergency")
+  rules        DiseaseRule[]
+  scoreLogs    RuleScoreLog[]
 }
 
 model DiseaseRule {
-  id             Int      @id @default(autoincrement()) @map("rule_id")
-  diseaseId      Int?     @map("disease_id")
-  questionId     Int?     @map("question_id")
-  expectedAnswer Boolean? @map("expected_answer")
+  id             Int                 @id @default(autoincrement()) @map("rule_id")
+  diseaseId      Int?                @map("disease_id")
+  questionId     Int?                @map("question_id")
+  expectedAnswer Boolean?            @map("expected_answer")
   weight         Float?
-  isActive       Boolean? @default(true) @map("is_active")
-
-  disease  Disease?            @relation(fields: [diseaseId], references: [id])
-  question DiagnosticQuestion? @relation(fields: [questionId], references: [id])
+  isActive       Boolean?            @default(true) @map("is_active")
+  disease        Disease?            @relation(fields: [diseaseId], references: [id])
+  question       DiagnosticQuestion? @relation(fields: [questionId], references: [id])
 }
 
 model DiseaseAdvice {
-  id         Int     @id @default(autoincrement()) @map("advice_id")
-  diseaseId  Int?    @map("disease_id")
-  adviceType String? @map("advice_type") @db.VarChar(20)
-  title      String? @db.VarChar(255)
-  content    String? @db.Text
+  id         Int      @id @default(autoincrement()) @map("advice_id")
+  diseaseId  Int?     @map("disease_id")
+  adviceType String?  @map("advice_type") @db.VarChar(20)
+  title      String?  @db.VarChar(255)
+  content    String?
   priority   Int?
-
-  disease Disease? @relation(fields: [diseaseId], references: [id])
-}
-
-model EmergencyRule {
-  id            Int      @id @default(autoincrement()) @map("emergency_id")
-  conditionText String?  @map("condition_text") @db.Text
-  isActive      Boolean? @map("is_active")
+  disease    Disease? @relation(fields: [diseaseId], references: [id])
 }
 
 model SkinScan {
-  id        Int      @id @default(autoincrement()) @map("scan_id")
-  patientId Int      @map("patient_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  patient       Patient          @relation(fields: [patientId], references: [id])
-  images        ScanImage[]
-  predictions   Prediction[]
+  id            Int              @id @default(autoincrement()) @map("scan_id")
+  patientId     Int              @map("patient_id")
+  createdAt     DateTime         @default(now()) @map("created_at")
   diagnosis     DiagnosisResult?
   feedback      FeedbackLog[]
-  diaries       SkinDiary[]
+  predictions   Prediction[]
   ruleScoreLogs RuleScoreLog[]
+  images        ScanImage[]
+  diaries       SkinDiary[]
+  patient       Patient          @relation(fields: [patientId], references: [id])
 }
 
 model ScanImage {
   id        Int      @id @default(autoincrement()) @map("image_id")
   scanId    Int      @map("scan_id")
   imageUrl  String   @map("image_url") @db.VarChar(500)
-  angle     String?  @db.VarChar(50)
-  isBlurry  Boolean? @map("is_blurry")
   createdAt DateTime @default(now()) @map("created_at")
-
-  scan SkinScan @relation(fields: [scanId], references: [id])
+  scan      SkinScan @relation(fields: [scanId], references: [id])
 }
 
 model Prediction {
-  id           Int      @id @default(autoincrement()) @map("prediction_id")
-  scanId           Int?     @map("scan_id")
-  diagnosticStatus String   @default("DISEASE") @db.VarChar(50) @map("diagnostic_status")
-  diseaseId        Int?     @map("disease_id")
+  id               Int       @id @default(autoincrement()) @map("prediction_id")
+  scanId           Int?      @map("scan_id")
+  diseaseId        Int?      @map("disease_id")
   confidence       Float?
-  modelVersion     String?  @map("model_version") @db.VarChar(255)
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  scan    SkinScan? @relation(fields: [scanId], references: [id])
-  disease Disease?  @relation(fields: [diseaseId], references: [id])
+  modelVersion     String?   @map("model_version") @db.VarChar(255)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  diagnosticStatus String    @default("DISEASE") @map("diagnostic_status") @db.VarChar(50)
+  disease          Disease?  @relation(fields: [diseaseId], references: [id])
+  scan             SkinScan? @relation(fields: [scanId], references: [id])
 }
 
 model DiagnosisResult {
   id                 Int      @id @default(autoincrement()) @map("result_id")
   scanId             Int      @unique @map("scan_id")
-  diagnosticStatus   String   @default("DISEASE") @db.VarChar(20) @map("diagnostic_status")
   predictedDiseaseId Int?     @map("predicted_disease_id")
   finalDiseaseId     Int?     @map("final_disease_id")
   isEmergency        Boolean? @map("is_emergency")
-
-  ruleScore       Float?  @map("rule_score")
-  maxRuleScore    Float?  @map("max_rule_score")
-  normalizedScore Float?  @map("normalized_score")
-  decision        String? @db.VarChar(50)
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  scan             SkinScan @relation(fields: [scanId], references: [id])
-  predictedDisease Disease? @relation("PredictedDisease", fields: [predictedDiseaseId], references: [id])
-  finalDisease     Disease? @relation("FinalDisease", fields: [finalDiseaseId], references: [id])
+  createdAt          DateTime @default(now()) @map("created_at")
+  decision           String?  @db.VarChar(50)
+  maxRuleScore       Float?   @map("max_rule_score")
+  normalizedScore    Float?   @map("normalized_score")
+  ruleScore          Float?   @map("rule_score")
+  diagnosticStatus   String   @default("DISEASE") @map("diagnostic_status") @db.VarChar(20)
+  finalDisease       Disease? @relation("FinalDisease", fields: [finalDiseaseId], references: [id])
+  predictedDisease   Disease? @relation("PredictedDisease", fields: [predictedDiseaseId], references: [id])
+  scan               SkinScan @relation(fields: [scanId], references: [id])
 }
 
 model FeedbackLog {
-  id                 Int      @id @default(autoincrement()) @map("feedback_id")
-  scanId             Int?     @map("scan_id")
-  diagnosticStatus   String   @default("DISEASE") @db.VarChar(20) @map("diagnostic_status")
-  predictedDiseaseId Int?     @map("predicted_disease_id")
-  actualDiseaseId    Int?     @map("actual_disease_id")
-  isCorrect          Boolean? @map("is_correct")
-  note               String?  @db.Text
-  createdAt          DateTime @default(now()) @map("created_at")
-
-  scan             SkinScan? @relation(fields: [scanId], references: [id])
-  predictedDisease Disease?  @relation("PredictedDiseaseFeedback", fields: [predictedDiseaseId], references: [id])
-  actualDisease    Disease?  @relation("ActualDiseaseFeedback", fields: [actualDiseaseId], references: [id])
+  id                 Int       @id @default(autoincrement()) @map("feedback_id")
+  scanId             Int?      @map("scan_id")
+  predictedDiseaseId Int?      @map("predicted_disease_id")
+  actualDiseaseId    Int?      @map("actual_disease_id")
+  isCorrect          Boolean?  @map("is_correct")
+  note               String?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  diagnosticStatus   String    @default("DISEASE") @map("diagnostic_status") @db.VarChar(20)
+  actualDisease      Disease?  @relation("ActualDiseaseFeedback", fields: [actualDiseaseId], references: [id])
+  predictedDisease   Disease?  @relation("PredictedDiseaseFeedback", fields: [predictedDiseaseId], references: [id])
+  scan               SkinScan? @relation(fields: [scanId], references: [id])
 }
 
 model SkinDiary {
-  id             Int      @id @default(autoincrement()) @map("diary_id")
-  patientId      Int      @map("patient_id")
-  scanId         Int?     @map("scan_id")
-  conditionScore Int?     @map("condition_score")
-  note           String?  @db.Text
-  createdAt      DateTime @default(now()) @map("created_at")
-
-  patient Patient   @relation(fields: [patientId], references: [id])
-  scan    SkinScan? @relation(fields: [scanId], references: [id])
+  id             Int       @id @default(autoincrement()) @map("diary_id")
+  patientId      Int       @map("patient_id")
+  scanId         Int?      @map("scan_id")
+  conditionScore Int?      @map("condition_score")
+  note           String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  patient        Patient   @relation(fields: [patientId], references: [id])
+  scan           SkinScan? @relation(fields: [scanId], references: [id])
 }
 
 model RuleScoreLog {
-  id                Int      @id @default(autoincrement()) @map("log_id")
-  scanId            Int      @map("scan_id")
-  questionId        Int      @map("question_id")
-  patientAnswer     String   @map("patient_answer") @db.VarChar(20)
-  expectedAnswer    Boolean? @map("expected_answer")
-  isMatch           Boolean  @map("is_match")
+  id                Int                @id @default(autoincrement()) @map("log_id")
+  scanId            Int                @map("scan_id")
+  questionId        Int                @map("question_id")
+  patientAnswer     String             @map("patient_answer") @db.VarChar(20)
+  expectedAnswer    Boolean?           @map("expected_answer")
+  isMatch           Boolean            @map("is_match")
   weight            Float
-  scoreContribution Float    @map("score_contribution")
-  createdAt         DateTime @default(now()) @map("created_at")
-
-  scan     SkinScan           @relation(fields: [scanId], references: [id])
-  question DiagnosticQuestion @relation(fields: [questionId], references: [id])
+  scoreContribution Float              @map("score_contribution")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  question          DiagnosticQuestion @relation(fields: [questionId], references: [id])
+  scan              SkinScan           @relation(fields: [scanId], references: [id])
 
   @@index([scanId])
 }

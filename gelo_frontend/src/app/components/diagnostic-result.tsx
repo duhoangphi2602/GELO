@@ -157,6 +157,27 @@ export function DiagnosticResult() {
                 </span>
               </p>
             </div>
+
+            {/* Emergency Warnings Banner - NEW */}
+            {advices.some((a: any) => a.type === 'emergency') && (
+              <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 animate-pulse shadow-md">
+                <div className="flex items-center gap-3 mb-3 text-red-700">
+                  <AlertCircle className="w-6 h-6" />
+                  <h4 className="font-black text-lg uppercase tracking-tight">Emergency Warnings</h4>
+                </div>
+                <div className="space-y-2">
+                  {advices.filter((a: any) => a.type === 'emergency').map((ad: any, i: number) => (
+                    <div key={i} className="flex gap-2 text-red-800 text-sm font-bold bg-white/50 p-3 rounded-lg border border-red-100">
+                      <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <div>
+                        {ad.title && <p className="mb-0.5 uppercase text-[10px] opacity-70">{ad.title}</p>}
+                        {ad.content}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

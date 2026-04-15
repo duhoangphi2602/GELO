@@ -11,13 +11,14 @@ async function bootstrap() {
 
   // ─── CORS: Chỉ cho phép frontend dev ─────────────────────────────────────
   app.enableCors({
-    origin: ['http://localhost:5173'],
+    origin: [process.env.CORS_ORIGIN || 'http://localhost:5173'],
     credentials: true,
   });
 
   // ─── Body size limit: 10MB thay vì 700MB ─────────────────────────────────
-  app.use(json({ limit: '10mb' }));
-  app.use(urlencoded({ limit: '10mb', extended: true }));
+  const bodyLimit = process.env.MAX_BODY_SIZE || '10mb';
+  app.use(json({ limit: bodyLimit }));
+  app.use(urlencoded({ limit: bodyLimit, extended: true }));
 
   // ServeStaticModule in AppModule handles /uploads/
 

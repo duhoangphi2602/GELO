@@ -7,9 +7,18 @@ import { DiaryModule } from './diary/diary.module';
 import { RuleModule } from './rule/rule.module';
 import { DiseaseModule } from './disease/disease.module';
 
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
   imports: [
-    PrismaModule, ScanModule, AuthModule, ResultModule, DiaryModule, RuleModule, DiseaseModule
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule, 
+    ScanModule, 
+    AuthModule, 
+    ResultModule, 
+    DiaryModule, 
+    RuleModule, 
+    DiseaseModule
   ],
   controllers: [],
   providers: [],

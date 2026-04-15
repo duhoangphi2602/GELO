@@ -1,242 +1,233 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "./admin-layout";
-import { Save, AlertTriangle, Heart, CheckCircle } from "lucide-react";
+import { Save, AlertTriangle, Heart, CheckCircle, Loader2, ActivitySquare } from "lucide-react";
+import api from "../lib/api";
+import { useToastContext } from "./ui/ToastContext";
+
+interface Disease {
+  id: number;
+  name: string;
+}
+
+interface Advice {
+  id?: number;
+  adviceType: "care" | "lifestyle" | "emergency";
+  title: string;
+  content: string;
+}
 
 export function AdviceConfiguration() {
-  const [selectedDisease, setSelectedDisease] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const toast = useToastContext();
+
+  const [diseases, setDiseases] = useState<Disease[]>([]);
+  const [selectedDiseaseId, setSelectedDiseaseId] = useState<string>("");
+
   const [careAdvice, setCareAdvice] = useState("");
   const [lifestyleAdvice, setLifestyleAdvice] = useState("");
   const [emergencyWarnings, setEmergencyWarnings] = useState("");
-  const [savedMessage, setSavedMessage] = useState(false);
 
-  const diseases = [
-    "Atopic Dermatitis",
-  ];
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const categories = [
-    { value: "care", label: "Care Advice", icon: Heart },
-    { value: "lifestyle", label: "Lifestyle Recommendations", icon: CheckCircle },
-    { value: "warning", label: "Emergency Warnings", icon: AlertTriangle },
-  ];
+  // 1. Fetch all diseases on mount
+  useEffect(() => {
+    const fetchDiseases = async () => {
+      try {
+        const response = await api.get("/diseases");
+        setDiseases(response.data);
+      } catch (error) {
+        toast.error("Error", "Could not load diseases.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDiseases();
+  }, []);
 
-  const handleSave = () => {
-    setSavedMessage(true);
-    setTimeout(() => setSavedMessage(false), 3000);
-  };
+  // 2. Fetch advices when disease changes
+  useEffect(() => {
+    if (!selectedDiseaseId) {
+      setCareAdvice("");
+      setLifestyleAdvice("");
+      setEmergencyWarnings("");
+      return;
+    }
 
-  const loadExistingAdvice = () => {
-    if (selectedDisease === "Atopic Dermatitis") {
-      setCareAdvice("• Apply a gentle, fragrance-free moisturizer twice daily to affected areas\n• Use mild, hypoallergenic soaps and avoid harsh chemicals\n• Use lukewarm water for bathing, avoiding very hot water\n• Keep the affected area moisturized at all times to prevent cracks\n• Avoid scratching the area to prevent secondary bacterial infection");
-      setLifestyleAdvice("• Identify and avoid triggers such as specific detergents or dust mites\n• Wear breathable, loose-fitting cotton clothing to reduce skin friction\n• Keep your indoor environment at a stable, cool temperature\n• Maintain proper hydration by drinking plenty of water daily\n• Practice stress-reduction techniques like meditation or yoga");
-      setEmergencyWarnings("• Signs of skin infection (yellow crusts, pus, or extreme warmth)\n• Severe swelling, blistering, or a rapidly spreading red rash\n• High fever or chills accompanied by worsening skin condition\n• Inability to sleep or perform daily tasks due to intense itching\n• Symptoms not responding to initial home care after 2 weeks");
+    const fetchAdvices = async () => {
+      try {
+        const response = await api.get(`/diseases/${selectedDiseaseId}/advices`);
+        const advices = response.data;
+
+        // Map types to state
+        setCareAdvice(advices.filter((a: any) => a.adviceType === 'care').map((a: any) => a.content).join('\n'));
+        setLifestyleAdvice(advices.filter((a: any) => a.adviceType === 'lifestyle').map((a: any) => a.content).join('\n'));
+        setEmergencyWarnings(advices.filter((a: any) => a.adviceType === 'emergency').map((a: any) => a.content).join('\n'));
+      } catch (error) {
+        toast.error("Error", "Could not load existing advice.");
+      }
+    };
+    fetchAdvices();
+  }, [selectedDiseaseId]);
+
+  const handleSave = async () => {
+    if (!selectedDiseaseId) return;
+
+    setIsSaving(true);
+    try {
+      const advicesToSave = [
+        ...careAdvice.split('\n').filter(c => c.trim()).map(c => ({ type: 'care', content: c.trim() })),
+        ...lifestyleAdvice.split('\n').filter(c => c.trim()).map(c => ({ type: 'lifestyle', content: c.trim() })),
+        ...emergencyWarnings.split('\n').filter(c => c.trim()).map(c => ({ type: 'emergency', content: c.trim() })),
+      ];
+
+      await api.post(`/diseases/${selectedDiseaseId}/advices`, advicesToSave);
+      toast.success("Success", "Advice configuration updated.");
+    } catch (error) {
+      toast.error("Save Failed", "Could not save advice configuration.");
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <AdminLayout title="Advice Configuration" subtitle="Loading system data...">
+        <div className="flex flex-col items-center justify-center p-20">
+          <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground font-medium">Syncing with clinical database...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout
       title="Advice Configuration"
-      subtitle="Configure medical advice and warnings for each disease"
+      subtitle="Configure medical advice and warnings for each disease dynamically"
     >
       <div className="space-y-6">
-        {/* Success Message */}
-        {savedMessage && (
-          <div className="bg-green-50 border border-green-300 text-green-800 rounded-lg p-4 flex items-center gap-3">
-            <CheckCircle className="w-5 h-5" />
-            <p>Advice configuration saved successfully!</p>
-          </div>
-        )}
-
         {/* Selection Controls */}
-        <div className="bg-card rounded-lg border border-border p-6">
-          <h3 className="mb-6">Select Disease & Category</h3>
+        <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <h3 className="text-lg font-bold">Selection Engine</h3>
+            <div className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] uppercase font-bold rounded border border-blue-100">Dynamic Mode</div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Disease Dropdown */}
             <div>
-              <label htmlFor="disease" className="block mb-2">
-                Disease
+              <label htmlFor="disease" className="block mb-2 text-sm font-semibold text-slate-600">
+                Target Disease
               </label>
               <select
                 id="disease"
-                value={selectedDisease}
-                onChange={(e) => {
-                  setSelectedDisease(e.target.value);
-                  if (e.target.value) loadExistingAdvice();
-                }}
-                className="cursor-pointer w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                value={selectedDiseaseId}
+                onChange={(e) => setSelectedDiseaseId(e.target.value)}
+                className="cursor-pointer w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all font-medium"
               >
-                <option value="">Select a disease...</option>
-                {diseases.map((disease) => (
-                  <option key={disease} value={disease}>
-                    {disease}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Category Dropdown */}
-            <div>
-              <label htmlFor="category" className="block mb-2">
-                Advice Category
-              </label>
-              <select
-                id="category"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                disabled={!selectedDisease}
-              >
-                <option value="">Select a category...</option>
-                {categories.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
+                <option value="">-- Choose a disease from system --</option>
+                {diseases.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
                   </option>
                 ))}
               </select>
             </div>
           </div>
-
-          {selectedDisease && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Currently editing:</strong> {selectedDisease}
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Advice Editor Tabs */}
-        {selectedDisease && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {selectedDiseaseId && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-500">
             {/* Care Advice */}
-            <div className="bg-card rounded-lg border border-border overflow-hidden">
-              <div className="bg-primary/10 px-6 py-4 border-b border-border flex items-center gap-3">
-                <Heart className="w-5 h-5 text-primary" />
-                <h3 className="text-primary">Care Advice</h3>
+            <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col">
+              <div className="bg-primary/5 px-6 py-4 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Heart className="w-5 h-5 text-primary" />
+                  <h3 className="text-primary font-bold">Care Advice</h3>
+                </div>
               </div>
-              <div className="p-6">
-                <label htmlFor="care" className="block mb-3 text-sm text-muted-foreground">
-                  Recommended care instructions
-                </label>
+              <div className="p-6 flex-1 flex flex-col">
                 <textarea
-                  id="care"
                   value={careAdvice}
                   onChange={(e) => setCareAdvice(e.target.value)}
-                  rows={12}
-                  placeholder="• First care instruction&#10;• Second care instruction&#10;• Third care instruction..."
-                  className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                  rows={15}
+                  placeholder="Enter medical care instructions (one per line)..."
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary resize-none text-sm font-medium flex-1"
                 />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Use bullet points (•) for each instruction
-                </p>
               </div>
             </div>
 
             {/* Lifestyle Advice */}
-            <div className="bg-card rounded-lg border border-border overflow-hidden">
-              <div className="bg-green-50 px-6 py-4 border-b border-border flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <h3 className="text-green-600">Lifestyle Recommendations</h3>
+            <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col">
+              <div className="bg-emerald-50 px-6 py-4 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-emerald-600" />
+                  <h3 className="text-emerald-600 font-bold">Lifestyle Tips</h3>
+                </div>
               </div>
-              <div className="p-6">
-                <label htmlFor="lifestyle" className="block mb-3 text-sm text-muted-foreground">
-                  Lifestyle and prevention tips
-                </label>
+              <div className="p-6 flex-1 flex flex-col">
                 <textarea
-                  id="lifestyle"
                   value={lifestyleAdvice}
                   onChange={(e) => setLifestyleAdvice(e.target.value)}
-                  rows={12}
-                  placeholder="• First lifestyle tip&#10;• Second lifestyle tip&#10;• Third lifestyle tip..."
-                  className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                  rows={15}
+                  placeholder="Enter lifestyle and prevention tips (one per line)..."
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 resize-none text-sm font-medium flex-1"
                 />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Use bullet points (•) for each recommendation
-                </p>
               </div>
             </div>
 
             {/* Emergency Warnings */}
-            <div className="bg-card rounded-lg border border-border overflow-hidden">
-              <div className="bg-destructive/10 px-6 py-4 border-b border-border flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-destructive" />
-                <h3 className="text-destructive">Emergency Warnings</h3>
+            <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col">
+              <div className="bg-red-50 px-6 py-4 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                  <h3 className="text-red-600 font-bold">Emergency Warnings</h3>
+                </div>
               </div>
-              <div className="p-6">
-                <label htmlFor="warnings" className="block mb-3 text-sm text-muted-foreground">
-                  Critical warning signs requiring immediate medical attention
-                </label>
+              <div className="p-6 flex-1 flex flex-col">
                 <textarea
-                  id="warnings"
                   value={emergencyWarnings}
                   onChange={(e) => setEmergencyWarnings(e.target.value)}
-                  rows={12}
-                  placeholder="• First warning sign&#10;• Second warning sign&#10;• Third warning sign..."
-                  className="cursor-text w-full px-4 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                  rows={15}
+                  placeholder="Enter critical warning signs (one per line)..."
+                  className="w-full px-4 py-3 bg-red-50/20 border border-red-100 rounded-xl focus:ring-2 focus:ring-red-500 resize-none text-sm font-bold text-red-900 flex-1"
                 />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Use bullet points (•) for each warning
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Preview Section */}
-        {selectedDisease && selectedCategory && (
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="mb-4">Preview</h3>
-            <div className="bg-muted/30 rounded-lg p-6">
-              <h4 className="mb-3">
-                {categories.find(c => c.value === selectedCategory)?.label}
-              </h4>
-              <div className="space-y-2">
-                {selectedCategory === "care" && careAdvice.split('\n').filter(line => line.trim()).map((line, idx) => (
-                  <p key={idx} className="text-sm">{line}</p>
-                ))}
-                {selectedCategory === "lifestyle" && lifestyleAdvice.split('\n').filter(line => line.trim()).map((line, idx) => (
-                  <p key={idx} className="text-sm">{line}</p>
-                ))}
-                {selectedCategory === "warning" && emergencyWarnings.split('\n').filter(line => line.trim()).map((line, idx) => (
-                  <p key={idx} className="text-sm text-destructive">{line}</p>
-                ))}
               </div>
             </div>
           </div>
         )}
 
         {/* Action Buttons */}
-        {selectedDisease && (
-          <div className="flex justify-end gap-4">
+        {selectedDiseaseId && (
+          <div className="flex justify-end gap-4 pb-10">
             <button
               onClick={() => {
-                setSelectedDisease("");
-                setSelectedCategory("");
+                setSelectedDiseaseId("");
                 setCareAdvice("");
                 setLifestyleAdvice("");
                 setEmergencyWarnings("");
               }}
-              className="cursor-pointer px-6 py-3 bg-card border-2 border-border rounded-lg hover:bg-muted/30 transition-colors"
+              className="cursor-pointer px-8 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all"
             >
-              Reset
+              Discard Changes
             </button>
             <button
               onClick={handleSave}
-              className="cursor-pointer flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              disabled={isSaving}
+              className="cursor-pointer flex items-center gap-2 px-10 py-3 bg-[#2a64ad] text-white font-bold rounded-xl hover:bg-[#1e4e8c] hover:shadow-lg transition-all disabled:opacity-50"
             >
-              <Save className="w-5 h-5" />
-              Save Configuration
+              {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Save Configuration</>}
             </button>
           </div>
         )}
 
         {/* Help Text */}
-        {!selectedDisease && (
-          <div className="bg-muted/30 rounded-lg p-8 text-center">
-            <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <p className="text-muted-foreground">
-              Select a disease to begin configuring advice
+        {!selectedDiseaseId && (
+          <div className="bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 p-20 text-center animate-in fade-in duration-700">
+            <ActivitySquare className="w-16 h-16 text-slate-300 mx-auto mb-4 opacity-40" />
+            <h4 className="text-slate-800 font-bold text-lg mb-1">Clinic Knowledge Base</h4>
+            <p className="text-slate-500 max-w-sm mx-auto font-medium">
+              Select a clinical condition from the dropdown above to manage its dynamic advice engine.
             </p>
           </div>
         )}

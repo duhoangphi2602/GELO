@@ -1,9 +1,17 @@
 {
-  "model_type": "efficientnet_b0",
-  "input_size": [
-    3,
-    224,
-    224
+  "version": "1.0",
+  "architecture": "efficientnet_v2_s",
+  "num_classes": 4,
+  "input_size": 224,
+  "mean": [
+    0.485,
+    0.456,
+    0.406
   ],
-  "num_classes": 2
+  "std": [
+    0.229,
+    0.224,
+    0.225
+  ],
+  "threshold": 0.7
 }

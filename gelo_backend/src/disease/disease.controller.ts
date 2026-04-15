@@ -28,4 +28,14 @@ export class DiseaseController {
   async remove(@Param('id') id: string) {
     return this.diseaseService.remove(+id);
   }
+
+  @Get(':id/advices')
+  async getAdvices(@Param('id') id: string) {
+    return this.diseaseService.getAdvices(+id);
+  }
+
+  @Post(':id/advices')
+  async updateAdvices(@Param('id') id: string, @Body() advices: { type: string; title?: string; content: string }[]) {
+    return this.diseaseService.updateAdvices(+id, advices);
+  }
 }

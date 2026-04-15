@@ -152,15 +152,12 @@ export class AuthService {
       },
     });
 
-    // Disease
     try {
       await this.prisma.disease.create({
         data: {
           id: 1,
           name: 'Atopic Dermatitis',
           description: 'A chronic condition that makes your skin red and itchy.',
-          visualPattern: 'Red, dry, itchy patches',
-          status: 'active',
         }
       });
     } catch(e) { } // Ignore if already seeded

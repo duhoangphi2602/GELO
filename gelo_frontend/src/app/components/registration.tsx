@@ -1,8 +1,8 @@
 // registration.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Activity, AlertCircle } from "lucide-react";
-import axios from "axios";
+import { Activity, AlertCircle, Eye, EyeOff } from "lucide-react";
+import api from "../lib/api";
 
 // Validation helpers
 const validateEmail = (email: string) =>
@@ -20,6 +20,7 @@ interface FieldErrors {
   fullName?: string;
   email?: string;
   password?: string;
+  confirmPassword?: string;
   age?: string;
   gender?: string;
   general?: string;
@@ -32,6 +33,7 @@ export function Registration() {
     fullName: "",
     email: "",
     password: "",
+    confirmPassword: "",
     age: "",
     gender: "",
   });
@@ -39,6 +41,8 @@ export function Registration() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Run client-side validation, return errors object
   const validate = (): FieldErrors => {
@@ -64,6 +68,12 @@ export function Registration() {
       e.password = "Password is required.";
     } else if (!validatePassword(formData.password)) {
       e.password = "Password must be at least 6 characters.";
+    }
+
+    if (!formData.confirmPassword) {
+      e.confirmPassword = "Please confirm your password.";
+    } else if (formData.confirmPassword !== formData.password) {
+      e.confirmPassword = "Passwords do not match.";
     }
 
     if (!formData.age) {
@@ -93,9 +103,12 @@ export function Registration() {
     setLoading(true);
     setErrors({});
     try {
-      const response = await axios.post(
-        "http://localhost:3000/auth/register",
-        formData
+      // Create a copy and remove confirmPassword before sending to backend
+      const { confirmPassword, ...dataToSubmit } = formData;
+
+      const response = await api.post(
+        "/auth/register",
+        dataToSubmit
       );
       if (response.data.patientId) {
         setSuccessMsg("success");
@@ -309,19 +322,68 @@ export function Registration() {
               >
                 Password <span className="text-red-500">*</span>
               </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 ${errors.password
-                  ? "border-red-400 focus:ring-red-200"
-                  : "border-slate-200 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad]"
-                  }`}
-                placeholder="Create a password (min. 6 chars)"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 pr-12 ${errors.password
+                    ? "border-red-400 focus:ring-red-200"
+                    : "border-slate-200 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad]"
+                    }`}
+                  placeholder="Create a password (min. 6 chars)"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
               <FieldError msg={errors.password} />
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block mb-1 text-sm font-medium text-slate-700"
+              >
+                Confirm Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={`cursor-text w-full px-4 py-3 bg-slate-50/50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-800 pr-12 ${errors.confirmPassword
+                    ? "border-red-400 focus:ring-red-200"
+                    : "border-slate-200 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad]"
+                    }`}
+                  placeholder="Confirm your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+              <FieldError msg={errors.confirmPassword} />
             </div>
 
             {/* Age */}

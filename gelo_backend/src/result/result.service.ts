@@ -66,16 +66,38 @@ export class ResultService {
     }
 
     // 2. Create FeedbackLog
-    return await this.prisma.feedbackLog.create({
+    const feedback = await this.prisma.feedbackLog.create({
       data: {
         scanId,
         diagnosticStatus: diagnosis.diagnosticStatus,
         predictedDiseaseId: diagnosis.predictedDiseaseId,
         isCorrect: body.isCorrect,
         note: body.note || 'User self-feedback',
-        // In this simplified 1-disease version, if it's correct, actual = predicted.
         actualDiseaseId: body.isCorrect ? diagnosis.predictedDiseaseId : null,
       }
     });
+
+    // 3. Nếu người dùng xác nhận đúng (isCorrect) và chẩn đoán là Bệnh -> Lưu vào làm dữ liệu huấn luyện
+    if (body.isCorrect && diagnosis.diagnosticStatus === 'DISEASE' && diagnosis.predictedDiseaseId) {
+      // Kiểm tra xem đã có trong DiseaseImage chưa để tránh trùng lặp
+      const alreadySaved = await this.prisma.diseaseImage.findFirst({
+        where: { scanId, diseaseId: diagnosis.predictedDiseaseId }
+      });
+
+      if (!alreadySaved) {
+        const scanImage = await this.prisma.scanImage.findFirst({ where: { scanId } });
+        if (scanImage) {
+          await this.prisma.diseaseImage.create({
+            data: {
+              diseaseId: diagnosis.predictedDiseaseId,
+              scanId: scanId,
+              imageUrl: scanImage.imageUrl,
+            }
+          });
+        }
+      }
+    }
+
+    return feedback;
   }
 }

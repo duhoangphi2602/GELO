@@ -1,17 +1,27 @@
 {
-  "-1": {
-    "id": -1,
-    "status": "UNKNOWN",
-    "name": "Unknown"
-  },
   "0": {
     "id": 1,
     "status": "DISEASE",
     "name": "Atopic Dermatitis"
   },
   "1": {
+    "id": 2,
+    "status": "DISEASE",
+    "name": "Vascular Tumors"
+  },
+  "2": {
+    "id": 3,
+    "status": "DISEASE",
+    "name": "Melanoma Skin Cancer / Nevi / Moles"
+  },
+  "3": {
+    "id": 4,
+    "status": "DISEASE",
+    "name": "Bullous Disease"
+  },
+  "-1": {
     "id": 0,
-    "status": "HEALTHY",
-    "name": "Healthy Skin"
+    "status": "UNKNOWN",
+    "name": "Unknown"
   }
 }

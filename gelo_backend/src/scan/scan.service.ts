@@ -12,15 +12,11 @@ export class ScanService {
     private engine: DiagnosticEngineService
   ) { }
 
-  async processScan(patientId: number, imageUrls: string[], answers: any[]) {
-    this.logger.log(`Start processing scan for patient: ${patientId}`);
+  /** Phase 1: Nhận ảnh, gọi AI và trả về bộ câu hỏi phù hợp */
+  async initiateScan(patientId: number, imageUrls: string[]) {
+    this.logger.log(`Phase 1: Initiating scan for patient ${patientId}`);
 
-    // 1. Tạo một phiên Scan vào DB
-    if (!patientId) {
-      this.logger.error('Attempted to process scan with undefined patientId');
-      throw new BadRequestException('Patient profile ID is missing. Please log out and log in again.');
-    }
-
+    // 1. Tạo bản ghi Scan và ScanImage
     const scan = await this.prisma.skinScan.create({
       data: {
         patientId: patientId,
@@ -30,102 +26,117 @@ export class ScanService {
       }
     });
 
-    // =====================================
     // 2. GỌI SANG AI SERVICE (FASTAPI)
-    // =====================================
-    this.logger.log(`Calling FastAPI Server at port 8000 for scan ${scan.id}...`);
-
-    let mockDiseaseId: number | null = 1;
-    let mockConfidence = 0.0; // Default Confidence level = 0
-    let modelVer = 'v1.0-mock';
-    let diagnosticStatus = 'DISEASE';
+    let aiDiseaseId: number | null = null;
+    let aiConfidence = 0.0;
+    let modelVer = 'v2.0-b3-mock';
+    let diagnosticStatus = 'UNKNOWN';
 
     try {
-      // Step A: Pre-flight Ping
-      const healthRes = await fetch('http://localhost:8000/ai/health', { method: 'GET' });
-      if (!healthRes.ok) throw new Error('AI Health Check responded with an error');
-
-      const healthData = await healthRes.json();
-      if (!healthData.model_loaded) {
-        throw new Error('AI Service is online but model is not loaded (model_loaded=false)');
-      }
-
-      // Step B: Inference
-      const aiResponse = await fetch('http://localhost:8000/ai/predict', {
+      const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+      const aiResponse = await fetch(`${aiUrl}/ai/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_urls: imageUrls, scan_id: scan.id })
       });
 
-      if (!aiResponse.ok) {
-        const errData = await aiResponse.json().catch(() => ({}));
-        throw new Error(`AI Prediction failed: HTTP ${aiResponse.status} - ${errData.detail || 'Unknown error'}`);
+      if (aiResponse.ok) {
+        const result = await aiResponse.json();
+        const rawId = result.disease_id;
+
+        // Nếu AI trả về 0 hoặc null -> UNKNOWN
+        if (rawId === 0 || !rawId) {
+          aiDiseaseId = null;
+          diagnosticStatus = 'UNKNOWN';
+        } else {
+          aiDiseaseId = rawId;
+          diagnosticStatus = result.diagnosticStatus || 'DISEASE';
+        }
+
+        aiConfidence = result.confidence;
+        modelVer = result.model_version || modelVer;
       }
-
-      const result = await aiResponse.json();
-
-      mockDiseaseId = result.disease_id || null;
-      mockConfidence = result.confidence;
-      // Truncate strings to prevent DB errors (Varsize constraints)
-      modelVer = (result.model_version || 'v1.0-mock').substring(0, 250);
-      diagnosticStatus = (result.diagnosticStatus || 'DISEASE').substring(0, 45);
-
     } catch (error) {
-      this.logger.error(`AI Pipeline bypassed due to error: ${error.message}. Fallback to Rule Engine Confidence 0.0`);
+      this.logger.error(`AI Service unreachable: ${error.message}`);
     }
 
-    // 3. Ensure Atopic Dermatitis is in DB (upsert by name, not id)
-    let dbDisease = await this.prisma.disease.findFirst({
-      where: { name: 'Atopic Dermatitis' }
+    // 4. Lưu lại dự đoán ban đầu
+    await this.prisma.prediction.create({
+      data: {
+        scanId: scan.id,
+        diagnosticStatus,
+        diseaseId: aiDiseaseId,
+        confidence: aiConfidence * 100,
+        modelVersion: modelVer
+      }
     });
 
-    if (!dbDisease) {
-      dbDisease = await this.prisma.disease.create({
-        data: {
-          name: 'Atopic Dermatitis',
-          description: 'A chronic condition that causes itchy, red, and dry skin, often starting in childhood.',
-          isContagious: false,
-        }
-      });
+    // 5. Lấy bộ câu hỏi dựa trên kết quả AI
+    // Nếu AI đoán được bệnh -> Lấy rules của bệnh đó.
+    // Nếu AI không đoán được -> Lấy rules của "General Inquiry" (Mặc định ID=1 hoặc category chung)
+    let questionsDiseaseId = aiDiseaseId;
+    if (!questionsDiseaseId || diagnosticStatus !== 'DISEASE') {
+      // Fallback: Nếu AI không nhận diện được bệnh cụ thể, dùng bệnh đầu tiên trong DB làm bộ khảo sát mặc định
+      const fallbackDisease = await this.prisma.disease.findFirst({ orderBy: { id: 'asc' } });
+      questionsDiseaseId = fallbackDisease?.id || null;
     }
 
-    // 4. Determine which disease to evaluate rules for
-    // If AI found a specific disease, use it. Otherwise, default to Atopic Dermatitis (ID=1).
-    let validDiseaseId: number = dbDisease.id;
-    if (diagnosticStatus === 'DISEASE' && mockDiseaseId) {
-      const aiDisease = await this.prisma.disease.findUnique({ where: { id: mockDiseaseId } });
-      if (aiDisease) {
-        validDiseaseId = mockDiseaseId;
-      }
-    }
-
-    // 4. Fetch Active Rules for Atopic Dermatitis
-    const diseaseRules = await this.prisma.diseaseRule.findMany({
-      where: { diseaseId: validDiseaseId, isActive: true },
+    const rules = await this.prisma.diseaseRule.findMany({
+      where: { diseaseId: questionsDiseaseId, isActive: true },
       include: { question: true }
     });
 
-    // 5. Calculate Hybrid Score
-    const engineResult = this.engine.calculateHybridScore(mockConfidence, answers || [], diseaseRules);
+    const questions = rules
+      .filter(r => r.question)
+      .map(r => ({
+        id: r.question!.id,
+        text: r.question!.questionText,
+        isEmergency: r.question!.isEmergency
+      }));
 
-    // 6. Transactional Save of Predictions, Logs, and Result
+    return {
+      scanId: scan.id,
+      predictedDisease: aiDiseaseId ? (await this.prisma.disease.findUnique({ where: { id: aiDiseaseId } }))?.name : 'Unknown',
+      diagnosticStatus,
+      confidence: aiConfidence * 100,
+      questions
+    };
+  }
+
+  /** Phase 2: Nhận câu trả lời, tính điểm Hybrid và chốt kết quả */
+  async completeScan(scanId: number, answers: any[]) {
+    this.logger.log(`Phase 2: Completing scan ${scanId} with answers`);
+
+    // 1. Lấy lại Scan và Prediction
+    const scan = await this.prisma.skinScan.findUnique({
+      where: { id: scanId },
+      include: { predictions: { orderBy: { createdAt: 'desc' }, take: 1 } }
+    });
+
+    if (!scan || scan.predictions.length === 0) {
+      throw new BadRequestException('Scan or Prediction not found');
+    }
+
+    const prediction = scan.predictions[0];
+    const diseaseId = prediction.diseaseId;
+
+    // 2. Lấy Rules để chấm điểm
+    const rules = await this.prisma.diseaseRule.findMany({
+      where: { diseaseId: diseaseId, isActive: true },
+      include: { question: true }
+    });
+
+    // 3. Tính điểm Hybrid
+    const aiScore = (prediction.confidence || 0) / 100;
+    const engineResult = this.engine.calculateHybridScore(aiScore, answers, rules);
+
+    // 4. Lưu kết quả chẩn đoán cuối cùng
     const diagnosis = await this.prisma.$transaction(async (tx) => {
-      // 6.1 Save mock prediction
-      await tx.prediction.create({
-        data: {
-          scanId: scan.id,
-          diagnosticStatus: diagnosticStatus,
-          diseaseId: validDiseaseId,
-          confidence: mockConfidence * 100,
-          modelVersion: modelVer
-        }
-      });
-
-      // 6.2 Save Rule Score Logs
+      // Lưu Rule Logs
       if (engineResult.ruleLogs.length > 0) {
         await tx.ruleScoreLog.createMany({
           data: engineResult.ruleLogs.map((log) => ({
-            scanId: scan.id,
+            scanId: scanId,
             questionId: log.questionId,
             patientAnswer: log.patientAnswer,
             expectedAnswer: log.expectedAnswer,
@@ -136,16 +147,15 @@ export class ScanService {
         });
       }
 
-      // 6.3 Save Diagnosis Result
-      const predictedId = engineResult.decision === 'positive' || engineResult.decision === 'emergency' ? validDiseaseId : null;
-      const finalStatus = (engineResult.decision === 'positive' || engineResult.decision === 'emergency') ? 'DISEASE' : diagnosticStatus;
+      // Tạo DiagnosisResult
+      const finalStatus = (engineResult.decision === 'positive' || engineResult.decision === 'emergency') ? 'DISEASE' : prediction.diagnosticStatus;
 
-      return await tx.diagnosisResult.create({
+      const result = await tx.diagnosisResult.create({
         data: {
-          scanId: scan.id,
+          scanId: scanId,
           diagnosticStatus: finalStatus,
-          predictedDiseaseId: predictedId,
-          finalDiseaseId: predictedId,
+          predictedDiseaseId: diseaseId,
+          finalDiseaseId: diseaseId,
           isEmergency: engineResult.isEmergency,
           ruleScore: engineResult.ruleScore,
           maxRuleScore: engineResult.maxRuleScore,
@@ -153,13 +163,29 @@ export class ScanService {
           decision: engineResult.decision,
         }
       });
+
+      // Step 4 logic: Nếu kết quả dương tính và điểm cao (ví dụ > ngưỡng cấu hình), lưu vào DiseaseImage để làm training data
+      const autoTrainThreshold = Number(process.env.AUTO_TRAIN_THRESHOLD || 85);
+      if (engineResult.decision === 'positive' && engineResult.normalizedScore >= autoTrainThreshold && diseaseId) {
+        const firstImage = await tx.scanImage.findFirst({ where: { scanId } });
+        if (firstImage) {
+          await tx.diseaseImage.create({
+            data: {
+              diseaseId: diseaseId,
+              scanId: scanId,
+              imageUrl: firstImage.imageUrl,
+            }
+          });
+        }
+      }
+
+      return result;
     });
 
     return {
-      message: "Analysis Complete",
-      scanId: scan.id,
-      diagnosis: diagnosis,
-      decision: engineResult.decision
+      message: "Diagnosis Complete",
+      scanId,
+      diagnosis
     };
   }
 
@@ -235,10 +261,11 @@ export class ScanService {
     };
   }
 
-  /** Trả về các scan có AI confidence thấp hơn ngưỡng (mặc định < 0.6) chưa được admin review */
-  async getPendingReviews(threshold = 60) {
+  /** Trả về các scan có AI confidence thấp hơn ngưỡng (mặc định cấu hình) chưa được admin review */
+  async getPendingReviews(threshold?: number) {
+    const reviewThreshold = threshold ?? Number(process.env.LOW_CONFIDENCE_THRESHOLD || 60);
     const predictions = await this.prisma.prediction.findMany({
-      where: { confidence: { lt: threshold } },
+      where: { confidence: { lt: reviewThreshold } },
       orderBy: { createdAt: 'desc' },
       include: {
         scan: {
@@ -308,37 +335,39 @@ export class ScanService {
     });
   }
 
+  private async deleteImagesFromCloudinary(imageUrls: string[]) {
+    if (imageUrls.length === 0) return;
+
+    try {
+      const deletePromises = imageUrls.map((url) => {
+        const urlParts = url.split('/');
+        const fileNameWithExt = urlParts[urlParts.length - 1];
+        const fileName = fileNameWithExt.split('.')[0];
+        const publicId = `gelo/scans/${fileName}`;
+
+        this.logger.log(`Deleting Cloudinary asset: ${publicId}`);
+        return cloudinary.uploader.destroy(publicId);
+      });
+
+      await Promise.all(deletePromises);
+    } catch (error) {
+      this.logger.error(`Failed to delete one or more Cloudinary assets: ${error.message}`);
+    }
+  }
+
   async deleteScan(patientId: number, scanId: number) {
     const scan = await this.prisma.skinScan.findFirst({
       where: { id: scanId, patientId },
+      include: { images: true }
     });
+
     if (!scan) {
       throw new BadRequestException('Scan not found or access denied.');
     }
 
-    // --- Xóa ảnh trên Cloudinary trước khi xóa bản ghi DB ---
-    try {
-      const images = await this.prisma.scanImage.findMany({
-        where: { scanId }
-      });
-
-      for (const img of images) {
-        // Trích xuất public_id từ URL Cloudinary
-        // URL format: https://res.cloudinary.com/cloud_name/image/upload/v123.../folder/public_id.jpg
-        const urlParts = img.imageUrl.split('/');
-        const fileNameWithExt = urlParts[urlParts.length - 1];
-        const fileName = fileNameWithExt.split('.')[0];
-
-        // Public ID bao gồm cả folder: gelo/scans/public_id
-        const publicId = `gelo/scans/${fileName}`;
-
-        this.logger.log(`Deleting Cloudinary asset: ${publicId}`);
-        await cloudinary.uploader.destroy(publicId);
-      }
-    } catch (error) {
-      this.logger.error(`Failed to delete Cloudinary assets for scan ${scanId}: ${error.message}`);
-      // Vẫn tiếp tục xóa DB ngay cả khi xóa Cloudinary lỗi để tránh kẹt dữ liệu
-    }
+    // Xóa ảnh song song trước
+    const imageUrls = scan.images.map(img => img.imageUrl);
+    await this.deleteImagesFromCloudinary(imageUrls);
 
     await this.prisma.$transaction([
       this.prisma.ruleScoreLog.deleteMany({ where: { scanId } }),
@@ -351,5 +380,35 @@ export class ScanService {
     ]);
 
     return { success: true };
+  }
+
+  async deleteAllScans(patientId: number) {
+    const scans = await this.prisma.skinScan.findMany({
+      where: { patientId },
+      include: { images: true }
+    });
+
+    if (scans.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const scanIds = scans.map(s => s.id);
+    const allImageUrls = scans.flatMap(s => s.images.map(img => img.imageUrl));
+
+    // Xóa tất cả ảnh của tất cả các scan song song (Parallel)
+    await this.deleteImagesFromCloudinary(allImageUrls);
+
+    // Transactional DB cleanup
+    await this.prisma.$transaction([
+      this.prisma.ruleScoreLog.deleteMany({ where: { scanId: { in: scanIds } } }),
+      this.prisma.diagnosisResult.deleteMany({ where: { scanId: { in: scanIds } } }),
+      this.prisma.prediction.deleteMany({ where: { scanId: { in: scanIds } } }),
+      this.prisma.scanImage.deleteMany({ where: { scanId: { in: scanIds } } }),
+      this.prisma.feedbackLog.deleteMany({ where: { scanId: { in: scanIds } } }),
+      this.prisma.skinDiary.updateMany({ where: { scanId: { in: scanIds } }, data: { scanId: null } }),
+      this.prisma.skinScan.deleteMany({ where: { id: { in: scanIds } } }),
+    ]);
+
+    return { success: true, count: scanIds.length };
   }
 }

@@ -12,37 +12,48 @@ export class DiseaseService {
   }
 
   async create(data: any) {
-    return (this.prisma.disease as any).create({
+    return this.prisma.disease.create({
       data: {
         name: data.name,
         description: data.description,
-        visualPattern: data.patterns, // Mapping frontend 'patterns' to 'visualPattern'
-        hasBlister: data.hasBlister,
-        hasScaling: data.hasScaling,
-        status: 'active',
       },
     });
   }
 
   async update(id: number, data: any) {
-    return (this.prisma.disease as any).update({
+    return this.prisma.disease.update({
       where: { id },
       data: {
         name: data.name,
         description: data.description,
-        visualPattern: data.patterns,
-        hasBlister: data.hasBlister,
-        hasScaling: data.hasScaling,
-        status: data.status,
       },
     });
   }
 
   async remove(id: number) {
-    // Check for related records (rules, advices, etc.)
-    // For now, we perform a simple delete or ideally a soft delete
     return this.prisma.disease.delete({
       where: { id },
+    });
+  }
+
+  async getAdvices(diseaseId: number) {
+    return this.prisma.diseaseAdvice.findMany({
+      where: { diseaseId },
+    });
+  }
+
+  async updateAdvices(diseaseId: number, advices: { type: string; title?: string; content: string }[]) {
+    // Xóa tất cả lời khuyên cũ và lưu lại bộ mới
+    return this.prisma.$transaction(async (tx) => {
+      await tx.diseaseAdvice.deleteMany({ where: { diseaseId } });
+      return await tx.diseaseAdvice.createMany({
+        data: advices.map(a => ({
+          diseaseId,
+          adviceType: a.type,
+          title: a.title,
+          content: a.content,
+        }))
+      });
     });
   }
 }
