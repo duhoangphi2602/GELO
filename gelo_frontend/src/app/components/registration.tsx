@@ -104,7 +104,14 @@ export function Registration() {
     setErrors({});
     try {
       // Create a copy and remove confirmPassword before sending to backend
-      const { confirmPassword, ...dataToSubmit } = formData;
+      const { confirmPassword, ...rawData } = formData;
+      
+      // Fix types and enums for backend validation
+      const dataToSubmit = {
+        ...rawData,
+        age: rawData.age ? parseInt(rawData.age, 10) : undefined,
+        gender: rawData.gender ? rawData.gender : undefined,
+      };
 
       const response = await api.post(
         "/auth/register",
@@ -115,10 +122,26 @@ export function Registration() {
         setTimeout(() => navigate("/"), 2500);
       }
     } catch (error: any) {
-      const backendMsg =
-        error.response?.data?.message || error.message || "Unknown error";
-      // Show backend error as general error
-      setErrors({ general: "Registration failed: " + backendMsg });
+      const backendMsg = error.response?.data?.message;
+      let newErrors: FieldErrors = {};
+
+      if (Array.isArray(backendMsg)) {
+        // Map common backend validation messages to specific fields
+        backendMsg.forEach((msg: string) => {
+          const m = msg.toLowerCase();
+          if (m.includes("username")) newErrors.username = msg;
+          else if (m.includes("email")) newErrors.email = msg;
+          else if (m.includes("password")) newErrors.password = msg;
+          else if (m.includes("age")) newErrors.age = msg;
+          else if (m.includes("gender")) newErrors.gender = msg;
+          else if (m.includes("full name")) newErrors.fullName = msg;
+          else newErrors.general = (newErrors.general ? newErrors.general + ", " : "") + msg;
+        });
+      } else {
+        newErrors.general = "Registration failed: " + (backendMsg || error.message || "Unknown error");
+      }
+
+      setErrors(newErrors);
     } finally {
       setLoading(false);
     }
@@ -429,11 +452,11 @@ export function Registration() {
                   : "border-slate-200 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad]"
                   }`}
               >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-                <option value="prefer-not-to-say">Prefer not to say</option>
+                <option value="" disabled hidden>Select gender</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+                <option value="UNKNOWN">Prefer not to say</option>
               </select>
               <FieldError msg={errors.gender} />
             </div>

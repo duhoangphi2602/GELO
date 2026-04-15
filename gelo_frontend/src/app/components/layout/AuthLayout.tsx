@@ -21,7 +21,7 @@ export default function AuthLayout({ children, title, subtitle, description }: A
                         Welcome to<br />GELO.
                     </h1>
                     <p className="text-lg text-blue-100 max-w-md mb-12">
-                        Clinical precision meets algorithmic insight. Diagnose faster, document smarter, and collaborate with confidence.
+                        Your intelligent partner in skin health. The system integrates AI image analysis with clinical surveys to deliver instant, high-precision diagnostic insights and urgent medical alerts.
                     </p>
 
                     <div className="w-12 h-1 bg-blue-300 mb-8 opacity-50"></div>
@@ -29,15 +29,19 @@ export default function AuthLayout({ children, title, subtitle, description }: A
                     <ul className="space-y-4">
                         <li className="flex items-center gap-3">
                             <span className="flex items-center justify-center w-5 h-5 border border-blue-200 rounded text-xs opacity-80">✓</span>
-                            <span className="text-blue-100 opacity-90">HIPAA & GDPR Compliant</span>
+                            <span className="text-blue-100 opacity-90">Atopic Dermatitis</span>
                         </li>
                         <li className="flex items-center gap-3">
                             <span className="flex items-center justify-center w-5 h-5 border border-blue-200 rounded text-xs opacity-80">✓</span>
-                            <span className="text-blue-100 opacity-90">ISO 13485 Certified System</span>
+                            <span className="text-blue-100 opacity-90">Vascular Tumors</span>
                         </li>
                         <li className="flex items-center gap-3">
                             <span className="flex items-center justify-center w-5 h-5 border border-blue-200 rounded text-xs opacity-80">✓</span>
-                            <span className="text-blue-100 opacity-90">256-bit Encrypted Data</span>
+                            <span className="text-blue-100 opacity-90">Melanoma</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                            <span className="flex items-center justify-center w-5 h-5 border border-blue-200 rounded text-xs opacity-80">✓</span>
+                            <span className="text-blue-100 opacity-90">Bullous Disease</span>
                         </li>
                     </ul>
                 </div>
