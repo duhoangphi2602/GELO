@@ -22,8 +22,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Clear local storage and redirect to login
+    if (error.response && error.response.status === 401 && !error.config.url.includes('/auth/login')) {
+      // Clear local storage and redirect to login only if not already logging in
       localStorage.removeItem('accessToken');
       localStorage.removeItem('patientId');
       localStorage.removeItem('role');

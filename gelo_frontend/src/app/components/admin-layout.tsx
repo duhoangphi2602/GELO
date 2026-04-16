@@ -3,8 +3,6 @@ import { useNavigate, useLocation } from "react-router";
 import {
   LayoutDashboard,
   Activity,
-  MessageSquare,
-  Settings,
   Users,
   Database,
   FileText,
@@ -36,11 +34,6 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
       path: "/admin/advice",
       icon: FileText,
       label: "Advice Configuration",
-    },
-    {
-      path: "/admin/rules",
-      icon: Settings,
-      label: "Rule Engine",
     },
   ];
 

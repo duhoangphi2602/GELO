@@ -8,7 +8,7 @@ import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser, Roles } from '../auth/auth.decorator';
 import { cloudinaryStorage } from '../common/cloudinary.config';
 import { UserRole } from '@prisma/client';
-import { CompleteScanDto } from './dto/scan.dto';
+
 
 // ─── Multer config: Upload thẳng lên Cloudinary ─────────────────────────────
 const multerOptions = {
@@ -24,9 +24,9 @@ const multerOptions = {
 
 @Controller('scans')
 export class ScanController {
-  constructor(private readonly scanService: ScanService) { }
+  constructor(private readonly scanService: ScanService) {}
 
-  // ─── Patient Phase 1: Upload ảnh & AI phân tích sơ bộ ────────────────────
+  // ─── Patient: Upload image & AI analysis (single-phase, AI-only) ────────
   @Post('initiate')
   @Roles(UserRole.PATIENT)
   @UseGuards(JwtAuthGuard)
@@ -38,29 +38,11 @@ export class ScanController {
     if (!patientId) {
       throw new BadRequestException('Patient profile required.');
     }
-
     if (!files || files.length === 0) {
       throw new BadRequestException('At least one image file is required.');
     }
-
     const imageUrls = files.map((f: any) => f.path);
     return this.scanService.initiateScan(patientId, imageUrls);
-  }
-
-  // ─── Patient Phase 2: Gửi câu trả lời & Chốt kết quả ──────────────────────
-  @Post('complete/:scanId')
-  @Roles(UserRole.PATIENT)
-  @UseGuards(JwtAuthGuard)
-  async completeScan(
-    @CurrentUser('patientId') patientId: number,
-    @Param('scanId') scanId: string,
-    @Body() completeScanDto: CompleteScanDto,
-  ) {
-    return this.scanService.completeScan(
-      parseInt(scanId, 10),
-      completeScanDto.answers,
-      patientId
-    );
   }
 
   // ─── Patient: Lịch sử scan ─────────────────────────────────────────────
@@ -78,16 +60,6 @@ export class ScanController {
     return this.scanService.getScansForPatient(requestedId);
   }
 
-  // ─── Patient: Xoá lịch sử scan ─────────────────────────────────────────────
-  @Delete(':scanId')
-  @UseGuards(JwtAuthGuard)
-  async deleteScan(
-    @CurrentUser('patientId') tokenPatientId: number,
-    @Param('scanId') scanId: string,
-  ) {
-    return this.scanService.deleteScan(tokenPatientId, parseInt(scanId, 10));
-  }
-
   // ─── Patient: Xoá toàn bộ lịch sử scan ──────────────────────────────────────
   @Delete('history/all')
   @UseGuards(JwtAuthGuard)
@@ -98,6 +70,16 @@ export class ScanController {
       throw new BadRequestException('Patient profile required.');
     }
     return this.scanService.deleteAllScans(tokenPatientId);
+  }
+
+  // ─── Patient: Xoá lịch sử scan ─────────────────────────────────────────────
+  @Delete(':scanId')
+  @UseGuards(JwtAuthGuard)
+  async deleteScan(
+    @CurrentUser('patientId') tokenPatientId: number,
+    @Param('scanId') scanId: string,
+  ) {
+    return this.scanService.deleteScan(tokenPatientId, parseInt(scanId, 10));
   }
 
   // ─── Admin: Stats cho Dashboard ──────────────────────────────────────────
@@ -138,8 +120,11 @@ export class ScanController {
   @UseGuards(JwtAuthGuard)
   async submitReview(
     @Param('scanId') scanId: string,
-    @Body() body: { isCorrect: boolean; actualDiseaseId?: number; note?: string },
+    @Body() body: { isCorrect: boolean; actualDiseaseId?: number; actualStatus?: string; note?: string },
   ) {
+    if (body.isCorrect === false && !body.actualDiseaseId && !body.actualStatus) {
+      throw new BadRequestException('Please provide the correct disease or status if the prediction is wrong.');
+    }
     return this.scanService.submitReview(parseInt(scanId, 10), body);
   }
 }

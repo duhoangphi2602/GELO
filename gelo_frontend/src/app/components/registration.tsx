@@ -152,8 +152,8 @@ export function Registration() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear the error for this field when user starts typing
-    setErrors((prev) => ({ ...prev, [name]: undefined, general: undefined }));
+    // Clear the specific field error when user starts typing, but keep the general error visible
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   // Reusable field error component

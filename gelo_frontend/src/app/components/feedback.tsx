@@ -29,7 +29,7 @@ export function Feedback() {
     setError("");
 
     try {
-      const response = await api.post(`/results/${scanId}/feedback`, {
+      await api.post(`/results/${scanId}/feedback`, {
         isCorrect,
         note
       });

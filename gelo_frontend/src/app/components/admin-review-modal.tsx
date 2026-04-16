@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, CheckCircle2, AlertTriangle, Info, Image as ImageIcon, Activity } from "lucide-react";
+import { X, CheckCircle2, AlertTriangle, Image as ImageIcon, Activity } from "lucide-react";
 import { useToast } from "../hooks/useToast";
 import api from "../lib/api";
 
@@ -117,7 +117,7 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                   </div>
                   <div className="text-right">
                     <p className="text-3xl font-black text-[#2a64ad]">
-                      {(scan.confidence * 100).toFixed(1)}%
+                      {scan.confidence.toFixed(1)}%
                     </p>
                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Confidence Level</p>
                   </div>
@@ -126,11 +126,11 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                 <div className="w-full bg-[#2a64ad]/10 h-2 rounded-full overflow-hidden">
                   <div 
                     className="bg-[#2a64ad] h-full transition-all duration-1000" 
-                    style={{ width: `${scan.confidence * 100}%` }}
+                    style={{ width: `${scan.confidence}%` }}
                   />
                 </div>
                 
-                {scan.confidence < 0.6 && (
+                {scan.confidence < 60 && (
                   <div className="mt-4 flex items-start gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100 italic text-sm">
                     <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                     Low confidence detected. Manual review is highly recommended.
@@ -145,9 +145,9 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
             <h3 className="font-bold mb-6 text-foreground">Review Decision</h3>
             
             <div className="space-y-6">
-              {/* Question 1 */}
+              {/* AI Validation Section */}
               <div>
-                <p className="text-sm font-medium mb-3">Is the AI prediction correct?</p>
+                <p className="text-sm font-medium mb-3 text-slate-700">Is the AI prediction accurate based on professional judgment?</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setIsCorrect(true)}
@@ -158,7 +158,7 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                     }`}
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span className="font-bold">Correct</span>
+                    <span className="font-bold">Accurate</span>
                   </button>
                   <button
                     onClick={() => setIsCorrect(false)}
@@ -169,7 +169,7 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                     }`}
                   >
                     <X className="w-4 h-4" />
-                    <span className="font-bold">Incorrect</span>
+                    <span className="font-bold">Inaccurate</span>
                   </button>
                 </div>
               </div>
@@ -177,13 +177,13 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
               {/* Correct Disease Select (Conditional) */}
               {isCorrect === false && (
                 <div className="animate-in slide-in-from-top-2 duration-200">
-                  <label className="text-sm font-medium mb-2 block">Correct Diagnosis</label>
+                  <label className="text-sm font-medium mb-2 block text-slate-700">Correct Clinical Diagnosis</label>
                   <select
                     value={actualDiseaseId.toString()}
                     onChange={(e) => setActualDiseaseId(e.target.value === "HEALTHY" ? "HEALTHY" : (e.target.value ? Number(e.target.value) : ""))}
                     className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad] transition-all"
                   >
-                    <option value="">Select the correct diagnosis...</option>
+                    <option value="">Select the correct clinical diagnosis...</option>
                     <option value="HEALTHY" className="font-bold text-green-700">Healthy Skin (No Disease)</option>
                     {(diseases || []).map(d => (
                       <option key={d.id} value={d.id.toString()}>{d.name}</option>
@@ -194,9 +194,9 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
 
               {/* Internal Notes */}
               <div>
-                <label className="text-sm font-medium mb-2 block">Admin Notes (Optional)</label>
+                <label className="text-sm font-medium mb-2 block text-slate-700">Review Notes & Observations</label>
                 <textarea
-                  placeholder="Describe why the model might be wrong or add clinical notes..."
+                  placeholder="Provide clinical observations or explain the model's inaccuracy to improve future training..."
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm h-32 focus:outline-none focus:ring-2 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad] transition-all resize-none"

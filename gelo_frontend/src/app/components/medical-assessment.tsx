@@ -1,32 +1,36 @@
 // medical-assessment.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Upload, AlertCircle, X, FileSearch, CheckCircle2, ActivitySquare, Loader2, Image as ImageIcon } from "lucide-react";
+import { Upload, AlertCircle, X, FileSearch, Activity, Loader2 } from "lucide-react";
 import api from "../lib/api";
 import { Layout } from "./layout/Layout";
 import { useToastContext } from "./ui/ToastContext";
-
-interface Question {
-  id: number;
-  text: string;
-  isEmergency: boolean;
-}
 
 export function MedicalAssessment() {
   const navigate = useNavigate();
   const toast = useToastContext();
 
-  const [step, setStep] = useState<1 | 2>(1);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [scanId, setScanId] = useState<number | null>(null);
-  const [prediction, setPrediction] = useState<any>(null);
-
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [symptoms, setSymptoms] = useState<Record<string, string>>({});
-
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isInitiating, setIsInitiating] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
   const [isBlurry, setIsBlurry] = useState(false);
+  const [processStatus, setProcessStatus] = useState<"idle" | "uploading" | "analyzing">("idle");
+
+  // --- Memory Management: Clean up object URLs to prevent leaks ---
+  useEffect(() => {
+    if (uploadedFiles.length === 0) {
+      setPreviewUrls([]);
+      return;
+    }
+
+    const urls = uploadedFiles.map(file => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+
+    // Cleanup: revoke URLs when files change or component unmounts
+    return () => {
+      urls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [uploadedFiles]);
 
   // --- Blurry Detection Logic ---
   const detectBlur = async (file: File): Promise<boolean> => {
@@ -48,18 +52,24 @@ export function MedicalAssessment() {
         let diff = 0;
 
         for (let i = 0; i < data.length - 4; i += 4) {
-          // Compare luminance of adjacent pixels
           const avg1 = (data[i] + data[i + 1] + data[i + 2]) / 3;
           const avg2 = (data[i + 4] + data[i + 5] + data[i + 6]) / 3;
           diff += Math.abs(avg1 - avg2);
         }
 
         const score = diff / (size * size);
-        // Lower score means less contrast/sharper edges = likely blurry
         const threshold = Number(import.meta.env.VITE_BLUR_THRESHOLD || 8);
         resolve(score < threshold);
       };
-      img.src = URL.createObjectURL(file);
+      
+      // Use the first file for blur check
+      const tempUrl = URL.createObjectURL(file);
+      img.src = tempUrl;
+      // Revoke temporary URL for blur check after loading
+      img.onload = (originalOnload => (e) => {
+        if (originalOnload) originalOnload.call(img, e);
+        URL.revokeObjectURL(tempUrl);
+      })(img.onload);
     });
   };
 
@@ -68,7 +78,6 @@ export function MedicalAssessment() {
       const filesArr = Array.from(e.target.files).slice(0, 3);
       setUploadedFiles(filesArr);
 
-      // Check first image for blur
       if (filesArr.length > 0) {
         const blurry = await detectBlur(filesArr[0]);
         setIsBlurry(blurry);
@@ -79,7 +88,7 @@ export function MedicalAssessment() {
     }
   };
 
-  // --- Phase 1: Initiate Scan ---
+  // --- AI-Only Scan Initiation ---
   const handleInitiateScan = async () => {
     const patientId = localStorage.getItem("patientId");
     if (!patientId) {
@@ -94,211 +103,144 @@ export function MedicalAssessment() {
     }
 
     setIsInitiating(true);
+    setProcessStatus("uploading");
+    
     try {
       const formData = new FormData();
       uploadedFiles.forEach(file => formData.append("images", file));
 
+      // 1. Step: Uploading to server & starting analysis
+      setProcessStatus("analyzing");
       const response = await api.post("/scans/initiate", formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        timeout: 45000, // 45s for entire flow (upload + AI)
       });
 
-      setScanId(response.data.scanId);
-      setPrediction(response.data);
-      setQuestions(response.data.questions);
-
-      // Initialize survey state
-      const initialSymptoms: Record<string, string> = {};
-      response.data.questions.forEach((q: Question) => {
-        initialSymptoms[q.id.toString()] = "";
-      });
-      setSymptoms(initialSymptoms);
-
-      setStep(2);
-      toast.success("AI Analysis Complete", `Likely: ${response.data.predictedDisease}. Please answer a few questions.`);
+      // Save scanId for results retrieval
+      localStorage.setItem("currentScanId", response.data.scanId.toString());
+      
+      toast.success("Analysis Complete", "Redirecting to your results...");
+      
+      // Artificial delay for smooth transition
+      setTimeout(() => {
+        navigate("/results");
+      }, 1000);
+      
     } catch (error: any) {
-      toast.error("Connection Error", error.response?.data?.message || "AI Service unavailable.");
+      const msg = error.code === 'ECONNABORTED' 
+        ? "AI Analysis timed out. The server is taking too long." 
+        : (error.response?.data?.message || "AI Service unavailable.");
+      toast.error("Analysis Failed", msg);
     } finally {
       setIsInitiating(false);
-    }
-  };
-
-  // --- Phase 2: Complete Scan ---
-  const handleCompleteScan = async () => {
-    if (!scanId) return;
-
-    const unanswered = questions.some(q => !symptoms[q.id.toString()]);
-    if (unanswered) {
-      toast.warning("Incomplete", "Please answer all questions to get final results.");
-      return;
-    }
-
-    setIsCompleting(true);
-    try {
-      const answersArray = Object.entries(symptoms).map(([questionId, answer]) => ({
-        questionId: parseInt(questionId),
-        answer,
-      }));
-
-      await api.post(`/scans/complete/${scanId}`, { answers: answersArray });
-
-      localStorage.setItem("currentScanId", scanId.toString());
-      navigate("/results");
-    } catch (error: any) {
-      toast.error("Submission Failed", "Could not save your diagnosis results.");
-    } finally {
-      setIsCompleting(false);
+      setProcessStatus("idle");
     }
   };
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
+      <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Header Section */}
-        <div className="flex flex-col mb-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center border border-blue-200">
-              <ActivitySquare className="w-5 h-5 text-[#2a64ad]" />
+        {/* Sync Header - Ultra Compact */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-slate-100">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-lg bg-[#2a64ad] flex items-center justify-center shadow-md">
+                <Activity className="w-4.5 h-4.5 text-white" />
+              </div>
+              <div className="space-y-0 text-left">
+                <div className="flex items-center gap-2">
+                    <span className="px-1.5 py-0.5 bg-slate-100 rounded-md text-[8px] font-black uppercase text-slate-500 tracking-widest">Diagnostics</span>
+                    <span className="text-[9px] font-bold text-slate-400">AI-Powered</span>
+                </div>
+                <h2 className="text-xl font-black text-slate-800 tracking-tight">AI Skin Assessment</h2>
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-slate-800">AI Diagnosis</h2>
           </div>
-          <p className="text-slate-500 max-w-2xl">
-            {step === 1
-              ? "Start by uploading photos of the affected area. Our AI will analyze the patterns to identify potential conditions."
-              : "AI analysis is complete. Now, provide some details about your symptoms to refine the diagnosis."}
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-          {/* STEP 1: UPLOAD AREA (Left on large, Full on small) */}
-          <div className={`${step === 1 ? 'lg:col-span-12' : 'lg:col-span-4'} transition-all duration-500`}>
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 h-full">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${step === 1 ? 'bg-[#2a64ad] text-white' : 'bg-emerald-500 text-white'}`}>
-                    {step === 1 ? '1' : <CheckCircle2 className="w-4 h-4" />}
-                  </span>
-                  Image Submission
-                </h3>
-                {step === 2 && (
-                  <button onClick={() => setStep(1)} className="cursor-pointer text-xs font-semibold text-[#2a64ad] hover:text-[#1e4e8c] hover:underline underline-offset-4 transition-colors">
-                    Change images
-                  </button>
-                )}
-              </div>
-
-              {uploadedFiles.length > 0 ? (
-                <div className={`border-2 rounded-xl p-4 flex flex-col items-center justify-center bg-slate-50/50 relative group transition-colors ${isBlurry ? 'border-amber-200 bg-amber-50/10' : 'border-slate-200'}`}>
-                  {step === 1 && (
-                    <div
-                      className="absolute top-3 right-3 bg-white rounded-full p-1 shadow-sm border border-slate-100 z-10 cursor-pointer hover:bg-red-50 hover:text-red-500 transition-all"
-                      onClick={() => setUploadedFiles([])}
-                    >
-                      <X className="w-4 h-4 text-slate-400" />
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-3 justify-center mb-4">
-                    {uploadedFiles.map((file, idx) => (
-                      <img
-                        key={idx}
-                        src={URL.createObjectURL(file)}
-                        alt="Preview"
-                        className="w-28 h-28 object-cover rounded-lg border border-slate-200 shadow-sm"
-                      />
-                    ))}
-                  </div>
-
-                  {isBlurry && (
-                    <div className="flex items-center gap-2 mb-4 p-2 bg-amber-100 text-amber-700 rounded-lg text-xs font-bold">
-                      <AlertCircle className="w-4 h-4" />
-                      Blurred detected! Consider retaking.
-                    </div>
-                  )}
-
-                  {step === 1 && (
-                      <button
-                        onClick={handleInitiateScan}
-                        disabled={isInitiating}
-                        className="cursor-pointer w-full py-4 bg-[#2a64ad] text-white font-bold rounded-xl hover:bg-[#1e4e8c] hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isInitiating ? <Loader2 className="w-5 h-5 animate-spin" /> : <><FileSearch className="w-5 h-5" /> Start AI Analysis</>}
-                      </button>
-                  )}
-                </div>
-              ) : (
-                <label className="border-2 border-dashed border-slate-300 rounded-2xl p-12 flex flex-col items-center justify-center cursor-pointer hover:border-[#2a64ad] hover:bg-blue-50/50 transition-all bg-slate-50/50 group text-center">
-                  <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <Upload className="w-8 h-8 text-blue-400" />
-                  </div>
-                  <p className="font-semibold text-slate-700 mb-1">Click to upload photos</p>
-                  <p className="text-xs text-slate-400 mb-6 font-medium">Clear photos improve accuracy significantly.</p>
-                  <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
-                </label>
-              )}
+        {/* Upload Container - Compact */}
+        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-6 md:p-8">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Step 1: Upload Images</h3>
+              <div className="h-px flex-1 bg-slate-100 mx-4" />
             </div>
-          </div>
 
-          {/* STEP 2: DYNAMIC SURVEY (Right Side) */}
-          {step === 2 && (
-            <div className="lg:col-span-8 animate-in slide-in-from-right-10 duration-500">
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8 h-full flex flex-col">
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] bg-[#2a64ad] text-white">2</span>
-                    Clinical Survey: {prediction?.predictedDisease}
-                  </h3>
-                  <div className="px-3 py-1 bg-blue-50 rounded-full text-[#2a64ad] text-[10px] font-bold uppercase tracking-tight">
-                    AI Analysis Result
-                  </div>
-                </div>
-
-                <div className="space-y-8 flex-1">
-                  {questions.map((q) => (
-                    <div key={q.id} className={`pb-6 border-b transition-opacity ${q.isEmergency ? 'border-red-100' : 'border-slate-100'} last:border-0`}>
-                      <div className="flex items-start gap-3 mb-4">
-                        <label className="text-slate-700 font-bold text-base leading-tight">
-                          {q.text}
-                          {q.isEmergency && <span className="ml-2 text-[10px] font-bold text-red-500 uppercase border border-red-200 bg-red-50 px-1.5 py-0.5 rounded">Emergency Indicator</span>}
-                        </label>
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                        {["Yes", "No", "Unsure"].map((option) => (
-                          <button
-                            key={option}
-                            onClick={() => setSymptoms(prev => ({ ...prev, [q.id]: option }))}
-                            className={`cursor-pointer flex-1 py-3 px-4 rounded-xl border-2 font-bold text-sm transition-all ${symptoms[q.id] === option
-                                ? "border-[#2a64ad] bg-blue-50 text-[#2a64ad] shadow-sm"
-                                : "border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:bg-slate-50"
-                              }`}
-                          >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
+            {uploadedFiles.length > 0 ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {previewUrls.map((url, idx) => (
+                    <div key={idx} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-100 shadow-md">
+                      <img
+                        src={url}
+                        alt="Preview"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <button
+                        onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== idx))}
+                        className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-1.5 shadow-xl border border-white hover:bg-red-500 hover:text-white transition-all scale-0 group-hover:scale-100"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   ))}
+                </div>
 
-                  {questions.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-10 opacity-60">
-                      <ImageIcon className="w-12 h-12 mb-4 text-slate-300" />
-                      <p className="text-slate-500 font-medium">AI analysis confirms no additional survey needed.</p>
-                    </div>
+                {isBlurry && (
+                  <div className="flex items-center gap-3 p-4 bg-amber-50 text-amber-700 rounded-2xl border border-amber-100 italic text-sm font-medium">
+                    <AlertCircle className="w-5 h-5 shrink-0" />
+                    <p>Image quality seems low. Clearer photos ensure higher AI accuracy.</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleInitiateScan}
+                  disabled={isInitiating}
+                  className="w-full py-4 bg-[#2a64ad] text-white font-black text-lg rounded-2xl hover:bg-[#1e4e8c] hover:shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 group"
+                >
+                  {isInitiating ? (
+                    <>
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <span>{processStatus === "uploading" ? "Uploading..." : "Analyzing..."}</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileSearch className="w-5 h-5" />
+                      Execute Analysis
+                    </>
                   )}
-                </div>
-
-                <div className="mt-10 pt-6 border-t border-slate-100 flex gap-4">
-                  <button
-                    onClick={handleCompleteScan}
-                    disabled={isCompleting}
-                    className="cursor-pointer flex-1 py-4 bg-slate-900 text-white font-bold rounded-xl hover:bg-black hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed"
-                  >
-                    {isCompleting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" /> View Final Diagnosis Result</>}
-                  </button>
-                </div>
+                </button>
               </div>
-            </div>
-          )}
+            ) : (
+              <label className="group relative border-2 border-dashed border-slate-200 rounded-[2rem] p-10 flex flex-col items-center justify-center cursor-pointer hover:border-[#2a64ad] hover:bg-blue-50/10 transition-all duration-300 text-center">
+                <div className="relative z-10 w-16 h-16 bg-white rounded-2xl shadow-md flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-300 border border-slate-50">
+                  <Upload className="w-6 h-6 text-[#2a64ad]" />
+                </div>
+                <div className="relative z-10 space-y-1">
+                  <p className="text-xl font-bold text-slate-800 tracking-tight">Drop photos here</p>
+                  <p className="text-slate-400 text-xs font-medium">Close-up shots recommended (Max 3)</p>
+                </div>
+                <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
+              </label>
+            )}
+          </div>
+        </div>
+
+        {/* Small Info Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-8">
+           <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-100">
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-2">Quality Notice</h4>
+              <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                High clarity allows the AI to detect micro-textures and border irregularities for professional-grade insights.
+              </p>
+           </div>
+           <div className="bg-slate-900 rounded-2xl p-5 text-white/90">
+              <h4 className="text-xs font-black uppercase tracking-widest mb-2">Secure & Private</h4>
+              <p className="text-[11px] opacity-70 leading-relaxed font-medium">
+                All data is encrypted and processed securely. We prioritize your diagnostic privacy above all else.
+              </p>
+           </div>
         </div>
       </div>
     </Layout>

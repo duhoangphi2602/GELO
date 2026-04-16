@@ -8,12 +8,11 @@ import { PatientDiary } from "./components/patient-diary";
 import { ScanHistory } from "./components/scan-history";
 import { AdminDashboard } from "./components/admin-dashboard";
 import { DiseaseManagement } from "./components/disease-management";
-import { AdviceConfiguration } from "./components/advice-configuration";
-import { RuleEngine } from "./components/rule-engine";
 import { PrivateRoute } from "./components/layout/PrivateRoute";
 import { AdminRoute } from "./components/layout/AdminRoute";
 import { AdminPatientList } from "./components/admin-patient-list";
 import { Feedback } from "./components/feedback";
+import { AdviceConfiguration } from "./components/advice-configuration";
 
 export const router = createBrowserRouter([
   // ─── Public routes (không cần đăng nhập) ───────────────────────────────────
@@ -86,10 +85,6 @@ export const router = createBrowserRouter([
       {
         path: "/admin/advice",
         Component: AdviceConfiguration,
-      },
-      {
-        path: "/admin/rules",
-        Component: RuleEngine,
       },
       {
         path: "/admin/patients",

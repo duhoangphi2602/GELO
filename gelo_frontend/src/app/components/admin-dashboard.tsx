@@ -173,13 +173,13 @@ export function AdminDashboard() {
                           </td>
                           <td className="px-6 py-4 text-center">
                             <div className="flex flex-col items-center gap-1.5">
-                              <span className={`text-xs font-bold ${scan.confidence < 0.6 ? 'text-rose-500' : 'text-amber-500'}`}>
-                                {(scan.confidence * 100).toFixed(0)}%
+                              <span className={`text-xs font-bold ${scan.confidence < 60 ? 'text-rose-500' : 'text-amber-500'}`}>
+                                {scan.confidence.toFixed(0)}%
                               </span>
                               <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
                                 <div
-                                  className={`h-full ${scan.confidence < 0.6 ? 'bg-rose-500' : 'bg-amber-500'}`}
-                                  style={{ width: `${scan.confidence * 100}%` }}
+                                  className={`h-full ${scan.confidence < 60 ? 'bg-rose-500' : 'bg-amber-500'}`}
+                                  style={{ width: `${scan.confidence}%` }}
                                 />
                               </div>
                             </div>

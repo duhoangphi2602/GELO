@@ -21,7 +21,7 @@ export default function AuthLayout({ children, title, subtitle, description }: A
                         Welcome to<br />GELO.
                     </h1>
                     <p className="text-lg text-blue-100 max-w-md mb-12">
-                        Your intelligent partner in skin health. The system integrates AI image analysis with clinical surveys to deliver instant, high-precision diagnostic insights and urgent medical alerts.
+                        Your intelligent partner in skin health. The system leverages state-of-the-art AI vision models to deliver instant, high-precision dermatological insights and urgent medical alerts.
                     </p>
 
                     <div className="w-12 h-1 bg-blue-300 mb-8 opacity-50"></div>

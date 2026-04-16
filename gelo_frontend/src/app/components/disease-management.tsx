@@ -74,13 +74,13 @@ export function DiseaseManagement() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this disease? This might affect associated rules.")) {
+    if (confirm("Are you sure you want to delete this disease? This will also remove associated diagnostic results and history.")) {
       try {
         await api.delete(`/diseases/${id}`);
         fetchDiseases();
       } catch (error) {
         console.error("Error deleting disease:", error);
-        alert("Failed to delete disease. It might be linked to existing rules.");
+        alert("Failed to delete disease. It might be linked to existing scan records.");
       }
     }
   };

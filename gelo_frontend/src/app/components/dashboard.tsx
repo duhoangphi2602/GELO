@@ -40,7 +40,7 @@ export function Dashboard() {
 
         {/* Welcome Text */}
         <div className="mb-2">
-          <h1 className="text-2xl font-bold text-slate-800">Welcome, {fullName}! 👋</h1>
+          <h1 className="text-2xl font-bold text-slate-800">Welcome, {fullName}!</h1>
         </div>
 
         {/* Stats Grid */}
