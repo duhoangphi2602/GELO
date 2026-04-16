@@ -139,7 +139,7 @@ export class ScanService {
     });
 
     // 3. Tính điểm Hybrid
-    const aiScore = (prediction.confidence || 0) / 100;
+    const aiScore = prediction.confidence || 0;
     const engineResult = this.engine.calculateHybridScore(aiScore, answers, rules);
 
     // 4. Lưu kết quả chẩn đoán cuối cùng

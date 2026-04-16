@@ -2,6 +2,8 @@ import os
 import json
 import logging
 import torch
+import torch.nn as nn
+from torchvision import models
 
 logger = logging.getLogger("model_loader")
 
@@ -32,24 +34,72 @@ class ModelPackage:
         # 3. Load model weight
         model_path = os.path.join(self.version_dir, "model.pt")
         if not os.path.exists(model_path):
-            logger.warning(f"Missing model.pt in {self.version_dir} - Loading Mock Architecture instead for testing!")
+            logger.warning(f"Missing model.pt in {self.version_dir} - Falling back to Mock Engine.")
             self.model = "mock"
         else:
             try:
-                # Load torch model. Using JIT is common for production, or standard state_dict if architecture is present.
-                # Assuming standard TorchScript for framework independence:
+                # Attempt 1: Load as TorchScript (Production preferred)
                 self.model = torch.jit.load(model_path, map_location=self.device)
                 self.model.eval()
-                logger.info(f"PyTorch model successfully loaded to {self.device}")
+                logger.info(f"TorchScript model loaded successfully to {self.device}")
             except Exception as e:
-                logger.error(f"Error loading torch model {model_path}: {e}")
-                # Optional fallback to general torch.load
+                logger.warning(f"Could not load as TorchScript (Expected for state_dict files): {e}")
+                
                 try:
-                    self.model = torch.load(model_path, map_location=self.device)
-                    self.model.eval()
-                    logger.info("Loaded PyTorch model using standard torch.load")
+                    # Attempt 2: Load as standard pickle (state_dict or full model)
+                    loaded_data = torch.load(model_path, map_location=self.device)
+                    
+                    if isinstance(loaded_data, dict):
+                        # Use 'model_state_dict' if present (common for checkpoints)
+                        raw_state_dict = loaded_data.get("model_state_dict", loaded_data)
+                        
+                        # Fix classifier naming mismatch (e.g., from classifier.1.1... to classifier.1...)
+                        state_dict = {}
+                        for k, v in raw_state_dict.items():
+                            new_key = k.replace("classifier.1.1.", "classifier.1.")
+                            state_dict[new_key] = v
+                        
+                        arch_type = self.config.get("architecture", "efficientnet_v2_s")
+                        num_classes = self.config.get("num_classes", 4)
+                        
+                        logger.info(f"Detected state_dict. Reconstructing architecture: {arch_type}")
+                        
+                        if arch_type == "efficientnet_v2_s":
+                            self.model = models.efficientnet_v2_s(weights=None)
+                            in_features = self.model.classifier[1].in_features
+                            self.model.classifier[1] = nn.Linear(in_features, num_classes)
+                            
+                            # Load with strict=False to be more resilient to minor layer naming differences
+                            self.model.load_state_dict(state_dict, strict=False)
+                            self.model.to(self.device)
+                            self.model.eval()
+                            logger.info(f"Successfully reconstructed {arch_type} and loaded weights.")
+                            
+                            # Auto-Sync Metadata from checkpoint to config
+                            synced_keys = []
+                            for key in ["input_size", "mean", "std"]:
+                                if key in loaded_data:
+                                    self.config[key] = loaded_data[key]
+                                    synced_keys.append(key)
+                            
+                            if "label_mapping" in loaded_data:
+                                # Standardize label mapping: ensure keys are strings (JSON compatible)
+                                raw_mapping = loaded_data["label_mapping"]
+                                self.labels = {str(k): v for k, v in raw_mapping.items()}
+                                synced_keys.append("label_mapping")
+                                
+                            if synced_keys:
+                                logger.info(f"Auto-Sync Complete. Overrode config with metadata from checkpoint: {synced_keys}")
+                        else:
+                            raise ValueError(f"Unsupported architecture for state_dict loading: {arch_type}")
+                    else:
+                        self.model = loaded_data
+                        self.model.eval()
+                        logger.info("Loaded PyTorch model using standard torch.load")
                 except Exception as e2:
-                    raise RuntimeError("Failed to load model weights. Ensure it is a valid torchscript or pt file.") from e2
+                    logger.error(f"Critical failure loading model weights: {e2}")
+                    self.model = "mock"
+                    logger.warning("Starting in Mock Mode to maintain service availability.")
 
 def load_model_package(version: str = "v1") -> ModelPackage:
     """

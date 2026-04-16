@@ -63,7 +63,9 @@ export class DiagnosticEngineService {
     }
 
     const normalizedRuleScore = maxRuleScore > 0 ? (ruleScore / maxRuleScore) * 100 : 0;
-    const finalScore = (aiScore * 100 * AI_WEIGHT) + (normalizedRuleScore * RULE_WEIGHT);
+    
+    // Both aiScore and normalizedRuleScore are expected to be in the 0-100 range.
+    const finalScore = (aiScore * AI_WEIGHT) + (normalizedRuleScore * RULE_WEIGHT);
 
     let decision = 'unknown';
     if (isEmergency) {

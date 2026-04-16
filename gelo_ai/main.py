@@ -4,6 +4,10 @@ import asyncio
 import os
 from typing import Optional, List
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+
+# Load environment variables early
+load_dotenv()
 
 from fastapi import FastAPI, HTTPException, Request, Security, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -108,6 +112,8 @@ async def predict(body: PredictRequest):
         else:
             full_urls.append(f"{host}{url if url.startswith('/') else '/' + url}")
     
+    logger.info(f"Initiating prediction for {len(full_urls)} images: {full_urls}")
+
     try:
         # Preprocessing Pipeline (Async HTTP -> PyTorch Tensor) (1, C, H, W) -> list
         tasks = [download_and_preprocess(url, predictor.config) for url in full_urls]
@@ -115,14 +121,15 @@ async def predict(body: PredictRequest):
         
         # Filter out exceptions (fault-tolerance for ensemble)
         valid_tensors = []
-        for t in tensors:
+        for i, t in enumerate(tensors):
             if isinstance(t, Exception):
-                logger.warning(f"Skipping failed image tensor: {type(t).__name__} - {str(t)}")
+                logger.error(f"Failed to process image {full_urls[i]}: {type(t).__name__} - {str(t)}")
             else:
                 valid_tensors.append(t)
         
         if not valid_tensors:
-            raise InvalidImageError("All provided images failed to download or preprocess.")
+            logger.error(f"All {len(full_urls)} images failed. Results of attempts: {tensors}")
+            raise InvalidImageError("All provided images failed to download or preprocess. Check AI logs for network/SSL/Timeout details.")
             
         import torch
         batch_tensor = torch.cat(valid_tensors, dim=0) # Stacks (1, C, H, W) -> (N, C, H, W)

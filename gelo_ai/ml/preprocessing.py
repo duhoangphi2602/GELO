@@ -10,28 +10,32 @@ logger = logging.getLogger("preprocessing")
 
 MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 
-async def fetch_image_async(image_url: str, timeout: float = 5.0) -> bytes:
+async def fetch_image_async(image_url: str, timeout: float = 10.0) -> bytes:
     logger.info(f"Downloading image from {image_url} (timeout={timeout}s)")
     try:
-        async with httpx.AsyncClient() as client:
+        # verify=False is used to bypass SSL issues common in local/dev environments on Windows
+        async with httpx.AsyncClient(verify=False) as client:
             response = await client.get(image_url, timeout=timeout)
             response.raise_for_status()
             
             content_type = response.headers.get("Content-Type", "")
             if not content_type.startswith("image/"):
-                raise InvalidImageError(f"Invalid content type: {content_type}")
+                raise InvalidImageError(f"Invalid content type: {content_type} for URL: {image_url}")
                 
             image_data = response.content
             if len(image_data) > MAX_IMAGE_SIZE_BYTES:
-                raise InvalidImageError("Image exceeds maximum size limits (10MB)")
+                raise InvalidImageError(f"Image from {image_url} exceeds maximum size limits (10MB)")
                 
             return image_data
     except httpx.RequestError as e:
-        logger.error(f"Network error while downloading: {e}")
-        raise DownloadError("Failed to fetch image due to network error")
+        logger.error(f"Network error while downloading {image_url}: {str(e)}")
+        raise DownloadError(f"Failed to fetch image due to network error: {str(e)}")
     except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP error {e.response.status_code} while downloading")
-        raise DownloadError(f"Server responded with {e.response.status_code}")
+        logger.error(f"HTTP error {e.response.status_code} while downloading {image_url}")
+        raise DownloadError(f"Server responded with {e.response.status_code} for {image_url}")
+    except Exception as e:
+        logger.error(f"Unexpected error while fetching {image_url}: {str(e)}")
+        raise DownloadError(f"Error fetching image: {str(e)}")
 
 def preprocess_image_tensor(image_bytes: bytes, config: dict) -> torch.Tensor:
     """
@@ -44,14 +48,20 @@ def preprocess_image_tensor(image_bytes: bytes, config: dict) -> torch.Tensor:
     except UnidentifiedImageError:
         raise InvalidImageError("Downloaded file is not a valid or readable image")
 
-    # Read config
-    input_size = config.get("input_size", [3, 224, 224]) # [C, H, W]
-    target_width = input_size[2]
-    target_height = input_size[1]
+    # Read config robustly
+    raw_input_size = config.get("input_size", [3, 224, 224])
+    if isinstance(raw_input_size, int):
+        target_width = raw_input_size
+        target_height = raw_input_size
+    else:
+        # Assuming [C, H, W] or [H, W]
+        target_width = raw_input_size[-1]
+        target_height = raw_input_size[-2]
     
-    normalization = config.get("normalize", {})
-    mean_list = normalization.get("mean", [0.485, 0.456, 0.406])
-    std_list = normalization.get("std", [0.229, 0.224, 0.225])
+    # Normalization: handle both root keys and nested 'normalize' key
+    norm_config = config.get("normalize", config) 
+    mean_list = norm_config.get("mean", [0.485, 0.456, 0.406])
+    std_list = norm_config.get("std", [0.229, 0.224, 0.225])
 
     # 1. Resize
     img = img.resize((target_width, target_height), Image.Resampling.BILINEAR)
