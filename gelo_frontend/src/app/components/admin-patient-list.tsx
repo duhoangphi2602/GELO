@@ -1,14 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { AdminLayout } from "./admin-layout";
 import api from "../lib/api";
-import { 
-  Search, 
-  User, 
-  Calendar, 
-  Activity, 
-  ChevronRight, 
-  ArrowUpDown, 
-  ArrowUp, 
+import {
+  Search,
+  User,
+  Calendar,
+  ChevronRight,
+  ArrowUpDown,
+  ArrowUp,
   ArrowDown,
   Filter,
   Users
@@ -133,24 +132,24 @@ export function AdminPatientList() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
-          <div className="flex flex-wrap items-center gap-3">
-             <div className="flex items-center gap-2 bg-muted/50 border border-border px-3 py-1.5 rounded-xl">
-                <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Gender:</span>
-                <select 
-                  className="bg-transparent text-sm font-semibold focus:outline-none cursor-pointer"
-                  value={genderFilter}
-                  onChange={(e) => setGenderFilter(e.target.value)}
-                >
-                  <option value="all">All Genders</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-             </div>
 
-             <div className="h-8 w-px bg-border hidden md:block"></div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 bg-muted/50 border border-border px-3 py-1.5 rounded-xl">
+              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Gender:</span>
+              <select
+                className="bg-transparent text-sm font-semibold focus:outline-none cursor-pointer"
+                value={genderFilter}
+                onChange={(e) => setGenderFilter(e.target.value)}
+              >
+                <option value="all">All Genders</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div className="h-8 w-px bg-border hidden md:block"></div>
 
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[#2a64ad]/5 border border-[#2a64ad]/20 rounded-xl">
               <Users className="w-4 h-4 text-[#2a64ad]" />
@@ -167,7 +166,7 @@ export function AdminPatientList() {
             <table className="w-full text-sm text-left">
               <thead>
                 <tr className="bg-muted/50 border-b border-border">
-                  <th 
+                  <th
                     className="px-6 py-4 font-bold text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors"
                     onClick={() => handleSort("fullName")}
                   >
@@ -175,7 +174,7 @@ export function AdminPatientList() {
                       Patient Name <SortIcon columnKey="fullName" />
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-4 font-bold text-muted-foreground text-center cursor-pointer hover:bg-muted/80 transition-colors"
                     onClick={() => handleSort("age")}
                   >
@@ -183,7 +182,7 @@ export function AdminPatientList() {
                       Age <SortIcon columnKey="age" />
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-4 font-bold text-muted-foreground text-center cursor-pointer hover:bg-muted/80 transition-colors"
                     onClick={() => handleSort("gender")}
                   >
@@ -193,15 +192,15 @@ export function AdminPatientList() {
                   </th>
                   <th className="px-6 py-4 font-bold text-muted-foreground text-center">
                     <div className="flex items-center justify-center gap-4 uppercase tracking-wider text-[11px]">
-                       <div className="cursor-pointer hover:text-[#2a64ad] flex items-center" onClick={() => handleSort("totalScans")}>
-                         Scans <SortIcon columnKey="totalScans" />
-                       </div>
-                       <div className="cursor-pointer hover:text-[#2a64ad] flex items-center" onClick={() => handleSort("totalDiaries")}>
-                         Diaries <SortIcon columnKey="totalDiaries" />
-                       </div>
+                      <div className="cursor-pointer hover:text-[#2a64ad] flex items-center" onClick={() => handleSort("totalScans")}>
+                        Scans <SortIcon columnKey="totalScans" />
+                      </div>
+                      <div className="cursor-pointer hover:text-[#2a64ad] flex items-center" onClick={() => handleSort("totalDiaries")}>
+                        Diaries <SortIcon columnKey="totalDiaries" />
+                      </div>
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-4 font-bold text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors"
                     onClick={() => handleSort("lastScanDate")}
                   >
@@ -209,7 +208,7 @@ export function AdminPatientList() {
                       Last Scan <SortIcon columnKey="lastScanDate" />
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-4 font-bold text-muted-foreground text-right cursor-pointer hover:bg-muted/80 transition-colors"
                     onClick={() => handleSort("createdAt")}
                   >
@@ -254,11 +253,10 @@ export function AdminPatientList() {
                         <span className="font-bold text-slate-700">{patient.age}</span>
                       </td>
                       <td className="px-6 py-5 text-center">
-                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${
-                          patient.gender?.toLowerCase() === 'male' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${patient.gender?.toLowerCase() === 'male' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
                           patient.gender?.toLowerCase() === 'female' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
-                          'bg-slate-50 text-slate-600 border border-slate-100'
-                        }`}>
+                            'bg-slate-50 text-slate-600 border border-slate-100'
+                          }`}>
                           {patient.gender || 'N/A'}
                         </span>
                       </td>
@@ -281,8 +279,8 @@ export function AdminPatientList() {
                               {patient.lastScanDisease || "No results"}
                             </span>
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                               <Calendar className="w-3 h-3" />
-                               {new Date(patient.lastScanDate).toLocaleDateString()}
+                              <Calendar className="w-3 h-3" />
+                              {new Date(patient.lastScanDate).toLocaleDateString()}
                             </div>
                           </div>
                         ) : (
@@ -303,17 +301,17 @@ export function AdminPatientList() {
                   <tr>
                     <td colSpan={6} className="px-6 py-20 text-center text-muted-foreground">
                       <div className="flex flex-col items-center">
-                         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                            <Search className="w-8 h-8 opacity-20" />
-                         </div>
-                         <p className="font-bold text-slate-500">No patients found</p>
-                         <p className="text-sm mt-1">Try adjusting your filters or search term</p>
-                         <button 
-                            onClick={() => {setSearchTerm(""); setGenderFilter("all");}}
-                            className="mt-4 text-[#2a64ad] font-bold text-sm hover:underline"
-                         >
-                            Clear all filters
-                         </button>
+                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                          <Search className="w-8 h-8 opacity-20" />
+                        </div>
+                        <p className="font-bold text-slate-500">No patients found</p>
+                        <p className="text-sm mt-1">Try adjusting your filters or search term</p>
+                        <button
+                          onClick={() => { setSearchTerm(""); setGenderFilter("all"); }}
+                          className="mt-4 text-[#2a64ad] font-bold text-sm hover:underline"
+                        >
+                          Clear all filters
+                        </button>
                       </div>
                     </td>
                   </tr>

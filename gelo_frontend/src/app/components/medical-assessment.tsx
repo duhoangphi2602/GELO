@@ -61,7 +61,7 @@ export function MedicalAssessment() {
         const threshold = Number(import.meta.env.VITE_BLUR_THRESHOLD || 8);
         resolve(score < threshold);
       };
-      
+
       // Use the first file for blur check
       const tempUrl = URL.createObjectURL(file);
       img.src = tempUrl;
@@ -104,7 +104,7 @@ export function MedicalAssessment() {
 
     setIsInitiating(true);
     setProcessStatus("uploading");
-    
+
     try {
       const formData = new FormData();
       uploadedFiles.forEach(file => formData.append("images", file));
@@ -118,17 +118,17 @@ export function MedicalAssessment() {
 
       // Save scanId for results retrieval
       localStorage.setItem("currentScanId", response.data.scanId.toString());
-      
+
       toast.success("Analysis Complete", "Redirecting to your results...");
-      
+
       // Artificial delay for smooth transition
       setTimeout(() => {
         navigate("/results");
       }, 1000);
-      
+
     } catch (error: any) {
-      const msg = error.code === 'ECONNABORTED' 
-        ? "AI Analysis timed out. The server is taking too long." 
+      const msg = error.code === 'ECONNABORTED'
+        ? "AI Analysis timed out. The server is taking too long."
         : (error.response?.data?.message || "AI Service unavailable.");
       toast.error("Analysis Failed", msg);
     } finally {
@@ -150,8 +150,8 @@ export function MedicalAssessment() {
               </div>
               <div className="space-y-0 text-left">
                 <div className="flex items-center gap-2">
-                    <span className="px-1.5 py-0.5 bg-slate-100 rounded-md text-[8px] font-black uppercase text-slate-500 tracking-widest">Diagnostics</span>
-                    <span className="text-[9px] font-bold text-slate-400">AI-Powered</span>
+                  <span className="px-1.5 py-0.5 bg-slate-100 rounded-md text-[8px] font-black uppercase text-slate-500 tracking-widest">Diagnostics</span>
+                  <span className="text-[9px] font-bold text-slate-400">AI-Powered</span>
                 </div>
                 <h2 className="text-xl font-black text-slate-800 tracking-tight">AI Skin Assessment</h2>
               </div>
@@ -197,7 +197,7 @@ export function MedicalAssessment() {
                 <button
                   onClick={handleInitiateScan}
                   disabled={isInitiating}
-                  className="w-full py-4 bg-[#2a64ad] text-white font-black text-lg rounded-2xl hover:bg-[#1e4e8c] hover:shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 group"
+                  className="cursor-pointer w-full py-4 bg-[#2a64ad] text-white font-black text-lg rounded-2xl hover:bg-[#1e4e8c] hover:shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 group"
                 >
                   {isInitiating ? (
                     <>
@@ -229,18 +229,18 @@ export function MedicalAssessment() {
 
         {/* Small Info Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-8">
-           <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-100">
-              <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-2">Quality Notice</h4>
-              <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
-                High clarity allows the AI to detect micro-textures and border irregularities for professional-grade insights.
-              </p>
-           </div>
-           <div className="bg-slate-900 rounded-2xl p-5 text-white/90">
-              <h4 className="text-xs font-black uppercase tracking-widest mb-2">Secure & Private</h4>
-              <p className="text-[11px] opacity-70 leading-relaxed font-medium">
-                All data is encrypted and processed securely. We prioritize your diagnostic privacy above all else.
-              </p>
-           </div>
+          <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-100">
+            <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-2">Quality Notice</h4>
+            <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+              High clarity allows the AI to detect micro-textures and border irregularities for professional-grade insights.
+            </p>
+          </div>
+          <div className="bg-slate-900 rounded-2xl p-5 text-white/90">
+            <h4 className="text-xs font-black uppercase tracking-widest mb-2">Secure & Private</h4>
+            <p className="text-[11px] opacity-70 leading-relaxed font-medium">
+              All data is encrypted and processed securely. We prioritize your diagnostic privacy above all else.
+            </p>
+          </div>
         </div>
       </div>
     </Layout>

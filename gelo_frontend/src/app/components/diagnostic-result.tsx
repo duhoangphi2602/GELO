@@ -363,15 +363,6 @@ export function DiagnosticResult() {
                   </div>
                 )}
               </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Image Fidelity</span>
-                  <span className="text-xs font-black text-emerald-500">100.0%</span>
-                </div>
-                <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 w-full" />
-                </div>
-              </div>
             </div>
 
             {/* AI Confidence Gauge */}
@@ -410,14 +401,14 @@ export function DiagnosticResult() {
             <div className="space-y-4">
               <button
                 onClick={() => navigate("/diary")}
-                className="w-full py-5 bg-white border-2 border-slate-900 text-slate-900 font-black rounded-[1.5rem] hover:bg-slate-900 hover:text-white transition-all group flex items-center justify-center gap-3"
+                className="cursor-pointer w-full py-5 bg-white border-2 border-slate-900 text-slate-900 font-black rounded-[1.5rem] hover:bg-slate-900 hover:text-white transition-all group flex items-center justify-center gap-3"
               >
                 Log in Health Diary
                 <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <button
                 onClick={() => navigate(`/feedback?scanId=${localStorage.getItem("currentScanId")}`)}
-                className="w-full py-5 bg-slate-100 text-slate-600 font-black rounded-[1.5rem] hover:bg-slate-200 transition-all flex items-center justify-center gap-3"
+                className="cursor-pointer w-full py-5 bg-slate-100 text-slate-600 font-black rounded-[1.5rem] hover:bg-slate-200 transition-all flex items-center justify-center gap-3"
               >
                 <MessageSquareHeart className="w-5 h-5" />
                 Correct AI Diagnosis

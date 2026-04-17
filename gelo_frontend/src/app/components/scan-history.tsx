@@ -17,7 +17,7 @@ export function ScanHistory() {
   const [modalConfig, setModalConfig] = useState({
     title: "",
     message: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
     isDanger: true
   });
 
@@ -44,7 +44,7 @@ export function ScanHistory() {
   async function handleDelete(e: any, scanId: number) {
     e.stopPropagation();
     console.log(`[History] Opening custom confirm for scan ID: ${scanId}`);
-    
+
     setModalConfig({
       title: "Delete Scan Record",
       message: "Are you sure you want to permanently remove this diagnostic record? This action cannot be undone.",
@@ -65,7 +65,7 @@ export function ScanHistory() {
 
   async function handleDeleteAllHistory() {
     console.log("[History] Opening custom confirm for ALL history");
-    
+
     setModalConfig({
       title: "Wipe All Scan History",
       message: "WARNING: This will permanently delete ALL your scan history and related diagnostic reports. There is no recovery after this action.",
@@ -105,8 +105,8 @@ export function ScanHistory() {
               </div>
               <div className="space-y-0">
                 <div className="flex items-center gap-2">
-                    <span className="px-1.5 py-0.5 bg-slate-100 rounded-md text-[8px] font-black uppercase text-slate-500 tracking-widest">Records</span>
-                    <span className="text-[9px] font-bold text-slate-400">{scans.length} Items</span>
+                  <span className="px-1.5 py-0.5 bg-slate-100 rounded-md text-[8px] font-black uppercase text-slate-500 tracking-widest">Records</span>
+                  <span className="text-[9px] font-bold text-slate-400">{scans.length} Items</span>
                 </div>
                 <h2 className="text-xl font-black text-slate-800 tracking-tight">History Archives</h2>
               </div>
@@ -116,8 +116,8 @@ export function ScanHistory() {
           <button
             type="button"
             onClick={() => {
-                console.log("[UI] User clicked Clear History");
-                handleDeleteAllHistory();
+              console.log("[UI] User clicked Clear History");
+              handleDeleteAllHistory();
             }}
             disabled={loading || scans.length === 0}
             className="flex items-center gap-2 cursor-pointer bg-white border border-slate-200 text-slate-400 px-3 py-1.5 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-colors font-black text-[9px] uppercase tracking-widest"
@@ -131,7 +131,7 @@ export function ScanHistory() {
         {loading ? (
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="h-14 bg-slate-50 rounded-xl" />
+              <div key={i} className="h-14 bg-slate-50 rounded-xl" />
             ))}
           </div>
         ) : scans.length > 0 ? (
@@ -144,7 +144,7 @@ export function ScanHistory() {
 
               const isHigh = decision === 'high_confidence';
               const statusColor = isHigh ? "text-emerald-600" : "text-amber-600";
-              
+
               return (
                 <div
                   key={scan.id}
@@ -154,49 +154,46 @@ export function ScanHistory() {
                   {/* Small Thumbnail */}
                   <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
                     {imageUrl ? (
-                        <img 
-                            src={imageUrl} 
-                            alt="Scan" 
-                            className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all"
-                        />
+                      <img
+                        src={imageUrl}
+                        alt="Scan"
+                        className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all"
+                      />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                           <Activity className="w-4 h-4 text-slate-300" />
-                        </div>
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Activity className="w-4 h-4 text-slate-300" />
+                      </div>
                     )}
                   </div>
 
                   {/* Primary Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-slate-800 text-sm truncate">
-                            {diagnosis?.predictedDisease?.name || "Processing Analysis..."}
-                        </h3>
-                        <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${isHigh ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-900'}`}>
-                            {isHigh ? 'Accurate' : 'Low Conf.'}
-                        </span>
+                      <h3 className="font-bold text-slate-800 text-sm truncate">
+                        {diagnosis?.predictedDisease?.name || "Processing Analysis..."}
+                      </h3>
+                      <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${isHigh ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-900'}`}>
+                        {isHigh ? 'Accurate' : 'Low Conf.'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-400 font-medium">
-                        <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {new Date(scan.createdAt).toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center gap-1 font-bold">
-                            Match: <span className={statusColor}>{confidence}%</span>
-                        </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(scan.createdAt).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center gap-1 font-bold">
+                        Match: <span className={statusColor}>{confidence}%</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 px-2">
-                    <div className="text-[#2a64ad] opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ChevronRight className="w-4 h-4" />
-                    </div>
                     <button
-                        onClick={(e) => handleDelete(e, scan.id)}
-                        className="p-2 hover:bg-rose-500 hover:text-white text-slate-300 rounded-lg transition-all"
+                      onClick={(e) => handleDelete(e, scan.id)}
+                      className="cursor-pointer p-2 hover:bg-rose-500 hover:text-white text-slate-300 rounded-lg transition-all"
                     >
-                        <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -222,7 +219,7 @@ export function ScanHistory() {
         )}
       </div>
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onConfirm={modalConfig.onConfirm}

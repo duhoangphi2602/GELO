@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { ChevronRight, FileImage, ShieldCheck, MoreVertical } from "lucide-react";
+import { ChevronRight, FileImage, ShieldCheck } from "lucide-react";
 
 export function RecentScans({ loading, scanHistory }: { loading: boolean, scanHistory: any[] }) {
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ export function RecentScans({ loading, scanHistory }: { loading: boolean, scanHi
                  scan.diagnosis?.predictedDisease?.name || "Pending Validation");
                  
                 const isDanger = result !== "Healthy Skin" && result !== "Normal" && result !== "Pending Validation";
-                const confPercent = scan.predictions?.[0]?.confidence ? (scan.predictions[0].confidence * 100).toFixed(0) : "80"; // fallback 80 if missing
+                const confPercent = scan.predictions?.[0]?.confidence ? (scan.predictions[0].confidence).toFixed(0) : "80"; // fallback 80 if missing
 
                 return (
                   <tr key={scan.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
@@ -94,7 +94,7 @@ export function RecentScans({ loading, scanHistory }: { loading: boolean, scanHi
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={(e) => {
-                          e.stopPropagation(); // Ngăn sự kiện click lan ra hàng <tr>
+                          e.stopPropagation();
                           localStorage.setItem("currentScanId", scan.id.toString());
                           navigate("/results");
                         }}

@@ -7,14 +7,9 @@ import { DiagnosticStatus } from '@prisma/client';
 export class ScanService {
   private readonly logger = new Logger(ScanService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
-  /**
-   * AI-Only Diagnostic Flow (single phase):
-   * 1. Create SkinScan + ScanImages
-   * 2. Call AI Service (with cleanup if it fails)
-   * 3. Save all results in a single Transaction
-   */
+
   async initiateScan(patientId: number, imageUrls: string[]) {
     this.logger.log(`Initiating AI-only scan for patient ${patientId}`);
 
@@ -114,11 +109,11 @@ export class ScanService {
       this.logger.error(`AI Analysis failed for scan ${scan.id}. Cleaning up...`);
       // CLEANUP: If AI fails, remove the "incomplete" scan and images from Cloudinary
       await this.cleanupFailedScan(scan.id, imageUrls);
-      
+
       throw new ServiceUnavailableException(
-        error.message?.includes('AI Service') 
-        ? error.message 
-        : 'AI Diagnostic Service failure. Your request was cancelled and no data was saved.'
+        error.message?.includes('AI Service')
+          ? error.message
+          : 'AI Diagnostic Service failure. Your request was cancelled and no data was saved.'
       );
     }
   }
@@ -126,7 +121,7 @@ export class ScanService {
   /** Removes scan record and Cloudinary assets if the analysis stage fails */
   private async cleanupFailedScan(scanId: number, imageUrls: string[]) {
     try {
-      await this.prisma.skinScan.delete({ where: { id: scanId } }).catch(() => {});
+      await this.prisma.skinScan.delete({ where: { id: scanId } }).catch(() => { });
       await this.deleteImagesFromCloudinary(imageUrls);
     } catch (err) {
       this.logger.error(`Cleanup failed for scan ${scanId}: ${err.message}`);
@@ -265,33 +260,33 @@ export class ScanService {
     if (!diagnosis) throw new NotFoundException(`DiagnosisResult not found for scan #${scanId}`);
 
     return this.prisma.$transaction(async (tx) => {
-       if (!body.isCorrect) {
-          await tx.diagnosisResult.update({
-            where: { scanId },
-            data: {
-              finalDiseaseId: body.actualDiseaseId ?? null,
-              diagnosticStatus:
-                (body.actualStatus as DiagnosticStatus) ??
-                (body.actualDiseaseId ? DiagnosticStatus.DISEASE : diagnosis.diagnosticStatus),
-            },
-          });
-        }
-
-        const feedback = await tx.feedbackLog.create({
+      if (!body.isCorrect) {
+        await tx.diagnosisResult.update({
+          where: { scanId },
           data: {
-            scanId,
+            finalDiseaseId: body.actualDiseaseId ?? null,
             diagnosticStatus:
-              (body.actualStatus as DiagnosticStatus) ?? diagnosis.diagnosticStatus,
-            predictedDiseaseId: diagnosis.predictedDiseaseId,
-            actualDiseaseId: body.isCorrect
-              ? diagnosis.predictedDiseaseId
-              : (body.actualDiseaseId ?? null),
-            isCorrect: body.isCorrect,
-            note: body.note ?? 'Admin review',
+              (body.actualStatus as DiagnosticStatus) ??
+              (body.actualDiseaseId ? DiagnosticStatus.DISEASE : diagnosis.diagnosticStatus),
           },
         });
+      }
 
-        return { message: 'Review submitted', feedbackId: feedback.id };
+      const feedback = await tx.feedbackLog.create({
+        data: {
+          scanId,
+          diagnosticStatus:
+            (body.actualStatus as DiagnosticStatus) ?? diagnosis.diagnosticStatus,
+          predictedDiseaseId: diagnosis.predictedDiseaseId,
+          actualDiseaseId: body.isCorrect
+            ? diagnosis.predictedDiseaseId
+            : (body.actualDiseaseId ?? null),
+          isCorrect: body.isCorrect,
+          note: body.note ?? 'Admin review',
+        },
+      });
+
+      return { message: 'Review submitted', feedbackId: feedback.id };
     });
   }
 

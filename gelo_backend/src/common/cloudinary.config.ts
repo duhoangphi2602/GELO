@@ -9,10 +9,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/**
- * Multer storage adapter that uploads directly to Cloudinary.
- * Replaces diskStorage — no files are written to the local filesystem.
- */
 export const cloudinaryStorage = new CloudinaryStorage({
   cloudinary,
   params: async (_req, file) => ({
