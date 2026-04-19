@@ -1,8 +1,9 @@
 import {
   Controller, Post, Get, Param, UseGuards, Delete,
-  UseInterceptors, UploadedFiles, Body, BadRequestException,
+  UseInterceptors, UploadedFile, Body, BadRequestException, Res
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { ScanService } from './scan.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser, Roles } from '../auth/auth.decorator';
@@ -30,18 +31,18 @@ export class ScanController {
   @Post('initiate')
   @Roles(UserRole.PATIENT)
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FilesInterceptor('images', 3, multerOptions))
+  @UseInterceptors(FileInterceptor('images', multerOptions))
   async initiateScan(
     @CurrentUser('patientId') patientId: number,
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFile() file: Express.Multer.File,
   ) {
     if (!patientId) {
       throw new BadRequestException('Patient profile required.');
     }
-    if (!files || files.length === 0) {
-      throw new BadRequestException('At least one image file is required.');
+    if (!file) {
+      throw new BadRequestException('Image file is required.');
     }
-    const imageUrls = files.map((f: any) => f.path);
+    const imageUrls = [file.path];
     return this.scanService.initiateScan(patientId, imageUrls);
   }
 
@@ -90,20 +91,31 @@ export class ScanController {
     return this.scanService.getAdminStats();
   }
 
-  // ─── Admin: Danh sách bệnh nhân ────────────────────────────────────────
-  @Get('admin/patients')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async getAdminPatients() {
-    return this.scanService.getAdminPatients();
-  }
-
   // ─── Admin: Scan cần review ─────────────────────────────────────────────
   @Get('admin/pending-reviews')
   @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
   async getPendingReviews() {
     return this.scanService.getPendingReviews();
+  }
+
+  // ─── Admin: Reviewed data (Gold Standard) ────────────────────────────────
+  @Get('admin/verified-data')
+  @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard)
+  async getAdminVerifiedData() {
+    return this.scanService.getAdminVerifiedData();
+  }
+
+  // ─── Admin: Export verified data as CSV ─────────────────────────────────
+  @Get('admin/export-csv')
+  @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard)
+  async exportCsv(@Res() res: Response) {
+    const csv = await this.scanService.exportTrainingDataCsv();
+    res.header('Content-Type', 'text/csv');
+    res.attachment('gelo_training_data.csv');
+    return res.send(csv);
   }
 
   // ─── Admin: Danh sách bệnh ─────────────────────────────────────────────

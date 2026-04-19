@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DiagnosticStatus, UserRole } from '@prisma/client';
+import { DiagnosticStatus, UserRole, FeedbackRole } from '@prisma/client';
 
 @Injectable()
 export class ResultService {
@@ -84,6 +84,7 @@ export class ResultService {
         isCorrect: body.isCorrect,
         note: body.note ?? 'User self-feedback',
         actualDiseaseId: body.isCorrect ? diagnosis.predictedDiseaseId : null,
+        role: FeedbackRole.USER,
       },
     });
 

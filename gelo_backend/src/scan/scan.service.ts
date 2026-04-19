@@ -1,7 +1,7 @@
 import { Injectable, Logger, BadRequestException, ServiceUnavailableException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { cloudinary } from '../common/cloudinary.config';
-import { DiagnosticStatus } from '@prisma/client';
+import { DiagnosticStatus, FeedbackRole } from '@prisma/client';
 
 @Injectable()
 export class ScanService {
@@ -214,41 +214,123 @@ export class ScanService {
   async getPendingReviews(threshold?: number) {
     const reviewThreshold = threshold ?? Number(process.env.LOW_CONFIDENCE_THRESHOLD ?? 60);
 
-    const predictions = await this.prisma.prediction.findMany({
-      where: { confidence: { lt: reviewThreshold } },
+    // 1. Scans with low confidence AND no admin review
+    const lowConfidenceScans = await this.prisma.skinScan.findMany({
+      where: {
+        diagnosis: { aiConfidence: { lt: reviewThreshold } },
+        feedback: { none: { role: FeedbackRole.ADMIN } },
+      },
+      include: {
+        patient: { select: { fullName: true, id: true } },
+        images: { take: 1 },
+        diagnosis: { include: { predictedDisease: true } },
+        feedback: {
+          where: { role: FeedbackRole.USER },
+          take: 1,
+        },
+      },
+    });
+
+    // 2. Scans with user feedback saying incorrect AND no admin review
+    const userReportedScans = await this.prisma.skinScan.findMany({
+      where: {
+        feedback: {
+          some: { role: FeedbackRole.USER, isCorrect: false },
+          none: { role: FeedbackRole.ADMIN },
+        },
+      },
+      include: {
+        patient: { select: { fullName: true, id: true } },
+        images: { take: 1 },
+        diagnosis: { include: { predictedDisease: true } },
+        feedback: {
+          where: { role: FeedbackRole.USER },
+          take: 1,
+        },
+      },
+    });
+
+    // Merge and deduplicate
+    const allPendingMap = new Map();
+    [...lowConfidenceScans, ...userReportedScans].forEach(s => {
+      allPendingMap.set(s.id, s);
+    });
+
+    const allPending = Array.from(allPendingMap.values());
+
+    return allPending.map((scan) => {
+      const userFeedback = scan.feedback?.[0];
+      const isUserReported = userFeedback?.role === FeedbackRole.USER && userFeedback?.isCorrect === false;
+
+      return {
+        scanId: scan.id,
+        patientId: scan.patient?.id,
+        patientName: scan.patient?.fullName,
+        imageUrl: scan.images?.[0]?.imageUrl ?? null,
+        confidence: scan.diagnosis?.aiConfidence ?? 0,
+        predictedDisease:
+          scan.diagnosis?.diagnosticStatus === DiagnosticStatus.HEALTHY
+            ? 'Healthy'
+            : scan.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
+              ? 'Unknown'
+              : (scan.diagnosis?.predictedDisease?.name ?? 'Unknown'),
+        reason: isUserReported ? "User Reported Error" : "Low Confidence",
+        userNote: userFeedback?.note,
+        createdAt: scan.createdAt,
+      };
+    });
+  }
+
+  /** Admin: get all cases reviewed by admin (Gold Standard) */
+  async getAdminVerifiedData() {
+    const logs = await this.prisma.feedbackLog.findMany({
+      where: { role: FeedbackRole.ADMIN },
       orderBy: { createdAt: 'desc' },
       include: {
         scan: {
           include: {
-            patient: { select: { fullName: true, id: true } },
             images: { take: 1 },
-            diagnosis: { include: { predictedDisease: true, finalDisease: true } },
-            feedback: { take: 1 },
-          },
+            patient: { select: { fullName: true } },
+            diagnosis: true
+          }
         },
-        disease: true,
-      },
+        actualDisease: true,
+        predictedDisease: true
+      }
     });
 
-    return predictions
-      .filter((p) => p.scan?.feedback?.length === 0)
-      .map((p) => ({
-        predictionId: p.id,
-        scanId: p.scanId,
-        confidence: p.confidence ?? 0,
-        modelVersion: p.modelVersion,
-        createdAt: p.createdAt,
-        patientId: p.scan?.patient?.id,
-        patientName: p.scan?.patient?.fullName,
-        imageUrl: p.scan?.images?.[0]?.imageUrl ?? null,
-        predictedDisease:
-          p.diagnosticStatus === DiagnosticStatus.HEALTHY
-            ? 'Healthy'
-            : p.diagnosticStatus === DiagnosticStatus.UNKNOWN
-              ? 'Unknown'
-              : (p.disease?.name ?? 'Unknown'),
-        diagnosisId: p.scan?.diagnosis?.id ?? null,
-      }));
+    return logs.map(log => ({
+      feedbackId: log.id,
+      scanId: log.scanId,
+      patientName: log.scan?.patient?.fullName,
+      imageUrl: log.scan?.images[0]?.imageUrl,
+      predictedDisease: log.predictedDisease?.name || (log.diagnosticStatus === DiagnosticStatus.HEALTHY ? "Healthy" : "Unknown"),
+      actualDisease: log.actualDisease?.name || (log.diagnosticStatus === DiagnosticStatus.HEALTHY ? "Healthy" : "Unknown"),
+      isCorrect: log.isCorrect,
+      confidence: log.scan?.diagnosis?.aiConfidence,
+      reviewedAt: log.createdAt,
+      note: log.note
+    }));
+  }
+
+  /** Admin: export training data as CSV string */
+  async exportTrainingDataCsv() {
+    const logs = await this.prisma.feedbackLog.findMany({
+      where: { role: FeedbackRole.ADMIN },
+      include: {
+        scan: { include: { images: { take: 1 } } },
+        actualDisease: true
+      }
+    });
+
+    let csv = "scan_id,image_url,label_id,label_name,is_correct,reviewed_at\n";
+    logs.forEach(log => {
+      const imageUrl = log.scan?.images[0]?.imageUrl || "";
+      const labelId = log.actualDiseaseId || 0;
+      const labelName = log.actualDisease?.name || (log.diagnosticStatus === DiagnosticStatus.HEALTHY ? "Healthy" : "Unknown");
+      csv += `${log.scanId},"${imageUrl}",${labelId},"${labelName}",${log.isCorrect},"${log.createdAt.toISOString()}"\n`;
+    });
+    return csv;
   }
 
   /** Admin: submit review decision for a scan */
@@ -283,6 +365,7 @@ export class ScanService {
             : (body.actualDiseaseId ?? null),
           isCorrect: body.isCorrect,
           note: body.note ?? 'Admin review',
+          role: FeedbackRole.ADMIN,
         },
       });
 

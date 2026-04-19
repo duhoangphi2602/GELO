@@ -19,9 +19,8 @@ export function AdminDashboard() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [reviewsRes, _, statsRes] = await Promise.all([
+      const [reviewsRes, statsRes] = await Promise.all([
         api.get("/scans/admin/pending-reviews"),
-        api.get("/scans/admin/patients"),
         api.get("/scans/admin/stats")
       ]);
       setPendingReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
@@ -131,7 +130,7 @@ export function AdminDashboard() {
                     <tr className="bg-muted/50 border-b border-border">
                       <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Scan Info</th>
                       <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Prediction</th>
-                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground text-center">Confidence</th>
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground text-center">Reason</th>
                       <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">Action</th>
                     </tr>
                   </thead>
@@ -168,26 +167,23 @@ export function AdminDashboard() {
                               <span className="text-sm font-medium text-[#2a64ad] bg-blue-50 w-fit px-2 py-0.5 rounded leading-4">
                                 {scan.predictedDisease}
                               </span>
-                              <span className="text-[10px] text-muted-foreground mt-1">Ver: {scan.modelVersion}</span>
+                              <span className="text-[10px] text-muted-foreground mt-1">Confidence: {scan.confidence.toFixed(0)}%</span>
                             </div>
                           </td>
                           <td className="px-6 py-4 text-center">
                             <div className="flex flex-col items-center gap-1.5">
-                              <span className={`text-xs font-bold ${scan.confidence < 60 ? 'text-rose-500' : 'text-amber-500'}`}>
-                                {scan.confidence.toFixed(0)}%
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${scan.reason === "User Reported Error" ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-amber-50 text-amber-600 border border-amber-100"}`}>
+                                {scan.reason}
                               </span>
-                              <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full ${scan.confidence < 60 ? 'bg-rose-500' : 'bg-amber-500'}`}
-                                  style={{ width: `${scan.confidence}%` }}
-                                />
-                              </div>
+                              {scan.userNote && (
+                                <p className="text-[10px] text-muted-foreground italic truncate max-w-[150px]">"{scan.userNote}"</p>
+                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <button
                               onClick={() => openReview(scan)}
-                              className="px-4 py-1.5 text-xs font-bold bg-[#2a64ad] text-white rounded-lg hover:bg-[#1e4e8c] transition-all shadow-md shadow-blue-500/10 active:scale-95"
+                              className="cursor-pointer px-4 py-1.5 text-xs font-bold bg-[#2a64ad] text-white rounded-lg hover:bg-[#1e4e8c] transition-all shadow-md shadow-blue-500/10 active:scale-95"
                             >
                               Review
                             </button>

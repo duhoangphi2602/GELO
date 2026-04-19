@@ -7,6 +7,7 @@ import {
   Database,
   FileText,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -24,6 +25,11 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
       path: "/admin/dashboard",
       icon: LayoutDashboard,
       label: "Dashboard",
+    },
+    {
+      path: "/admin/data",
+      icon: ShieldCheck,
+      label: "Data Management",
     },
     {
       path: "/admin/diseases",

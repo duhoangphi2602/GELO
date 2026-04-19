@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class DiaryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async createDiaryEntry(patientId: number, scanId: number | null, conditionScore: number, note: string, entryDate?: string) {
     if (!patientId) {
@@ -11,7 +11,6 @@ export class DiaryService {
       throw new BadRequestException('Diary entries can only be created by patients with a valid profile.');
     }
 
-    // --- Self-Healing: Verify scanId before connecting ---
     let validScanId = scanId;
     if (scanId) {
       const scanExists = await this.prisma.skinScan.findFirst({ where: { id: scanId } });
@@ -75,9 +74,9 @@ export class DiaryService {
       where: { patientId }
     });
 
-    return { 
+    return {
       message: 'All diary entries deleted successfully',
-      count: result.count 
+      count: result.count
     };
   }
 }

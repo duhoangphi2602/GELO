@@ -122,6 +122,7 @@ model FeedbackLog {
   actualDiseaseId    Int?             @map("actual_disease_id")
   isCorrect          Boolean?         @map("is_correct")
   note               String?
+  role               FeedbackRole     @default(USER)
   createdAt          DateTime         @default(now()) @map("created_at")
   diagnosticStatus   DiagnosticStatus @default(DISEASE) @map("diagnostic_status")
   actualDisease      Disease?         @relation("ActualDiseaseFeedback", fields: [actualDiseaseId], references: [id], onDelete: Cascade)
@@ -145,6 +146,11 @@ model SkinDiary {
 enum UserRole {
   ADMIN
   PATIENT
+}
+
+enum FeedbackRole {
+  USER
+  ADMIN
 }
 
 enum Gender {

@@ -4,7 +4,6 @@ export function StatsCards({ scanHistory }: { scanHistory: any[] }) {
   const totalScans = scanHistory.length;
   const diseasesDetected = scanHistory.filter(s => s.diagnosis?.diagnosticStatus === 'DISEASE').length;
   const awaitingReview = scanHistory.filter(s => !s.diagnosis?.isReviewed && s.diagnosis?.diagnosticStatus === 'DISEASE').length;
-  const healthy = scanHistory.filter(s => s.diagnosis?.diagnosticStatus === 'HEALTHY').length;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

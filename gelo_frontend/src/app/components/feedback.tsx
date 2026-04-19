@@ -53,12 +53,23 @@ export function Feedback() {
           <p className="text-slate-500 text-lg">
             Your verification helps us improve the AI diagnostic model's accuracy.
           </p>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="px-8 py-3 bg-[#2a64ad] text-white rounded-xl font-bold hover:bg-[#1e4e8c] transition-all shadow-md"
-          >
-            Return to Dashboard
-          </button>
+          <div className="flex justify-center items-center">
+            <div className="flex gap-6">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="cursor-pointer px-8 py-3 bg-[#2a64ad] text-white rounded-xl font-bold hover:bg-[#1e4e8c] transition-all shadow-md"
+              >
+                Return to Dashboard
+              </button>
+
+              <button
+                onClick={() => navigate("/diary")}
+                className="cursor-pointer px-8 py-3 bg-[#2a64ad] text-white rounded-xl font-bold hover:bg-[#1e4e8c] transition-all shadow-md"
+              >
+                Track to Diary
+              </button>
+            </div>
+          </div>
         </div>
       </Layout>
     );
@@ -91,8 +102,8 @@ export function Feedback() {
                   type="button"
                   onClick={() => setIsCorrect(true)}
                   className={`cursor-pointer flex flex-col items-center gap-4 p-8 rounded-3xl border-2 transition-all w-48 ${isCorrect === true
-                      ? "bg-green-50 border-green-500 text-green-700 ring-4 ring-green-100"
-                      : "bg-slate-50 border-slate-100 text-slate-400 hover:border-green-200 hover:bg-white"
+                    ? "bg-green-50 border-green-500 text-green-700 ring-4 ring-green-100"
+                    : "bg-slate-50 border-slate-100 text-slate-400 hover:border-green-200 hover:bg-white"
                     }`}
                 >
                   <ThumbsUp className={`w-12 h-12 ${isCorrect === true ? "fill-green-500" : ""}`} />
@@ -103,8 +114,8 @@ export function Feedback() {
                   type="button"
                   onClick={() => setIsCorrect(false)}
                   className={`cursor-pointer flex flex-col items-center gap-4 p-8 rounded-3xl border-2 transition-all w-48 ${isCorrect === false
-                      ? "bg-red-50 border-red-500 text-red-700 ring-4 ring-red-100"
-                      : "bg-slate-50 border-slate-100 text-slate-400 hover:border-red-200 hover:bg-white"
+                    ? "bg-red-50 border-red-500 text-red-700 ring-4 ring-red-100"
+                    : "bg-slate-50 border-slate-100 text-slate-400 hover:border-red-200 hover:bg-white"
                     }`}
                 >
                   <ThumbsDown className={`w-12 h-12 ${isCorrect === false ? "fill-red-500" : ""}`} />

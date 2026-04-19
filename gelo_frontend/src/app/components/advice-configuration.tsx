@@ -7,12 +7,17 @@ import { useToastContext } from "./ui/ToastContext";
 interface Disease {
   id: number;
   name: string;
+}type AdviceType = "care" | "lifestyle" | "emergency";
+
+interface AdviceResponse {
+  id: number;
+  adviceType: AdviceType;
+  title?: string;
+  content: string;
 }
 
-interface Advice {
-  id?: number;
-  adviceType: "care" | "lifestyle" | "emergency";
-  title: string;
+interface AdviceUpdate {
+  type: AdviceType;
   content: string;
 }
 
@@ -56,12 +61,12 @@ export function AdviceConfiguration() {
     const fetchAdvices = async () => {
       try {
         const response = await api.get(`/diseases/${selectedDiseaseId}/advices`);
-        const advices = response.data;
+        const advices: AdviceResponse[] = response.data;
 
         // Map types to state
-        setCareAdvice(advices.filter((a: any) => a.adviceType === 'care').map((a: any) => a.content).join('\n'));
-        setLifestyleAdvice(advices.filter((a: any) => a.adviceType === 'lifestyle').map((a: any) => a.content).join('\n'));
-        setEmergencyWarnings(advices.filter((a: any) => a.adviceType === 'emergency').map((a: any) => a.content).join('\n'));
+        setCareAdvice(advices.filter(a => a.adviceType === 'care').map(a => a.content).join('\n'));
+        setLifestyleAdvice(advices.filter(a => a.adviceType === 'lifestyle').map(a => a.content).join('\n'));
+        setEmergencyWarnings(advices.filter(a => a.adviceType === 'emergency').map(a => a.content).join('\n'));
       } catch (error) {
         toast.error("Error", "Could not load existing advice.");
       }
@@ -74,10 +79,10 @@ export function AdviceConfiguration() {
 
     setIsSaving(true);
     try {
-      const advicesToSave = [
-        ...careAdvice.split('\n').filter(c => c.trim()).map(c => ({ type: 'care', content: c.trim() })),
-        ...lifestyleAdvice.split('\n').filter(c => c.trim()).map(c => ({ type: 'lifestyle', content: c.trim() })),
-        ...emergencyWarnings.split('\n').filter(c => c.trim()).map(c => ({ type: 'emergency', content: c.trim() })),
+      const advicesToSave: AdviceUpdate[] = [
+        ...careAdvice.split('\n').filter(c => c.trim()).map(c => ({ type: 'care' as AdviceType, content: c.trim() })),
+        ...lifestyleAdvice.split('\n').filter(c => c.trim()).map(c => ({ type: 'lifestyle' as AdviceType, content: c.trim() })),
+        ...emergencyWarnings.split('\n').filter(c => c.trim()).map(c => ({ type: 'emergency' as AdviceType, content: c.trim() })),
       ];
 
       await api.post(`/diseases/${selectedDiseaseId}/advices`, advicesToSave);
@@ -109,8 +114,8 @@ export function AdviceConfiguration() {
         {/* Selection Controls */}
         <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
-            <h3 className="text-lg font-bold">Selection Engine</h3>
-            <div className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] uppercase font-bold rounded border border-blue-100">Dynamic Mode</div>
+            <h3 className="text-lg font-bold">Condition Selection</h3>
+            <div className="px-2 py-0.5 bg-sky-50 text-sky-700 text-[10px] uppercase font-bold rounded border border-sky-100">Live Config</div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -227,7 +232,7 @@ export function AdviceConfiguration() {
             <ActivitySquare className="w-16 h-16 text-slate-300 mx-auto mb-4 opacity-40" />
             <h4 className="text-slate-800 font-bold text-lg mb-1">Clinic Knowledge Base</h4>
             <p className="text-slate-500 max-w-sm mx-auto font-medium">
-              Select a clinical condition from the dropdown above to manage its dynamic advice engine.
+              Select a medical condition from the list above to manage its clinical advice.
             </p>
           </div>
         )}

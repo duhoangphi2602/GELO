@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { FileUp, FileBarChart, User, ChevronRight, ActivitySquare } from "lucide-react";
+import { FileBarChart, User, ChevronRight, ActivitySquare } from "lucide-react";
 
 export function QuickActions() {
   const navigate = useNavigate();

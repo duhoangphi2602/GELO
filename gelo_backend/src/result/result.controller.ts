@@ -7,7 +7,7 @@ import { UserRole } from '@prisma/client';
 @Controller('results')
 @UseGuards(JwtAuthGuard)
 export class ResultController {
-  constructor(private resultService: ResultService) {}
+  constructor(private resultService: ResultService) { }
 
   @Get(':scanId')
   async getResult(
@@ -21,8 +21,8 @@ export class ResultController {
   async submitFeedback(
     @Param('scanId', ParseIntPipe) scanId: number,
     @Body() body: { isCorrect: boolean; note?: string },
-    @CurrentUser('patientId') patientId: number,
+    @CurrentUser() user: { patientId: number; role: UserRole },
   ) {
-    return this.resultService.submitFeedback(scanId, body, patientId);
+    return this.resultService.submitFeedback(scanId, body, user.patientId);
   }
 }

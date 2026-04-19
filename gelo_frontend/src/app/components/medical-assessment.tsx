@@ -75,7 +75,7 @@ export function MedicalAssessment() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const filesArr = Array.from(e.target.files).slice(0, 3);
+      const filesArr = Array.from(e.target.files).slice(0, 1);
       setUploadedFiles(filesArr);
 
       if (filesArr.length > 0) {
@@ -163,7 +163,7 @@ export function MedicalAssessment() {
         <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-6 md:p-8">
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Step 1: Upload Images</h3>
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Step 1: Upload Image</h3>
               <div className="h-px flex-1 bg-slate-100 mx-4" />
             </div>
 
@@ -219,9 +219,9 @@ export function MedicalAssessment() {
                 </div>
                 <div className="relative z-10 space-y-1">
                   <p className="text-xl font-bold text-slate-800 tracking-tight">Drop photos here</p>
-                  <p className="text-slate-400 text-xs font-medium">Close-up shots recommended (Max 3)</p>
+                  <p className="text-slate-400 text-xs font-medium">Close-up shots recommended (1 Photo)</p>
                 </div>
-                <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
+                <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
               </label>
             )}
           </div>

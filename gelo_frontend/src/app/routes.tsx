@@ -13,6 +13,7 @@ import { AdminRoute } from "./components/layout/AdminRoute";
 import { AdminPatientList } from "./components/admin-patient-list";
 import { Feedback } from "./components/feedback";
 import { AdviceConfiguration } from "./components/advice-configuration";
+import { AdminDataManagement } from "./components/admin-data-management";
 
 export const router = createBrowserRouter([
   // ─── Public routes (không cần đăng nhập) ───────────────────────────────────
@@ -85,6 +86,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin/advice",
         Component: AdviceConfiguration,
+      },
+      {
+        path: "/admin/data",
+        Component: AdminDataManagement,
       },
       {
         path: "/admin/patients",

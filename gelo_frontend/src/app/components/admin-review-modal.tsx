@@ -28,7 +28,7 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
       api.get("/scans/admin/diseases")
         .then(res => setDiseases(Array.isArray(res.data) ? res.data : []))
         .catch(err => console.error("Failed to fetch diseases", err));
-      
+
       // Reset form
       setIsCorrect(null);
       setActualDiseaseId("");
@@ -52,8 +52,8 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
     try {
       await api.post(`/scans/admin/review/${scan.scanId}`, {
         isCorrect,
-        actualDiseaseId: (isCorrect || actualDiseaseId === "HEALTHY" || !actualDiseaseId) ? undefined : Number(actualDiseaseId),
-        actualStatus: actualDiseaseId === "HEALTHY" ? "HEALTHY" : undefined,
+        actualDiseaseId: (isCorrect || actualDiseaseId === "HEALTHY" || actualDiseaseId === "UNKNOWN" || !actualDiseaseId) ? undefined : Number(actualDiseaseId),
+        actualStatus: (actualDiseaseId === "HEALTHY" || actualDiseaseId === "UNKNOWN") ? (actualDiseaseId as string) : undefined,
         note
       });
 
@@ -122,14 +122,14 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Confidence Level</p>
                   </div>
                 </div>
-                
+
                 <div className="w-full bg-[#2a64ad]/10 h-2 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-[#2a64ad] h-full transition-all duration-1000" 
+                  <div
+                    className="bg-[#2a64ad] h-full transition-all duration-1000"
                     style={{ width: `${scan.confidence}%` }}
                   />
                 </div>
-                
+
                 {scan.confidence < 60 && (
                   <div className="mt-4 flex items-start gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100 italic text-sm">
                     <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -143,7 +143,7 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
           {/* Right: Review Form */}
           <div className="w-full lg:w-96 p-6 bg-muted/10 overflow-y-auto">
             <h3 className="font-bold mb-6 text-foreground">Review Decision</h3>
-            
+
             <div className="space-y-6">
               {/* AI Validation Section */}
               <div>
@@ -151,22 +151,20 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setIsCorrect(true)}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${
-                      isCorrect === true 
-                        ? "bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm" 
-                        : "bg-card border-border hover:border-emerald-200"
-                    }`}
+                    className={`cursor-pointer flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${isCorrect === true
+                      ? "bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm"
+                      : "bg-card border-border hover:border-emerald-200"
+                      }`}
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span className="font-bold">Accurate</span>
                   </button>
                   <button
                     onClick={() => setIsCorrect(false)}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${
-                      isCorrect === false 
-                        ? "bg-rose-50 border-rose-500 text-rose-700 shadow-sm" 
-                        : "bg-card border-border hover:border-rose-200"
-                    }`}
+                    className={`cursor-pointer flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${isCorrect === false
+                      ? "bg-rose-50 border-rose-500 text-rose-700 shadow-sm"
+                      : "bg-card border-border hover:border-rose-200"
+                      }`}
                   >
                     <X className="w-4 h-4" />
                     <span className="font-bold">Inaccurate</span>
@@ -180,11 +178,19 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                   <label className="text-sm font-medium mb-2 block text-slate-700">Correct Clinical Diagnosis</label>
                   <select
                     value={actualDiseaseId.toString()}
-                    onChange={(e) => setActualDiseaseId(e.target.value === "HEALTHY" ? "HEALTHY" : (e.target.value ? Number(e.target.value) : ""))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "HEALTHY" || val === "UNKNOWN") {
+                        setActualDiseaseId(val);
+                      } else {
+                        setActualDiseaseId(val ? Number(val) : "");
+                      }
+                    }}
                     className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad] transition-all"
                   >
                     <option value="">Select the correct clinical diagnosis...</option>
-                    <option value="HEALTHY" className="font-bold text-green-700">Healthy Skin (No Disease)</option>
+                    <option value="HEALTHY" className="font-bold text-green-700">Healthy Skin</option>
+                    <option value="UNKNOWN" className="font-bold text-amber-700">Other (Unknown Disease / To be added)</option>
                     {(diseases || []).map(d => (
                       <option key={d.id} value={d.id.toString()}>{d.name}</option>
                     ))}
@@ -207,7 +213,7 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                 <button
                   disabled={submitting || isCorrect === null}
                   onClick={handleSubmit}
-                  className="w-full bg-[#2a64ad] hover:bg-[#1e4e8c] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                  className="cursor-pointer w-full bg-[#2a64ad] hover:bg-[#1e4e8c] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                 >
                   {submitting ? "Submitting Review..." : "Submit Review"}
                 </button>

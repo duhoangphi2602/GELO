@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { History, Activity, ChevronRight, Trash2, Calendar } from "lucide-react";
+import { History, Activity, Trash2, Calendar } from "lucide-react";
 import { useNavigate } from "react-router";
 import api from "../lib/api";
 import { Layout } from "./layout/Layout";
