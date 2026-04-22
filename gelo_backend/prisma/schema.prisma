@@ -11,9 +11,9 @@ model Account {
   username     String   @unique @db.VarChar(100)
   email        String   @unique @db.VarChar(255)
   passwordHash String   @map("password_hash") @db.VarChar(255)
-  role         UserRole @default(PATIENT)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+  role         UserRole @default(PATIENT)
   patient      Patient?
 }
 
@@ -22,8 +22,8 @@ model Patient {
   accountId Int         @unique @map("account_id")
   fullName  String?     @map("full_name") @db.VarChar(100)
   age       Int?
-  gender    Gender?     @default(UNKNOWN)
   createdAt DateTime    @default(now()) @map("created_at")
+  gender    Gender?     @default(UNKNOWN)
   account   Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
   diaries   SkinDiary[]
   skinScans SkinScan[]
@@ -31,7 +31,8 @@ model Patient {
 
 model Disease {
   id                 Int               @id @default(autoincrement()) @map("disease_id")
-  name               String            @unique @db.VarChar(100)
+  code               String            @unique @db.VarChar(50)
+  name               String            @db.VarChar(100)
   description        String?
   diagnosisFinal     DiagnosisResult[] @relation("FinalDisease")
   diagnosisPredicted DiagnosisResult[] @relation("PredictedDisease")
@@ -65,6 +66,7 @@ model SkinScan {
   id          Int              @id @default(autoincrement()) @map("scan_id")
   patientId   Int              @map("patient_id")
   createdAt   DateTime         @default(now()) @map("created_at")
+  isDeleted   Boolean          @default(false) @map("is_deleted")
   diagnosis   DiagnosisResult?
   feedback    FeedbackLog[]
   predictions Prediction[]
@@ -104,12 +106,12 @@ model DiagnosisResult {
   scanId             Int              @unique @map("scan_id")
   predictedDiseaseId Int?             @map("predicted_disease_id")
   finalDiseaseId     Int?             @map("final_disease_id")
-  /// AI confidence stored as 0–100 (percentage)
-  aiConfidence       Float?           @map("ai_confidence")
+  createdAt          DateTime         @default(now()) @map("created_at")
   /// "high_confidence" (>=50%) | "low_confidence" (<50%)
   decision           String?          @db.VarChar(50)
+  /// AI confidence stored as 0–100 (percentage)
+  aiConfidence       Float?           @map("ai_confidence")
   diagnosticStatus   DiagnosticStatus @default(DISEASE) @map("diagnostic_status")
-  createdAt          DateTime         @default(now()) @map("created_at")
   finalDisease       Disease?         @relation("FinalDisease", fields: [finalDiseaseId], references: [id], onDelete: Cascade)
   predictedDisease   Disease?         @relation("PredictedDisease", fields: [predictedDiseaseId], references: [id], onDelete: Cascade)
   scan               SkinScan         @relation(fields: [scanId], references: [id], onDelete: Cascade)
@@ -122,9 +124,9 @@ model FeedbackLog {
   actualDiseaseId    Int?             @map("actual_disease_id")
   isCorrect          Boolean?         @map("is_correct")
   note               String?
-  role               FeedbackRole     @default(USER)
   createdAt          DateTime         @default(now()) @map("created_at")
   diagnosticStatus   DiagnosticStatus @default(DISEASE) @map("diagnostic_status")
+  role               FeedbackRole     @default(USER)
   actualDisease      Disease?         @relation("ActualDiseaseFeedback", fields: [actualDiseaseId], references: [id], onDelete: Cascade)
   predictedDisease   Disease?         @relation("PredictedDiseaseFeedback", fields: [predictedDiseaseId], references: [id], onDelete: Cascade)
   scan               SkinScan?        @relation(fields: [scanId], references: [id], onDelete: Cascade)
@@ -162,6 +164,5 @@ enum Gender {
 
 enum DiagnosticStatus {
   DISEASE
-  HEALTHY
   UNKNOWN
 }

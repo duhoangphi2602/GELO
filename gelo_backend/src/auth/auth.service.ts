@@ -114,12 +114,11 @@ export class AuthService {
 
   // ─── UPDATE PROFILE ──────────────────────────────────────────────────────────
   async updateProfile(accountId: number, updateProfileDto: UpdateProfileDto) {
-    const { fullName, email, password } = updateProfileDto;
+    const { fullName, email, password, age, gender } = updateProfileDto;
 
     // 1. Cập nhật Account (Email & Password)
     const updateAccountData: any = {};
     if (email) {
-      // Kiểm tra trùng email nếu email thay đổi
       const existing = await this.prisma.account.findFirst({
         where: {
           email: email.trim().toLowerCase(),
@@ -134,17 +133,26 @@ export class AuthService {
       updateAccountData.passwordHash = await bcrypt.hash(password, 10);
     }
 
-    // 2. Cập nhật Patient (Full Name)
-    const updatePatientData: any = {};
-    if (fullName) updatePatientData.fullName = fullName.trim();
+    // 2. Cập nhật hoặc Tạo mới Patient (Full Name, Age, Gender)
+    const patientData: any = {};
+    if (fullName) patientData.fullName = fullName.trim();
+    if (age !== undefined) patientData.age = age;
+    if (gender) patientData.gender = gender;
 
-    // Thực hiện Update
+    // Thực hiện Update Account & Upsert Patient
     await this.prisma.account.update({
       where: { id: accountId },
       data: {
         ...updateAccountData,
-        patient: Object.keys(updatePatientData).length > 0 ? {
-          update: updatePatientData
+        patient: Object.keys(patientData).length > 0 ? {
+          upsert: {
+            create: {
+              fullName: fullName?.trim() || 'User',
+              age: age || 25,
+              gender: gender || Gender.UNKNOWN,
+            },
+            update: patientData
+          }
         } : undefined
       }
     });

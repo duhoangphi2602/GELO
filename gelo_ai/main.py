@@ -89,6 +89,11 @@ class PredictRequest(BaseModel):
     image_urls: List[str]  # Expected: ['/uploads/abc.jpg', ...]
     scan_id: Optional[int] = None
 
+class ConfigUpdateRequest(BaseModel):
+    version: Optional[str] = None
+    inference_threshold: Optional[float] = None
+    enabled_disease_codes: Optional[List[str]] = None
+
 @app.get("/ai/health")
 async def health_check():
     """NestJS will call this before processing a scan."""
@@ -97,6 +102,110 @@ async def health_check():
         "model_loaded": predictor.is_ready,
         "model_version": predictor.version
     }
+
+@app.get("/ai/config", dependencies=[Depends(verify_api_key)])
+async def get_config():
+    if not predictor.is_ready:
+        raise HTTPException(status_code=503, detail="AI Service is currently initializing.")
+    
+    cfg = predictor.config.copy()
+    
+    # Extract disease codes from labels.json to show what the model actually supports
+    if predictor._package and predictor._package.labels:
+        model_disease_codes = []
+        for k, v in predictor._package.labels.items():
+            if isinstance(v, dict) and v.get("code"):
+                model_disease_codes.append(v["code"])
+        cfg["model_supported_codes"] = model_disease_codes
+    
+    return cfg
+
+@app.get("/ai/models", dependencies=[Depends(verify_api_key)])
+async def list_models():
+    """Scan model_package directory and return list of available models with metadata."""
+    models_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_package")
+    if not os.path.exists(models_dir):
+        return []
+    
+    available_models = []
+    import json
+    
+    for version in os.listdir(models_dir):
+        pkg_dir = os.path.join(models_dir, version)
+        if os.path.isdir(pkg_dir):
+            config_path = os.path.join(pkg_dir, "config.json")
+            if os.path.exists(config_path):
+                try:
+                    with open(config_path, "r") as f:
+                        cfg = json.load(f)
+                        supported_labels = []
+                        labels_path = os.path.join(pkg_dir, "labels.json")
+                        if os.path.exists(labels_path):
+                            try:
+                                with open(labels_path, "r") as lf:
+                                    lbls = json.load(lf)
+                                    for k, v in lbls.items():
+                                        if isinstance(v, dict) and v.get("name"):
+                                            supported_labels.append(v)
+                            except Exception as e:
+                                logger.error(f"Error reading labels for {version}: {e}")
+                                
+                        available_models.append({
+                            "version": version,
+                            "name": cfg.get("name", version),
+                            "architecture": cfg.get("architecture", "Unknown"),
+                            "created_at": cfg.get("created_at", "Unknown"),
+                            "is_active": predictor.version == version,
+                            "supported_labels": supported_labels
+                        })
+                except Exception as e:
+                    logger.error(f"Error reading config for {version}: {e}")
+                    
+    return available_models
+
+@app.post("/ai/config/reload", dependencies=[Depends(verify_api_key)])
+async def reload_config(body: ConfigUpdateRequest):
+    version_to_load = body.version or predictor.version
+    if version_to_load == "v1.0.0-engine" or version_to_load == "1.0":
+        version_to_load = "v1" # Fallback/Alias mapping
+        
+    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_package", version_to_load)
+    config_path = os.path.join(base_dir, "config.json")
+    
+    if not os.path.exists(config_path):
+        raise HTTPException(status_code=404, detail=f"Config file not found for version {version_to_load}")
+    
+    # 1. Read existing config
+    import json
+    try:
+        with open(config_path, "r") as f:
+            current_config = json.load(f)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read config: {str(e)}")
+        
+    # 2. Update fields
+    if body.inference_threshold is not None:
+        current_config["inference_threshold"] = body.inference_threshold
+    if body.enabled_disease_codes is not None:
+        current_config["enabled_disease_codes"] = body.enabled_disease_codes
+        
+    # 3. Write back
+    try:
+        with open(config_path, "w") as f:
+            json.dump(current_config, f, indent=2)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save config: {str(e)}")
+        
+    # 4. Hot Reload Model Package
+    try:
+        package = load_model_package(version=version_to_load)
+        predictor.set_package(package)
+        logger.info(f"Successfully reloaded AI configuration for {version_to_load}")
+    except Exception as e:
+        logger.error(f"Failed to reload model package: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to reload model: {str(e)}")
+        
+    return {"message": "Configuration reloaded successfully", "config": predictor.config}
 
 @app.post("/ai/predict", dependencies=[Depends(verify_api_key)])
 async def predict(body: PredictRequest):
@@ -134,11 +243,16 @@ async def predict(body: PredictRequest):
         import torch
         batch_tensor = torch.cat(valid_tensors, dim=0) # Stacks (1, C, H, W) -> (N, C, H, W)
         
+        # Debug: Check if tensor has data
+        tensor_mean = batch_tensor.mean().item()
+        logger.info(f"Input Tensor Mean: {tensor_mean:.4f} (Checking if image data is valid)")
+
         # Inference (Singleton)
         result = predictor.predict(batch_tensor)
         
         return {
             "disease_id": result.get("diseaseId"),
+            "code": result.get("code"),
             "diagnosticStatus": result.get("diagnosticStatus", "DISEASE"),
             "name": result.get("name", "Unknown"),
             "confidence": result["confidence"],

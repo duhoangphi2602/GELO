@@ -7,14 +7,14 @@ from .exceptions import ModelNotLoadedError
 logger = logging.getLogger("predictor")
 
 # Configuration for the new AI-First flow
-THRESHOLD = 0.70  # Adjusted for better sensitivity in screening
+FALLBACK_THRESHOLD = 0.70  # Adjusted for better sensitivity in screening
 
 # Internal Mapping to match the DB Master Seed IDs & labels.json of v1
-DEFAULT_LABELS = {
-    "0": {"id": 1, "status": "DISEASE", "name": "Atopic Dermatitis"},
-    "1": {"id": 2, "status": "DISEASE", "name": "Vascular Tumors"},
-    "2": {"id": 3, "status": "DISEASE", "name": "Melanoma Skin Cancer / Nevi / Moles"},
-    "3": {"id": 4, "status": "DISEASE", "name": "Bullous Disease"},
+FALLBACK_LABELS = {
+    "0": {"id": 1, "code": "L20.9", "status": "DISEASE", "name": "Atopic Dermatitis"},
+    "1": {"id": 2, "code": "D18.0", "status": "DISEASE", "name": "Vascular Tumors"},
+    "2": {"id": 3, "code": "MEL_NEV_MOL", "status": "DISEASE", "name": "Melanoma Skin Cancer / Nevi / Moles"},
+    "3": {"id": 4, "code": "L10", "status": "DISEASE", "name": "Bullous Disease"},
 }
 
 class PredictorService:
@@ -71,39 +71,54 @@ class PredictorService:
         max_conf = max_conf_val.item()
 
         # 4. Unknown Handling & Thresholding
-        if max_conf < THRESHOLD:
-            logger.info(f"Ensemble Confidence {max_conf:.2f} below threshold {THRESHOLD}. Classifying as Unknown.")
+        threshold = self.config.get("inference_threshold", FALLBACK_THRESHOLD)
+        if max_conf < threshold:
+            logger.info(f"Ensemble Confidence {max_conf:.2f} below threshold {threshold}. Classifying as Unknown.")
             return {
                 "diseaseId": 0,
+                "code": "UNKNOWN",
                 "diagnosticStatus": "UNKNOWN",
                 "name": "Unknown",
                 "confidence": max_conf
             }
 
         # 5. Mapping to Labels
-        # We prioritize package labels, then internal DEFAULT_LABELS
-        labels_map = self._package.labels if (self._package and self._package.labels) else DEFAULT_LABELS
+        # We prioritize package labels, then internal FALLBACK_LABELS
+        labels_map = self._package.labels if (self._package and self._package.labels) else FALLBACK_LABELS
         idx_str = str(predicted_idx)
         
         if idx_str in labels_map:
             mapping = labels_map[idx_str]
             disease_id = mapping.get("id", predicted_idx)
+            code = mapping.get("code", "UNKNOWN")
             status = mapping.get("status", "DISEASE")
             name = mapping.get("name", "Unknown")
         else:
             # Fallback if index not in map
             disease_id = predicted_idx + 1 # Assuming IDs start at 1 if node index is disease rank
+            code = "UNKNOWN"
             status = "DISEASE"
             name = "Unknown"
 
-        # Final check for ID 0
-        if disease_id == 0:
+        # 6. Dynamic Labels Checking
+        enabled_codes = self.config.get("enabled_disease_codes")
+        if enabled_codes is not None and code not in enabled_codes:
+            logger.info(f"Predicted Disease Code '{code}' is not in enabled_disease_codes list. Classifying as Unknown.")
+            disease_id = 0
+            code = "UNKNOWN"
             status = "UNKNOWN"
+            name = "Unknown"
 
-        logger.info(f"Inference Result -> Status: {status}, ID: {disease_id}, Name: {name} ({max_conf:.4f})")
+        # Final check for ID 0
+        if disease_id == 0 or code == "UNKNOWN":
+            status = "UNKNOWN"
+            name = "Unknown"
+
+        logger.info(f"Inference Result -> Status: {status}, Code: {code}, Name: {name} ({max_conf:.4f})")
         
         return {
             "diseaseId": disease_id,
+            "code": code,
             "diagnosticStatus": status,
             "name": name,
             "confidence": max_conf

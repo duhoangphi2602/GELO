@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "./admin-layout";
 import api from "../lib/api";
-import { TrendingUp, Users, FileCheck, AlertCircle, Clock, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { TrendingUp, Users, FileCheck, AlertCircle, Clock, Image as ImageIcon, CheckCircle2, LayoutDashboard, Settings } from "lucide-react";
 import { AdminReviewModal } from "./admin-review-modal";
+import { AdminSettings } from "./admin-settings";
 
 export function AdminDashboard() {
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedScan, setSelectedScan] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "settings">("overview");
   const [dashboardStats, setDashboardStats] = useState({
     totalDiagnoses: 0,
     totalPatients: 0,
@@ -82,8 +84,37 @@ export function AdminDashboard() {
       title="Admin Dashboard"
       subtitle="Monitor AI performance, manage patients, and review low-confidence diagnoses"
     >
-      <div className="space-y-8">
-        {/* Stats Grid */}
+      {/* Tab Navigation */}
+      <div className="flex items-center gap-2 mb-8 border-b border-border pb-px">
+        <button
+          onClick={() => setActiveTab("overview")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${
+            activeTab === "overview" 
+              ? "border-[#2a64ad] text-[#2a64ad]" 
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          Overview
+        </button>
+        <button
+          onClick={() => setActiveTab("settings")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${
+            activeTab === "settings" 
+              ? "border-[#2a64ad] text-[#2a64ad]" 
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Settings className="w-4 h-4" />
+          AI Engine Settings
+        </button>
+      </div>
+
+      {activeTab === "settings" ? (
+        <AdminSettings />
+      ) : (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat) => {
             const Icon = stat.icon;
@@ -159,6 +190,9 @@ export function AdminDashboard() {
                               <div>
                                 <p className="text-sm font-bold text-foreground">#{scan.scanId}</p>
                                 <p className="text-xs text-muted-foreground">{scan.patientName}</p>
+                                {scan.isDeleted && (
+                                  <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-tight border border-red-100">User Deleted</span>
+                                )}
                               </div>
                             </div>
                           </td>
@@ -237,6 +271,7 @@ export function AdminDashboard() {
           </div>
         </div>
       </div>
+    )}
 
       <AdminReviewModal
         isOpen={isModalOpen}

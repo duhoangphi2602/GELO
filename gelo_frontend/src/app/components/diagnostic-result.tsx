@@ -90,19 +90,6 @@ export function DiagnosticResult() {
       status: "AI Engine - Unidentifiable"
     };
 
-    // 2. Healthy / Clear Case
-    if (diagnosticStatus === 'HEALTHY') return {
-      color: "sky",
-      bg: "bg-sky-50/50",
-      border: "border-sky-100",
-      text: "text-sky-700",
-      fill: "bg-sky-500",
-      pill: "bg-sky-100 text-sky-700",
-      title: "Healthy Skin Detected",
-      icon: Heart,
-      status: "AI Engine - No Abnormalities"
-    };
-
     // 3. High Confidence Disease
     if (decision === 'high_confidence') return {
       color: "emerald",
@@ -141,16 +128,6 @@ export function DiagnosticResult() {
           The AI model could not identify a specific condition with high certainty from the provided image (Model Confidence: <strong className="font-extrabold">{aiConfidence}%</strong>).
           This may be due to image quality or conditions outside our current dataset.
           <strong className="block mt-2 text-rose-600">Please consult a professional dermatologist for an accurate assessment.</strong>
-        </span>
-      );
-    }
-
-    // 2. Handling Healthy
-    if (diagnosticStatus === 'HEALTHY') {
-      return (
-        <span>
-          No significant skin abnormalities were detected in the analyzed area (Model Confidence: <strong className="font-extrabold">{aiConfidence}%</strong>).
-          Maintain your skin health and continue with regular checkups.
         </span>
       );
     }
@@ -399,14 +376,21 @@ export function DiagnosticResult() {
 
             {/* Action Buttons */}
             <div className="space-y-4">
-              <button
-                onClick={() => navigate(`/feedback?scanId=${localStorage.getItem("currentScanId")}`)}
-                className="cursor-pointer w-full py-5 bg-white border-2 border-slate-900 text-slate-900 font-black rounded-[1.5rem] hover:bg-slate-900 hover:text-white transition-all group flex items-center justify-center gap-3"
-              >
-                <MessageSquareHeart className="w-5 h-5" />
-                Correct AI Diagnosis
-                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              {resultData && !resultData.hasFeedback ? (
+                <button
+                  onClick={() => navigate(`/feedback?scanId=${localStorage.getItem("currentScanId")}`)}
+                  className="cursor-pointer w-full py-5 bg-white border-2 border-slate-900 text-slate-900 font-black rounded-[1.5rem] hover:bg-slate-900 hover:text-white transition-all group flex items-center justify-center gap-3"
+                >
+                  <MessageSquareHeart className="w-5 h-5" />
+                  Correct AI Diagnosis
+                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              ) : (
+                <div className="w-full py-5 bg-emerald-50 border-2 border-emerald-500 text-emerald-700 font-bold rounded-[1.5rem] flex items-center justify-center gap-3">
+                  <CheckCircle className="w-5 h-5" />
+                  Feedback Submitted
+                </div>
+              )}
             </div>
           </div>
         </div>

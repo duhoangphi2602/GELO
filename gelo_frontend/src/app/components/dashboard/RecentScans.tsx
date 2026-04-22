@@ -53,11 +53,10 @@ export function RecentScans({ loading, scanHistory }: { loading: boolean, scanHi
             ) : (
               recentScansPreview.map((scan) => {
                 const status = scan.diagnosis?.diagnosticStatus;
-                const result = status === "HEALTHY" ? "Healthy Skin" :
-                 (status === "UNKNOWN" ? "Unknown" :
-                 scan.diagnosis?.predictedDisease?.name || "Pending Validation");
-                 
-                const isDanger = result !== "Healthy Skin" && result !== "Normal" && result !== "Pending Validation";
+                const result = status === "UNKNOWN" ? "Unknown" :
+                  scan.diagnosis?.predictedDisease?.name || "Pending Validation";
+
+                const isDanger = result !== "Normal" && result !== "Pending Validation" && result !== "Unknown";
                 const confPercent = scan.predictions?.[0]?.confidence ? (scan.predictions[0].confidence).toFixed(0) : "80"; // fallback 80 if missing
 
                 return (

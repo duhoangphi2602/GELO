@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DiagnosticStatus, UserRole, FeedbackRole } from '@prisma/client';
 
@@ -30,7 +30,6 @@ export class ResultService {
 
     // aiConfidence is stored 0–100; return directly, no multiplication needed
     const isUnknown = result.diagnosticStatus === DiagnosticStatus.UNKNOWN;
-    const isHealthy = result.diagnosticStatus === DiagnosticStatus.HEALTHY;
 
     return {
       scanId: result.scanId,
@@ -42,20 +41,19 @@ export class ResultService {
       diagnosticStatus: result.diagnosticStatus,
       disease: isUnknown 
         ? 'Analysis Inconclusive' 
-        : isHealthy 
-          ? 'Healthy Skin' 
-          : (result.predictedDisease?.name ?? 'Unknown'),
+        : (result.predictedDisease?.name ?? 'Unknown'),
       description: isUnknown
         ? 'The AI model could not identify a specific condition with high certainty from the provided image.'
-        : isHealthy
-          ? 'No significant skin abnormalities were detected in the analyzed area.'
-          : (result.predictedDisease?.description ?? null),
+        : (result.predictedDisease?.description ?? null),
       images: result.scan.images.map((img) => img.imageUrl),
       advices: (result.predictedDisease?.advices ?? []).map((ad) => ({
         type: ad.adviceType,
         title: ad.title,
         content: ad.content,
       })),
+      hasFeedback: await this.prisma.feedbackLog.count({ 
+        where: { scanId, role: FeedbackRole.USER } 
+      }) > 0,
     };
   }
 
@@ -74,6 +72,14 @@ export class ResultService {
     // Security: patient can only feedback their own scans
     if (diagnosis.scan.patientId !== patientId) {
       throw new ForbiddenException('You can only submit feedback for your own diagnostic results.');
+    }
+
+    // NEW: Prevent duplicate feedback
+    const existingFeedback = await this.prisma.feedbackLog.findFirst({
+      where: { scanId, role: FeedbackRole.USER },
+    });
+    if (existingFeedback) {
+      throw new BadRequestException('You have already submitted feedback for this scan.');
     }
 
     const feedback = await this.prisma.feedbackLog.create({

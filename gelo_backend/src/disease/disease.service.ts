@@ -14,6 +14,7 @@ export class DiseaseService {
   async create(data: any) {
     return this.prisma.disease.create({
       data: {
+        code: data.code,
         name: data.name,
         description: data.description,
       },
@@ -24,6 +25,7 @@ export class DiseaseService {
     return this.prisma.disease.update({
       where: { id },
       data: {
+        code: data.code,
         name: data.name,
         description: data.description,
       },

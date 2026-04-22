@@ -1,26 +1,31 @@
 {
   "0": {
     "id": 1,
+    "code": "L20.9",
     "status": "DISEASE",
     "name": "Atopic Dermatitis"
   },
   "1": {
     "id": 2,
+    "code": "D18.0",
     "status": "DISEASE",
     "name": "Vascular Tumors"
   },
   "2": {
     "id": 3,
+    "code": "MEL_NEV_MOL",
     "status": "DISEASE",
     "name": "Melanoma Skin Cancer / Nevi / Moles"
   },
   "3": {
     "id": 4,
+    "code": "L10",
     "status": "DISEASE",
     "name": "Bullous Disease"
   },
   "-1": {
     "id": 0,
+    "code": "UNKNOWN",
     "status": "UNKNOWN",
     "name": "Unknown"
   }

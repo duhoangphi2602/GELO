@@ -49,8 +49,10 @@ export class ScanService {
 
       const result: {
         disease_id: number;
+        code?: string;
         diagnosticStatus: string;
         confidence: number;
+        name?: string;
         model_version?: string;
       } = await aiResponse.json();
 
@@ -58,7 +60,20 @@ export class ScanService {
       const aiConfidence = Math.min(100, Math.max(0, Math.round((result.confidence || 0) * 100)));
       const modelVer = result.model_version || 'v1.0.0';
       const diagnosticStatus = (result.diagnosticStatus as DiagnosticStatus) ?? DiagnosticStatus.UNKNOWN;
-      const aiDiseaseId = (result.disease_id && result.disease_id !== 0) ? result.disease_id : null;
+
+      let trueDiseaseId: number | null = null;
+      if (result.code && result.code !== 'UNKNOWN') {
+        const dbDisease = await this.prisma.disease.findUnique({
+          where: { code: result.code }
+        });
+        if (dbDisease) {
+          trueDiseaseId = dbDisease.id;
+        } else {
+          this.logger.warn(`AI predicted code '${result.code}' but it was not found in DB!`);
+        }
+      }
+
+      const aiDiseaseId = trueDiseaseId ?? ((result.disease_id && result.disease_id !== 0) ? result.disease_id : null);
       const decision = aiConfidence >= 50 ? 'high_confidence' : 'low_confidence';
 
       // 3. Atomically save all results & training data in a single TRANSACTION
@@ -131,7 +146,7 @@ export class ScanService {
   /** Returns all scans for a patient (for history view) */
   async getScansForPatient(patientId: number) {
     return this.prisma.skinScan.findMany({
-      where: { patientId },
+      where: { patientId, isDeleted: false },
       orderBy: { createdAt: 'desc' },
       include: {
         diagnosis: {
@@ -139,6 +154,7 @@ export class ScanService {
         },
         predictions: { take: 1 },
         images: true,
+        feedback: true,
       },
     });
   }
@@ -171,11 +187,9 @@ export class ScanService {
       totalScans: p._count.skinScans,
       totalDiaries: p._count.diaries,
       lastScanDisease:
-        p.skinScans[0]?.diagnosis?.diagnosticStatus === DiagnosticStatus.HEALTHY
-          ? 'Healthy'
-          : p.skinScans[0]?.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
-            ? 'Unknown'
-            : (p.skinScans[0]?.diagnosis?.predictedDisease?.name ?? null),
+        p.skinScans[0]?.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
+          ? 'Unknown'
+          : (p.skinScans[0]?.diagnosis?.predictedDisease?.name ?? null),
       lastScanDate: p.skinScans[0]?.createdAt ?? null,
     }));
   }
@@ -214,10 +228,9 @@ export class ScanService {
   async getPendingReviews(threshold?: number) {
     const reviewThreshold = threshold ?? Number(process.env.LOW_CONFIDENCE_THRESHOLD ?? 60);
 
-    // 1. Scans with low confidence AND no admin review
-    const lowConfidenceScans = await this.prisma.skinScan.findMany({
+    // 1. Scans with no admin review
+    const pendingScans = await this.prisma.skinScan.findMany({
       where: {
-        diagnosis: { aiConfidence: { lt: reviewThreshold } },
         feedback: { none: { role: FeedbackRole.ADMIN } },
       },
       include: {
@@ -252,7 +265,7 @@ export class ScanService {
 
     // Merge and deduplicate
     const allPendingMap = new Map();
-    [...lowConfidenceScans, ...userReportedScans].forEach(s => {
+    [...pendingScans, ...userReportedScans].forEach(s => {
       allPendingMap.set(s.id, s);
     });
 
@@ -269,34 +282,55 @@ export class ScanService {
         imageUrl: scan.images?.[0]?.imageUrl ?? null,
         confidence: scan.diagnosis?.aiConfidence ?? 0,
         predictedDisease:
-          scan.diagnosis?.diagnosticStatus === DiagnosticStatus.HEALTHY
-            ? 'Healthy'
-            : scan.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
-              ? 'Unknown'
-              : (scan.diagnosis?.predictedDisease?.name ?? 'Unknown'),
+          scan.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
+            ? 'Unknown'
+            : (scan.diagnosis?.predictedDisease?.name ?? 'Unknown'),
         reason: isUserReported ? "User Reported Error" : "Low Confidence",
         userNote: userFeedback?.note,
         createdAt: scan.createdAt,
+        isDeleted: scan.isDeleted,
       };
     });
   }
 
   /** Admin: get all cases reviewed by admin (Gold Standard) */
-  async getAdminVerifiedData() {
+  async getAdminVerifiedData(search?: string, diseaseId?: number) {
+    const where: any = { role: FeedbackRole.ADMIN };
+
+    if (diseaseId) {
+      where.actualDiseaseId = diseaseId;
+    }
+
+    if (search) {
+      const searchCriteria: any[] = [
+        { scan: { patient: { fullName: { contains: search, mode: 'insensitive' } } } },
+        { actualDisease: { name: { contains: search, mode: 'insensitive' } } },
+        { predictedDisease: { name: { contains: search, mode: 'insensitive' } } },
+      ];
+
+      if (!isNaN(parseInt(search, 10))) {
+        searchCriteria.push({ scanId: parseInt(search, 10) });
+      }
+
+      where.AND = [
+        { OR: searchCriteria }
+      ];
+    }
+
     const logs = await this.prisma.feedbackLog.findMany({
-      where: { role: FeedbackRole.ADMIN },
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         scan: {
           include: {
             images: { take: 1 },
             patient: { select: { fullName: true } },
-            diagnosis: true
-          }
+            diagnosis: true,
+          },
         },
         actualDisease: true,
-        predictedDisease: true
-      }
+        predictedDisease: true,
+      },
     });
 
     return logs.map(log => ({
@@ -304,8 +338,8 @@ export class ScanService {
       scanId: log.scanId,
       patientName: log.scan?.patient?.fullName,
       imageUrl: log.scan?.images[0]?.imageUrl,
-      predictedDisease: log.predictedDisease?.name || (log.diagnosticStatus === DiagnosticStatus.HEALTHY ? "Healthy" : "Unknown"),
-      actualDisease: log.actualDisease?.name || (log.diagnosticStatus === DiagnosticStatus.HEALTHY ? "Healthy" : "Unknown"),
+      predictedDisease: log.predictedDisease?.name || "Unknown",
+      actualDisease: log.actualDisease?.name || "Unknown",
       isCorrect: log.isCorrect,
       confidence: log.scan?.diagnosis?.aiConfidence,
       reviewedAt: log.createdAt,
@@ -327,7 +361,7 @@ export class ScanService {
     logs.forEach(log => {
       const imageUrl = log.scan?.images[0]?.imageUrl || "";
       const labelId = log.actualDiseaseId || 0;
-      const labelName = log.actualDisease?.name || (log.diagnosticStatus === DiagnosticStatus.HEALTHY ? "Healthy" : "Unknown");
+      const labelName = log.actualDisease?.name || "Unknown";
       csv += `${log.scanId},"${imageUrl}",${labelId},"${labelName}",${log.isCorrect},"${log.createdAt.toISOString()}"\n`;
     });
     return csv;
@@ -375,65 +409,158 @@ export class ScanService {
 
   /** Admin: get all diseases for review modal dropdown */
   async getAllDiseases() {
-    return this.prisma.disease.findMany({
+    const diseases = await this.prisma.disease.findMany({
       orderBy: { name: 'asc' },
-      select: { id: true, name: true },
+      select: { id: true, name: true, code: true },
+    });
+    this.logger.log(`Admin requested diseases. Found ${diseases.length} records. Codes: ${diseases.map(d => d.code).join(', ')}`);
+    return diseases;
+  }
+
+  /** Patient: get list of diseases currently enabled in AI Engine */
+  async getSupportedDiseases() {
+    try {
+      const config = await this.getAiSettings();
+      const enabledCodes = config.enabled_disease_codes || [];
+
+      if (enabledCodes.length === 0) return [];
+
+      return this.prisma.disease.findMany({
+        where: { code: { in: enabledCodes } },
+        select: { id: true, name: true, code: true },
+        orderBy: { name: 'asc' },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to get supported diseases: ${error.message}`);
+      return [];
+    }
+  }
+
+  /** Admin: get all patients */
+  async getPatients() {
+    return this.prisma.patient.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: { select: { skinScans: true } },
+      },
     });
   }
 
-  /** Delete a single scan with POST-DB Cloudinary cleanup */
+  /** Admin: get current AI settings */
+  async getAiSettings() {
+    const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+    const apiKey = process.env.INTERNAL_API_KEY || '';
+
+    try {
+      const response = await fetch(`${aiUrl}/ai/config`, {
+        headers: { 'X-Internal-Api-Key': apiKey }
+      });
+      if (!response.ok) throw new Error('Failed to fetch AI config');
+      return await response.json();
+    } catch (err) {
+      this.logger.error(`Failed to get AI settings: ${err.message}`);
+      throw new ServiceUnavailableException('Could not connect to AI Service');
+    }
+  }
+
+  private normalizeDiseaseName(name: string): string {
+    return name
+      .trim()
+      .replace(/\s+/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  /** Admin: get available model packages from AI Service */
+  async getAvailableModels() {
+    const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+    const apiKey = process.env.INTERNAL_API_KEY || '';
+
+    try {
+      const response = await fetch(`${aiUrl}/ai/models`, {
+        headers: { 'X-Internal-Api-Key': apiKey }
+      });
+      const models = await response.json();
+
+      // Auto-Sync diseases from models into Database
+      for (const model of models) {
+        if (model.supported_labels && Array.isArray(model.supported_labels)) {
+          for (const label of model.supported_labels) {
+            if (label.status === 'DISEASE' && label.code) {
+              const normalizedName = label.name ? this.normalizeDiseaseName(label.name) : 'Unknown Disease';
+              try {
+                await this.prisma.disease.upsert({
+                  where: { code: label.code },
+                  update: { name: normalizedName }, // Update name in case Admin didn't change it, or just leave it
+                  create: {
+                    code: label.code,
+                    name: normalizedName,
+                    description: `Auto-imported from AI model ${model.version}`
+                  }
+                });
+              } catch (e) {
+                this.logger.error(`Failed to auto-sync disease ${label.code}: ${e.message}`);
+              }
+            }
+          }
+        }
+      }
+
+      return models;
+    } catch (err) {
+      this.logger.error(`Failed to get available models: ${err.message}`);
+      throw new ServiceUnavailableException('Could not connect to AI Service');
+    }
+  }
+
+  /** Admin: update AI Settings & hot-reload */
+  async updateAiSettings(body: { version?: string; inference_threshold?: number; enabled_disease_codes?: string[] }) {
+    const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+    const apiKey = process.env.INTERNAL_API_KEY || '';
+
+    try {
+      const response = await fetch(`${aiUrl}/ai/config/reload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Api-Key': apiKey,
+        },
+        body: JSON.stringify(body)
+      });
+      if (!response.ok) throw new Error(`Failed to reload AI config: ${response.statusText}`);
+      return await response.json();
+    } catch (err) {
+      this.logger.error(`Failed to update AI settings: ${err.message}`);
+      throw new ServiceUnavailableException('Failed to update AI Service settings');
+    }
+  }
+
+  /** Soft Delete: Marks scan as deleted for patient but keeps data for Admin dataset */
   async deleteScan(patientId: number, scanId: number) {
     const scan = await this.prisma.skinScan.findFirst({
-      where: { id: scanId, patientId },
-      include: { images: true },
+      where: { id: scanId, patientId, isDeleted: false },
     });
 
     if (!scan) throw new BadRequestException('Scan not found or access denied.');
 
-    const imageUrls = scan.images.map((img) => img.imageUrl);
-
-    // 1. Delete from DB first
-    await this.prisma.$transaction([
-      this.prisma.diagnosisResult.deleteMany({ where: { scanId } }),
-      this.prisma.prediction.deleteMany({ where: { scanId } }),
-      this.prisma.scanImage.deleteMany({ where: { scanId } }),
-      this.prisma.feedbackLog.deleteMany({ where: { scanId } }),
-      this.prisma.skinDiary.updateMany({ where: { scanId }, data: { scanId: null } }),
-      this.prisma.skinScan.delete({ where: { id: scanId } }),
-    ]);
-
-    // 2. ONLY if DB deletion succeeded, clean up Cloudinary
-    await this.deleteImagesFromCloudinary(imageUrls);
-
-    return { success: true };
-  }
-
-  /** Delete all scans for a patient with POST-DB Cloudinary cleanup */
-  async deleteAllScans(patientId: number) {
-    const scans = await this.prisma.skinScan.findMany({
-      where: { patientId },
-      include: { images: true },
+    // Just mark as deleted, don't touch Cloudinary or other records
+    await this.prisma.skinScan.update({
+      where: { id: scanId },
+      data: { isDeleted: true },
     });
 
-    if (scans.length === 0) return { success: true, count: 0 };
+    return { success: true, message: 'Scan removed from your history.' };
+  }
 
-    const scanIds = scans.map((s) => s.id);
-    const allImageUrls = scans.flatMap((s) => s.images.map((img) => img.imageUrl));
+  /** Soft Delete All: Marks all scans as deleted for patient */
+  async deleteAllScans(patientId: number) {
+    const result = await this.prisma.skinScan.updateMany({
+      where: { patientId, isDeleted: false },
+      data: { isDeleted: true },
+    });
 
-    // 1. Delete from DB first
-    await this.prisma.$transaction([
-      this.prisma.diagnosisResult.deleteMany({ where: { scanId: { in: scanIds } } }),
-      this.prisma.prediction.deleteMany({ where: { scanId: { in: scanIds } } }),
-      this.prisma.scanImage.deleteMany({ where: { scanId: { in: scanIds } } }),
-      this.prisma.feedbackLog.deleteMany({ where: { scanId: { in: scanIds } } }),
-      this.prisma.skinDiary.updateMany({ where: { scanId: { in: scanIds } }, data: { scanId: null } }),
-      this.prisma.skinScan.deleteMany({ where: { id: { in: scanIds } } }),
-    ]);
-
-    // 2. Clean up Cloudinary
-    await this.deleteImagesFromCloudinary(allImageUrls);
-
-    return { success: true, count: scanIds.length };
+    return { success: true, count: result.count };
   }
 
   private async deleteImagesFromCloudinary(imageUrls: string[]) {

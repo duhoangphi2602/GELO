@@ -64,4 +64,14 @@ export class UpdateProfileDto {
   @MinLength(6)
   @IsOptional()
   password?: string;
+
+  @IsInt()
+  @Min(1)
+  @Max(120)
+  @IsOptional()
+  age?: number;
+
+  @IsEnum(Gender)
+  @IsOptional()
+  gender?: Gender;
 }

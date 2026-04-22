@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, CheckCircle2, AlertTriangle, Image as ImageIcon, Activity } from "lucide-react";
-import { useToast } from "../hooks/useToast";
+import { useToastContext } from "./ui/ToastContext";
 import api from "../lib/api";
 
 interface ReviewModalProps {
@@ -16,7 +16,7 @@ interface Disease {
 }
 
 export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: ReviewModalProps) {
-  const { toast } = useToast();
+  const toast = useToastContext();
   const [diseases, setDiseases] = useState<Disease[]>([]);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [actualDiseaseId, setActualDiseaseId] = useState<string | number>("");
@@ -52,8 +52,8 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
     try {
       await api.post(`/scans/admin/review/${scan.scanId}`, {
         isCorrect,
-        actualDiseaseId: (isCorrect || actualDiseaseId === "HEALTHY" || actualDiseaseId === "UNKNOWN" || !actualDiseaseId) ? undefined : Number(actualDiseaseId),
-        actualStatus: (actualDiseaseId === "HEALTHY" || actualDiseaseId === "UNKNOWN") ? (actualDiseaseId as string) : undefined,
+        actualDiseaseId: (isCorrect || actualDiseaseId === "UNKNOWN" || !actualDiseaseId) ? undefined : Number(actualDiseaseId),
+        actualStatus: (actualDiseaseId === "UNKNOWN") ? "UNKNOWN" : undefined,
         note
       });
 
@@ -189,8 +189,7 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                     className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a64ad]/20 focus:border-[#2a64ad] transition-all"
                   >
                     <option value="">Select the correct clinical diagnosis...</option>
-                    <option value="HEALTHY" className="font-bold text-green-700">Healthy Skin</option>
-                    <option value="UNKNOWN" className="font-bold text-amber-700">Other (Unknown Disease / To be added)</option>
+                    <option value="UNKNOWN" className="font-bold text-amber-700">Other (Unknown / Unlisted Disease)</option>
                     {(diseases || []).map(d => (
                       <option key={d.id} value={d.id.toString()}>{d.name}</option>
                     ))}

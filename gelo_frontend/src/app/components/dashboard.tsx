@@ -5,11 +5,14 @@ import { Layout } from "./layout/Layout";
 import { StatsCards } from "./dashboard/StatsCards";
 import { RecentScans } from "./dashboard/RecentScans";
 import { QuickActions } from "./dashboard/QuickActions";
+import { SupportedDiseases } from "./dashboard/SupportedDiseases";
 
 export function Dashboard() {
   const navigate = useNavigate();
   const [scanHistory, setScanHistory] = useState<any[]>([]);
+  const [supportedDiseases, setSupportedDiseases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingDiseases, setLoadingDiseases] = useState(true);
 
   const fullName = localStorage.getItem("fullName") || "Patient";
 
@@ -32,6 +35,17 @@ export function Dashboard() {
         setScanHistory([]);
         setLoading(false);
       });
+
+    // Fetch AI capabilities
+    api.get("/scans/supported-diseases")
+      .then(res => {
+        setSupportedDiseases(res.data || []);
+        setLoadingDiseases(false);
+      })
+      .catch(err => {
+        console.error("Failed to load supported diseases", err);
+        setLoadingDiseases(false);
+      });
   }, [navigate]);
 
   return (
@@ -45,6 +59,9 @@ export function Dashboard() {
 
         {/* Stats Grid */}
         <StatsCards scanHistory={scanHistory} />
+
+        {/* AI Capabilities Section */}
+        <SupportedDiseases diseases={supportedDiseases} loading={loadingDiseases} />
 
         {/* Action Section */}
         <div className="flex flex-col gap-8">

@@ -6,17 +6,42 @@ import { useToastContext } from "./ui/ToastContext";
 
 export function AdminDataManagement() {
   const [data, setData] = useState<any[]>([]);
+  const [diseases, setDiseases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterDiseaseId, setFilterDiseaseId] = useState("");
   const toast = useToastContext();
 
   useEffect(() => {
-    fetchVerifiedData();
+    fetchDiseases();
   }, []);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchVerifiedData();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, filterDiseaseId]);
+
+  const fetchDiseases = async () => {
+    try {
+      const res = await api.get("/scans/admin/diseases");
+      setDiseases(res.data || []);
+    } catch (err) {
+      console.error("Error fetching diseases", err);
+    }
+  };
 
   const fetchVerifiedData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/scans/admin/verified-data");
+      const res = await api.get("/scans/admin/verified-data", {
+        params: {
+          search: searchTerm || undefined,
+          diseaseId: filterDiseaseId || undefined
+        }
+      });
       setData(res.data || []);
     } catch (err) {
       console.error("Error fetching verified data", err);
@@ -55,15 +80,26 @@ export function AdminDataManagement() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by Scan ID or Disease..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by ID, Patient, or Disease..."
               className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center cursor-pointer gap-2 px-4 py-2 border border-border rounded-xl text-sm font-medium hover:bg-muted transition-colors">
-              <Filter className="w-4 h-4" />
-              Filter
-            </button>
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <select
+                value={filterDiseaseId}
+                onChange={(e) => setFilterDiseaseId(e.target.value)}
+                className="pl-9 pr-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted transition-colors outline-none appearance-none cursor-pointer"
+              >
+                <option value="">All Conditions</option>
+                {diseases.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
             <button
               onClick={handleExportCsv}
               disabled={loading || data.length === 0}

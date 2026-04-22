@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "v1",
   "architecture": "efficientnet_v2_s",
   "num_classes": 4,
   "input_size": 224,
@@ -13,5 +13,10 @@
     0.224,
     0.225
   ],
-  "threshold": 0.7
+  "inference_threshold": 0.7,
+  "enabled_disease_codes": [
+    "L20.9",
+    "L10",
+    "D18.0"
+  ]
 }

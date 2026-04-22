@@ -1,8 +1,9 @@
 import io
+import os
 import httpx
 import logging
-import numpy as np
 import torch
+from torchvision import transforms
 from PIL import Image, UnidentifiedImageError
 from .exceptions import DownloadError, InvalidImageError
 
@@ -13,8 +14,13 @@ MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 async def fetch_image_async(image_url: str, timeout: float = 10.0) -> bytes:
     logger.info(f"Downloading image from {image_url} (timeout={timeout}s)")
     try:
-        # verify=False is used to bypass SSL issues common in local/dev environments on Windows
-        async with httpx.AsyncClient(verify=False) as client:
+        # Check environment variable for SSL verification (default to True for security)
+        ssl_verify_str = os.getenv("SSL_VERIFY", "True").lower()
+        verify_ssl = ssl_verify_str in ("true", "1", "yes")
+        if not verify_ssl:
+            logger.warning("SSL Verification is DISABLED. Do not use this in production.")
+
+        async with httpx.AsyncClient(verify=verify_ssl) as client:
             response = await client.get(image_url, timeout=timeout)
             response.raise_for_status()
             
@@ -63,22 +69,18 @@ def preprocess_image_tensor(image_bytes: bytes, config: dict) -> torch.Tensor:
     mean_list = norm_config.get("mean", [0.485, 0.456, 0.406])
     std_list = norm_config.get("std", [0.229, 0.224, 0.225])
 
-    # 1. Resize
-    img = img.resize((target_width, target_height), Image.Resampling.BILINEAR)
-    
-    # 2. To Numpy & Rescale [0, 1]
-    img_arr = np.array(img).astype(np.float32) / 255.0
-    
-    # 3. Normalize
-    mean = np.array(mean_list).astype(np.float32)
-    std = np.array(std_list).astype(np.float32)
-    img_arr = (img_arr - mean) / std
+    # 1. Setup transforms
+    preprocess = transforms.Compose([
+        transforms.Resize((target_height, target_width), interpolation=transforms.InterpolationMode.BILINEAR),
+        transforms.ToTensor(), # Converts to [0, 1] and [C, H, W]
+        transforms.Normalize(mean=mean_list, std=std_list)
+    ])
 
-    # 4. Transpose (H, W, C) -> (C, H, W)
-    img_arr = np.transpose(img_arr, (2, 0, 1))
+    # 2. Apply transforms
+    tensor = preprocess(img)
 
-    # 5. Convert to Tensor & Add Batch Dimension
-    tensor = torch.tensor(img_arr).unsqueeze(0)
+    # 3. Add Batch Dimension
+    tensor = tensor.unsqueeze(0)
 
     return tensor
 

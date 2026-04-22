@@ -1,6 +1,6 @@
 import {
-  Controller, Post, Get, Param, UseGuards, Delete,
-  UseInterceptors, UploadedFile, Body, BadRequestException, Res
+  Controller, Post, Get, Put, Param, UseGuards, Delete,
+  UseInterceptors, UploadedFile, Body, BadRequestException, Res, Query
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
@@ -25,7 +25,7 @@ const multerOptions = {
 
 @Controller('scans')
 export class ScanController {
-  constructor(private readonly scanService: ScanService) {}
+  constructor(private readonly scanService: ScanService) { }
 
   // ─── Patient: Upload image & AI analysis (single-phase, AI-only) ────────
   @Post('initiate')
@@ -59,6 +59,12 @@ export class ScanController {
       throw new BadRequestException('You can only view your own scan history.');
     }
     return this.scanService.getScansForPatient(requestedId);
+  }
+
+  @Get('supported-diseases')
+  @UseGuards(JwtAuthGuard)
+  async getSupportedDiseases() {
+    return this.scanService.getSupportedDiseases();
   }
 
   // ─── Patient: Xoá toàn bộ lịch sử scan ──────────────────────────────────────
@@ -103,8 +109,14 @@ export class ScanController {
   @Get('admin/verified-data')
   @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard)
-  async getAdminVerifiedData() {
-    return this.scanService.getAdminVerifiedData();
+  async getAdminVerifiedData(
+    @Query('search') search?: string,
+    @Query('diseaseId') diseaseId?: string,
+  ) {
+    return this.scanService.getAdminVerifiedData(
+      search,
+      diseaseId ? parseInt(diseaseId, 10) : undefined,
+    );
   }
 
   // ─── Admin: Export verified data as CSV ─────────────────────────────────
@@ -138,5 +150,36 @@ export class ScanController {
       throw new BadRequestException('Please provide the correct disease or status if the prediction is wrong.');
     }
     return this.scanService.submitReview(parseInt(scanId, 10), body);
+  }
+
+  // ─── Admin: AI Settings ────────────────────────────────────────────────
+  @Get('admin/ai-settings')
+  @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard)
+  async getAiSettings() {
+    return this.scanService.getAiSettings();
+  }
+
+  @Get('admin/models')
+  @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard)
+  async getAvailableModels() {
+    return this.scanService.getAvailableModels();
+  }
+
+  @Get('admin/patients')
+  @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard)
+  async getPatients() {
+    return this.scanService.getPatients();
+  }
+
+  @Put('admin/ai-settings')
+  @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard)
+  async updateAiSettings(
+    @Body() body: { version?: string; inference_threshold?: number; enabled_disease_codes?: string[] }
+  ) {
+    return this.scanService.updateAiSettings(body);
   }
 }

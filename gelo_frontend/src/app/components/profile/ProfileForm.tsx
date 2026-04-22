@@ -11,7 +11,6 @@ export function ProfileForm() {
   const [gender, setGender] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(true);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -48,8 +47,6 @@ export function ProfileForm() {
       // Update local storage so Header/Sidebar updates immediately
       localStorage.setItem("fullName", response.data.patient?.fullName || fullName);
       
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
       toast.success("Profile updated!", "Your information has been saved successfully.");
       setPassword(""); // Clear password field after save
     } catch (error: any) {
@@ -89,14 +86,6 @@ export function ProfileForm() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8 space-y-8">
           <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-4">Personal Information</h3>
           
-          {/* Save success inline banner */}
-          {saved && (
-            <div className="flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-[#2a64ad] text-sm animate-in slide-in-from-top-2 duration-300">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              <span className="font-medium">Profile saved successfully!</span>
-            </div>
-          )}
-
           <div className="space-y-5">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>

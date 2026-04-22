@@ -5,6 +5,7 @@ import api from "../lib/api";
 
 interface Disease {
   id: number;
+  code: string;
   name: string;
   description: string;
 }
@@ -15,6 +16,7 @@ export function DiseaseManagement() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [formData, setFormData] = useState({
+    code: "",
     name: "",
     description: "",
   });
@@ -57,6 +59,7 @@ export function DiseaseManagement() {
 
   const resetForm = () => {
     setFormData({
+      code: "",
       name: "",
       description: "",
     });
@@ -66,6 +69,7 @@ export function DiseaseManagement() {
 
   const handleEdit = (disease: Disease) => {
     setFormData({
+      code: disease.code || "",
       name: disease.name,
       description: disease.description,
     });
@@ -87,7 +91,8 @@ export function DiseaseManagement() {
 
   const filteredDiseases = (diseases || []).filter(d =>
     d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.description.toLowerCase().includes(searchQuery.toLowerCase())
+    d.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (d.code && d.code.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -125,6 +130,7 @@ export function DiseaseManagement() {
                 <table className="w-full">
                   <thead className="bg-muted/50 border-b border-border">
                     <tr>
+                      <th className="px-6 py-4 text-left">Code</th>
                       <th className="px-6 py-4 text-left">Disease Name</th>
                       <th className="px-6 py-4 text-left">Description</th>
                       <th className="px-6 py-4 text-center">Actions</th>
@@ -134,7 +140,10 @@ export function DiseaseManagement() {
                     {filteredDiseases.map((disease) => (
                       <tr key={disease.id} className="cursor-pointer hover:bg-muted/20 transition-colors">
                         <td className="px-6 py-4">
-                          <span>{disease.name}</span>
+                          <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">{disease.code}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-medium">{disease.name}</span>
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-sm text-muted-foreground line-clamp-2">
@@ -174,9 +183,25 @@ export function DiseaseManagement() {
                 </h3>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Code */}
+                  <div>
+                    <label htmlFor="code" className="block mb-2 text-sm font-medium">
+                      Disease Code (ICD-10/Slug) *
+                    </label>
+                    <input
+                      type="text"
+                      id="code"
+                      value={formData.code}
+                      onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                      className="cursor-text w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-colors font-mono"
+                      placeholder="e.g., L20.9"
+                      required
+                    />
+                  </div>
+
                   {/* Name */}
                   <div>
-                    <label htmlFor="name" className="block mb-2 text-sm">
+                    <label htmlFor="name" className="block mb-2 text-sm font-medium">
                       Disease Name *
                     </label>
                     <input

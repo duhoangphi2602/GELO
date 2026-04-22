@@ -60,6 +60,7 @@ async function main() {
   // Disease ID 1
   const ad = await prisma.disease.create({
     data: {
+      code: 'L20.9',
       name: 'Atopic Dermatitis',
       description:
         'A chronic inflammatory skin condition characterized by intense itching, dry skin, and recurring rashes. It often begins in childhood and may persist into adulthood. Commonly associated with allergies, asthma, and hay fever.',
@@ -69,6 +70,7 @@ async function main() {
   // Disease ID 2
   const vt = await prisma.disease.create({
     data: {
+      code: 'D18.0',
       name: 'Vascular Tumors',
       description:
         'Benign or malignant growths arising from blood vessels or lymphatic vessels. Common types include hemangiomas, which often appear as bright red birthmarks, and vascular malformations. Most are harmless but should be monitored for changes.',
@@ -78,6 +80,7 @@ async function main() {
   // Disease ID 3
   const mel = await prisma.disease.create({
     data: {
+      code: 'MEL_NEV_MOL',
       name: 'Melanoma Skin Cancer / Nevi / Moles',
       description:
         'A broad category covering benign moles (nevi) and melanoma, the most dangerous form of skin cancer. Melanoma develops in melanocytes, the cells that produce skin pigment. Early detection is critical for effective treatment.',
@@ -87,6 +90,7 @@ async function main() {
   // Disease ID 4
   const bul = await prisma.disease.create({
     data: {
+      code: 'L10',
       name: 'Bullous Disease',
       description:
         'A group of rare autoimmune disorders that cause large, fluid-filled blisters (bullae) on the skin and mucous membranes. Types include bullous pemphigoid and pemphigus vulgaris. These conditions require prompt medical attention.',
