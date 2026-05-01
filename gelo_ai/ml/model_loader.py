@@ -89,7 +89,7 @@ class ModelPackage:
         num_classes = self.config.get("num_classes", 4)
         
         from .models.factory import ModelFactory
-        self.model = ModelFactory.create(model_type=arch_type, num_classes=num_classes)
+        self.model = ModelFactory.create(model_type=arch_type, num_classes=num_classes, config=self.config)
         
         # Clean and map state dict keys
         clean_dict = self._clean_state_dict(raw_state_dict)
@@ -100,6 +100,14 @@ class ModelPackage:
             logger.warning(f"Weights missing for layers (using random init): {missing}")
         if unexpected:
             logger.debug(f"Unexpected layers ignored: {unexpected}")
+        
+        # Cảnh báo nếu tỉ lệ key không khớp quá cao (dấu hiệu weights sai chuẩn)
+        total_keys = len(clean_dict)
+        if total_keys > 0 and len(missing) / total_keys > 0.5:
+            logger.warning(
+                f"Over 50% of weights are missing. Model may have been trained with a different "
+                f"library. Consider re-saving weights in timm format for best compatibility."
+            )
             
         self.model.to(self.device)
         self.model.eval()
@@ -107,35 +115,22 @@ class ModelPackage:
 
     def _clean_state_dict(self, state_dict):
         """
-        Normalizes keys to handle common naming differences between libraries.
-        (e.g. module.prefix from DataParallel, or timm vs torchvision mappings)
+        Normalizes state_dict keys by removing common wrapper prefixes.
+        Focuses on standard prefix removals only.
+        For best results, models should be saved in timm-compatible format.
         """
         new_dict = {}
-        
-        # Detect if it's a timm-style naming
-        is_timm = any(k.startswith('conv_stem') or k.startswith('blocks') for k in state_dict.keys())
-        
         for k, v in state_dict.items():
-            # Remove common prefixes
+            # Remove common prefixes from DataParallel or wrapper modules
             key = k.replace('module.', '').replace('model.', '')
-            
-            # Map timm -> torchvision if detected
-            if is_timm:
-                if key.startswith('conv_stem'): key = key.replace('conv_stem', 'features.0.0')
-                elif key.startswith('bn1'): key = key.replace('bn1', 'features.0.1')
-                elif key.startswith('blocks'): key = key.replace('blocks', 'features')
-                elif key.startswith('conv_head'): key = key.replace('conv_head', 'features.7.0')
-                elif key.startswith('bn2'): key = key.replace('bn2', 'features.7.1')
-                elif key.startswith('classifier'): key = key.replace('classifier', 'classifier.1')
-            else:
-                # Minor torchvision version fixes
-                key = key.replace("classifier.1.1.", "classifier.1.")
-
             new_dict[key] = v
         return new_dict
 
 def load_model_package(version: str = "v1") -> ModelPackage:
-    """Entry point for loading a model version."""
+    """Entry point for loading a model version. Includes memory cleanup."""
+    from .models.factory import ModelFactory
+    ModelFactory.clear_memory()
+    
     base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "model_package", version)
     logger.info(f"Initializing Model Package from: {base_dir}")
     return ModelPackage(version_dir=base_dir)

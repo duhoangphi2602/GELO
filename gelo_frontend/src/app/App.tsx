@@ -1,6 +1,8 @@
-import { RouterProvider } from "react-router";
-import { router } from "./routes";
-import { ToastProvider } from "./components/ui/ToastProvider";
+import { RouterProvider, createBrowserRouter } from "react-router";
+import routes from "~react-pages";
+import { ToastProvider } from "@/components/ui/ToastProvider";
+
+const router = createBrowserRouter(routes);
 
 export default function App() {
   return (

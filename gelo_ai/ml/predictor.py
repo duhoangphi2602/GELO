@@ -52,9 +52,11 @@ class PredictorService:
         is_mock = self._package is None or self._package.model == "mock"
 
         if is_mock:
-            # Mocking a batch output score for 4 classes (Uniform distribution to avoid bias)
+            # Dynamic mock: probability distribution based on actual num_classes from config
+            num_classes = self.config.get("num_classes", 4)
             N = tensor_input.shape[0]
-            prob_tensor = torch.tensor([[0.25, 0.25, 0.25, 0.25] for _ in range(N)])
+            uniform_prob = 1.0 / num_classes
+            prob_tensor = torch.tensor([[uniform_prob] * num_classes for _ in range(N)])
         else:
             with torch.no_grad():
                 model = self._package.model
@@ -95,9 +97,9 @@ class PredictorService:
             name = mapping.get("name", "Unknown")
         else:
             # Fallback if index not in map
-            disease_id = predicted_idx + 1 # Assuming IDs start at 1 if node index is disease rank
+            disease_id = 0
             code = "UNKNOWN"
-            status = "DISEASE"
+            status = "UNKNOWN"
             name = "Unknown"
 
         # 6. Dynamic Labels Checking
@@ -109,10 +111,11 @@ class PredictorService:
             status = "UNKNOWN"
             name = "Unknown"
 
-        # Final check for ID 0
-        if disease_id == 0 or code == "UNKNOWN":
+        # Final check: ensure UNKNOWN code always has consistent status
+        if code == "UNKNOWN":
             status = "UNKNOWN"
             name = "Unknown"
+            disease_id = 0
 
         logger.info(f"Inference Result -> Status: {status}, Code: {code}, Name: {name} ({max_conf:.4f})")
         

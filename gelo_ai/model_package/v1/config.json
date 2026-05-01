@@ -1,5 +1,7 @@
 {
   "version": "v1",
+  "name": "Skin Diagnostic v1 (Multi-class)",
+  "task_type": "classification",
   "architecture": "efficientnet_v2_s",
   "num_classes": 4,
   "input_size": 224,
@@ -17,6 +19,7 @@
   "enabled_disease_codes": [
     "L20.9",
     "L10",
+    "MEL_NEV_MOL",
     "D18.0"
   ]
 }

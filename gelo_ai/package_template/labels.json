@@ -1,0 +1,20 @@
+{
+  "0": {
+    "id": 1,
+    "code": "ICD_CODE_HERE",
+    "status": "DISEASE",
+    "name": "Disease Name Here"
+  },
+  "1": {
+    "id": 0,
+    "code": "UNKNOWN",
+    "status": "UNKNOWN",
+    "name": "Unknown"
+  },
+  "-1": {
+    "id": 0,
+    "code": "UNKNOWN",
+    "status": "UNKNOWN",
+    "name": "Unknown"
+  }
+}

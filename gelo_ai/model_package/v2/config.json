@@ -1,9 +1,10 @@
 {
   "version": "v2",
-  "name": "Skin Model v2 (Binary)",
-  "architecture": "efficientnet_v2_s",
+  "name": "Skin Diagnostic v2 (Binary)",
+  "task_type": "classification",
+  "architecture": "efficientnet_b3",
   "num_classes": 2,
-  "input_size": 224,
+  "input_size": 300,
   "mean": [
     0.485,
     0.456,

@@ -22,8 +22,10 @@ yarn-error.log*
 
 # Node
 node_modules/
-package-lock.json
-yarn.lock
+# Keep lock files for consistency
+# package-lock.json
+# yarn.lock
+
 
 # Python (Global)
 __pycache__/
@@ -38,6 +40,7 @@ venv/
 dist/
 build/
 out/
-.next/
 *.tar
 *.zip
+*.7z
+*.rar
