@@ -6,8 +6,8 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 export interface JwtPayload {
-  sub: number;       // account.id
-  role: string;      // 'patient' | 'admin'
+  sub: number; // account.id
+  role: string; // 'patient' | 'admin'
   patientId: number; // patient.id
 }
 

@@ -15,9 +15,19 @@ async function main() {
   console.log('--- 🚀 STARTING MASTER SEED ---');
 
   // 1. Cleanup existing data
-  console.log('Cleaning up existing disease data...');
+  console.log('Cleaning up existing database tables...');
+  await prisma.$executeRaw`TRUNCATE TABLE "OtpCode" RESTART IDENTITY CASCADE;`;
+  await prisma.$executeRaw`TRUNCATE TABLE "Prediction" RESTART IDENTITY CASCADE;`;
+  await prisma.$executeRaw`TRUNCATE TABLE "FeedbackLog" RESTART IDENTITY CASCADE;`;
+  await prisma.$executeRaw`TRUNCATE TABLE "ScanImage" RESTART IDENTITY CASCADE;`;
+  await prisma.$executeRaw`TRUNCATE TABLE "DiagnosisResult" RESTART IDENTITY CASCADE;`;
+  await prisma.$executeRaw`TRUNCATE TABLE "SkinDiary" RESTART IDENTITY CASCADE;`;
+  await prisma.$executeRaw`TRUNCATE TABLE "SkinScan" RESTART IDENTITY CASCADE;`;
   await prisma.$executeRaw`TRUNCATE TABLE "DiseaseAdvice" RESTART IDENTITY CASCADE;`;
+  await prisma.$executeRaw`TRUNCATE TABLE "DiseaseImage" RESTART IDENTITY CASCADE;`;
   await prisma.$executeRaw`TRUNCATE TABLE "Disease" RESTART IDENTITY CASCADE;`;
+  await prisma.$executeRaw`TRUNCATE TABLE "Patient" RESTART IDENTITY CASCADE;`;
+  await prisma.$executeRaw`TRUNCATE TABLE "Account" RESTART IDENTITY CASCADE;`;
 
   // 2. Create Admin account (no Patient profile)
   console.log('Creating admin account...');
@@ -30,6 +40,7 @@ async function main() {
       email: 'admin@healthai.com',
       passwordHash: adminPasswordHash,
       role: UserRole.ADMIN,
+      isVerified: true,
     },
   });
 
@@ -44,6 +55,7 @@ async function main() {
       email: 'patient@healthai.com',
       passwordHash: patientPasswordHash,
       role: UserRole.PATIENT,
+      isVerified: true,
       patient: {
         create: {
           fullName: 'Demo Patient',

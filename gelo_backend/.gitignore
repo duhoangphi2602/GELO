@@ -26,6 +26,8 @@ seed.log
 
 # Test coverage
 coverage/
+scratch/
+
 
 # Typescript
 *.tsbuildinfo

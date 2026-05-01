@@ -1,4 +1,8 @@
-import { createParamDecorator, ExecutionContext, SetMetadata } from '@nestjs/common';
+import {
+  createParamDecorator,
+  ExecutionContext,
+  SetMetadata,
+} from '@nestjs/common';
 
 /**
  * @CurrentUser() — Lấy user từ JWT token (đã verify).
@@ -25,7 +29,7 @@ export const CurrentUser = createParamDecorator(
 
 /**
  * @Roles('admin') — Đánh dấu route chỉ cho phép role cụ thể.
- * 
+ *
  * Kết hợp với JwtAuthGuard để enforce.
  *
  * Usage:

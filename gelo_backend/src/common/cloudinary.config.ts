@@ -14,7 +14,9 @@ export const cloudinaryStorage = new CloudinaryStorage({
   params: async (_req, file) => ({
     folder: 'gelo/scans',
     allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    transformation: [{ width: 1024, height: 1024, crop: 'limit', quality: 'auto' }],
+    transformation: [
+      { width: 1024, height: 1024, crop: 'limit', quality: 'auto' },
+    ],
     public_id: `scan_${Date.now()}_${Math.round(Math.random() * 1e6)}`,
   }),
 });

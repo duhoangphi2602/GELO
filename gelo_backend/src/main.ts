@@ -26,9 +26,9 @@ async function bootstrap() {
   // ─── Global Validation Pipe ───────────────────────────────────────────────
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,       // Strip unknown fields
+      whitelist: true, // Strip unknown fields
       forbidNonWhitelisted: false,
-      transform: true,       // Auto-transform types (string → number)
+      transform: true, // Auto-transform types (string → number)
     }),
   );
 
@@ -37,7 +37,9 @@ async function bootstrap() {
   // ─── SWAGGER CONFIGURATION ───────────────────────────────────────────────
   const config = new DocumentBuilder()
     .setTitle('Gelo API')
-    .setDescription('The Gelo Healthcare AI Diagnostic System API Documentation')
+    .setDescription(
+      'The Gelo Healthcare AI Diagnostic System API Documentation',
+    )
     .setVersion('1.0')
     .addTag('auth')
     .addTag('scans')

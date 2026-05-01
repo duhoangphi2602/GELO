@@ -1,4 +1,15 @@
-import { Controller, Post, Get, Delete, Body, Param, ParseIntPipe, UseGuards, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Body,
+  Param,
+  ParseIntPipe,
+  UseGuards,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { DiaryService } from './diary.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser, Roles } from '../auth/auth.decorator';
@@ -13,10 +24,22 @@ export class DiaryController {
   @Roles(UserRole.PATIENT)
   async createDiary(
     @CurrentUser('patientId') patientId: number,
-    @Body() body: { scanId: number | null; conditionScore: number; note: string; entryDate: string },
+    @Body()
+    body: {
+      scanId: number | null;
+      conditionScore: number;
+      note: string;
+      entryDate: string;
+    },
   ) {
     // patientId lấy từ JWT token, không từ body
-    return this.diaryService.createDiaryEntry(patientId, body.scanId, body.conditionScore, body.note, body.entryDate);
+    return this.diaryService.createDiaryEntry(
+      patientId,
+      body.scanId,
+      body.conditionScore,
+      body.note,
+      body.entryDate,
+    );
   }
 
   @Get(':patientId')
@@ -33,9 +56,7 @@ export class DiaryController {
 
   @Delete('batch/all')
   @Roles(UserRole.PATIENT)
-  async deleteAllDiaries(
-    @CurrentUser('patientId') patientId: number,
-  ) {
+  async deleteAllDiaries(@CurrentUser('patientId') patientId: number) {
     return this.diaryService.deleteAllDiaries(patientId);
   }
 

@@ -1,4 +1,14 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsInt, Min, Max, IsEnum } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  IsEnum,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Gender } from '@prisma/client';
 
@@ -54,6 +64,11 @@ export class LoginDto {
 export class UpdateProfileDto {
   @IsString()
   @IsOptional()
+  @MinLength(3)
+  username?: string;
+
+  @IsString()
+  @IsOptional()
   fullName?: string;
 
   @IsEmail()
@@ -74,4 +89,60 @@ export class UpdateProfileDto {
   @IsEnum(Gender)
   @IsOptional()
   gender?: Gender;
+}
+
+export class VerifyOtpDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+
+  @IsEnum(['REGISTER', 'FORGOT_PASSWORD', 'CHANGE_PASSWORD'])
+  @IsNotEmpty()
+  type: 'REGISTER' | 'FORGOT_PASSWORD' | 'CHANGE_PASSWORD';
+}
+
+export class ResendOtpDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsEnum(['REGISTER', 'FORGOT_PASSWORD', 'CHANGE_PASSWORD'])
+  @IsNotEmpty()
+  type: 'REGISTER' | 'FORGOT_PASSWORD' | 'CHANGE_PASSWORD';
+}
+
+export class ForgotPasswordDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+}
+
+export class ResetPasswordDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6)
+  newPassword: string;
+}
+
+export class ChangePasswordVerifyDto {
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6)
+  newPassword: string;
 }

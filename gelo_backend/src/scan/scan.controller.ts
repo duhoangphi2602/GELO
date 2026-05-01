@@ -1,6 +1,17 @@
 import {
-  Controller, Post, Get, Put, Param, UseGuards, Delete,
-  UseInterceptors, UploadedFile, Body, BadRequestException, Res, Query
+  Controller,
+  Post,
+  Get,
+  Put,
+  Param,
+  UseGuards,
+  Delete,
+  UseInterceptors,
+  UploadedFile,
+  Body,
+  BadRequestException,
+  Res,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
@@ -10,14 +21,18 @@ import { CurrentUser, Roles } from '../auth/auth.decorator';
 import { cloudinaryStorage } from '../common/cloudinary.config';
 import { UserRole } from '@prisma/client';
 
-
 // ─── Multer config: Upload thẳng lên Cloudinary ─────────────────────────────
 const multerOptions = {
   storage: cloudinaryStorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
   fileFilter: (_req: any, file: any, cb: any) => {
     if (!file.mimetype.match(/\/(jpg|jpeg|png|webp)$/)) {
-      return cb(new BadRequestException('Only image files (jpg, png, webp) are allowed'), false);
+      return cb(
+        new BadRequestException(
+          'Only image files (jpg, png, webp) are allowed',
+        ),
+        false,
+      );
     }
     cb(null, true);
   },
@@ -25,7 +40,9 @@ const multerOptions = {
 
 @Controller('scans')
 export class ScanController {
-  constructor(private readonly scanService: ScanService) { }
+  constructor(
+    private readonly scanService: ScanService
+  ) {}
 
   // ─── Patient: Upload image & AI analysis (single-phase, AI-only) ────────
   @Post('initiate')
@@ -70,9 +87,7 @@ export class ScanController {
   // ─── Patient: Xoá toàn bộ lịch sử scan ──────────────────────────────────────
   @Delete('history/all')
   @UseGuards(JwtAuthGuard)
-  async deleteAllScans(
-    @CurrentUser('patientId') tokenPatientId: number,
-  ) {
+  async deleteAllScans(@CurrentUser('patientId') tokenPatientId: number) {
     if (!tokenPatientId) {
       throw new BadRequestException('Patient profile required.');
     }
@@ -87,99 +102,5 @@ export class ScanController {
     @Param('scanId') scanId: string,
   ) {
     return this.scanService.deleteScan(tokenPatientId, parseInt(scanId, 10));
-  }
-
-  // ─── Admin: Stats cho Dashboard ──────────────────────────────────────────
-  @Get('admin/stats')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async getAdminStats() {
-    return this.scanService.getAdminStats();
-  }
-
-  // ─── Admin: Scan cần review ─────────────────────────────────────────────
-  @Get('admin/pending-reviews')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async getPendingReviews() {
-    return this.scanService.getPendingReviews();
-  }
-
-  // ─── Admin: Reviewed data (Gold Standard) ────────────────────────────────
-  @Get('admin/verified-data')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async getAdminVerifiedData(
-    @Query('search') search?: string,
-    @Query('diseaseId') diseaseId?: string,
-  ) {
-    return this.scanService.getAdminVerifiedData(
-      search,
-      diseaseId ? parseInt(diseaseId, 10) : undefined,
-    );
-  }
-
-  // ─── Admin: Export verified data as CSV ─────────────────────────────────
-  @Get('admin/export-csv')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async exportCsv(@Res() res: Response) {
-    const csv = await this.scanService.exportTrainingDataCsv();
-    res.header('Content-Type', 'text/csv');
-    res.attachment('gelo_training_data.csv');
-    return res.send(csv);
-  }
-
-  // ─── Admin: Danh sách bệnh ─────────────────────────────────────────────
-  @Get('admin/diseases')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async getDiseases() {
-    return this.scanService.getAllDiseases();
-  }
-
-  // ─── Admin: Submit review ───────────────────────────────────────────────
-  @Post('admin/review/:scanId')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async submitReview(
-    @Param('scanId') scanId: string,
-    @Body() body: { isCorrect: boolean; actualDiseaseId?: number; actualStatus?: string; note?: string },
-  ) {
-    if (body.isCorrect === false && !body.actualDiseaseId && !body.actualStatus) {
-      throw new BadRequestException('Please provide the correct disease or status if the prediction is wrong.');
-    }
-    return this.scanService.submitReview(parseInt(scanId, 10), body);
-  }
-
-  // ─── Admin: AI Settings ────────────────────────────────────────────────
-  @Get('admin/ai-settings')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async getAiSettings() {
-    return this.scanService.getAiSettings();
-  }
-
-  @Get('admin/models')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async getAvailableModels() {
-    return this.scanService.getAvailableModels();
-  }
-
-  @Get('admin/patients')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async getPatients() {
-    return this.scanService.getPatients();
-  }
-
-  @Put('admin/ai-settings')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard)
-  async updateAiSettings(
-    @Body() body: { version?: string; inference_threshold?: number; enabled_disease_codes?: string[] }
-  ) {
-    return this.scanService.updateAiSettings(body);
   }
 }

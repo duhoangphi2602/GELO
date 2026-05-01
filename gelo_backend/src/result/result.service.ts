@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DiagnosticStatus, UserRole, FeedbackRole } from '@prisma/client';
 
@@ -21,11 +26,16 @@ export class ResultService {
       },
     });
 
-    if (!result) throw new NotFoundException('Diagnostic result not found for this scan ID');
+    if (!result)
+      throw new NotFoundException(
+        'Diagnostic result not found for this scan ID',
+      );
 
     // Security: only owner or admin can view
     if (role !== UserRole.ADMIN && result.scan.patientId !== patientId) {
-      throw new ForbiddenException('You do not have permission to view this diagnostic result.');
+      throw new ForbiddenException(
+        'You do not have permission to view this diagnostic result.',
+      );
     }
 
     // aiConfidence is stored 0–100; return directly, no multiplication needed
@@ -35,12 +45,14 @@ export class ResultService {
       scanId: result.scanId,
       scannedAt: result.createdAt,
       decision: result.decision ?? 'low_confidence',
-      aiConfidence: (result as any).aiConfidence !== undefined && (result as any).aiConfidence !== null 
-        ? Math.round((result as any).aiConfidence) 
-        : 0,
+      aiConfidence:
+        (result as any).aiConfidence !== undefined &&
+        (result as any).aiConfidence !== null
+          ? Math.round((result as any).aiConfidence)
+          : 0,
       diagnosticStatus: result.diagnosticStatus,
-      disease: isUnknown 
-        ? 'Analysis Inconclusive' 
+      disease: isUnknown
+        ? 'Analysis Inconclusive'
         : (result.predictedDisease?.name ?? 'Unknown'),
       description: isUnknown
         ? 'The AI model could not identify a specific condition with high certainty from the provided image.'
@@ -51,9 +63,10 @@ export class ResultService {
         title: ad.title,
         content: ad.content,
       })),
-      hasFeedback: await this.prisma.feedbackLog.count({ 
-        where: { scanId, role: FeedbackRole.USER } 
-      }) > 0,
+      hasFeedback:
+        (await this.prisma.feedbackLog.count({
+          where: { scanId, role: FeedbackRole.USER },
+        })) > 0,
     };
   }
 
@@ -71,7 +84,9 @@ export class ResultService {
 
     // Security: patient can only feedback their own scans
     if (diagnosis.scan.patientId !== patientId) {
-      throw new ForbiddenException('You can only submit feedback for your own diagnostic results.');
+      throw new ForbiddenException(
+        'You can only submit feedback for your own diagnostic results.',
+      );
     }
 
     // NEW: Prevent duplicate feedback
@@ -79,7 +94,9 @@ export class ResultService {
       where: { scanId, role: FeedbackRole.USER },
     });
     if (existingFeedback) {
-      throw new BadRequestException('You have already submitted feedback for this scan.');
+      throw new BadRequestException(
+        'You have already submitted feedback for this scan.',
+      );
     }
 
     const feedback = await this.prisma.feedbackLog.create({
@@ -105,7 +122,9 @@ export class ResultService {
       });
 
       if (!alreadySaved) {
-        const scanImage = await this.prisma.scanImage.findFirst({ where: { scanId } });
+        const scanImage = await this.prisma.scanImage.findFirst({
+          where: { scanId },
+        });
         if (scanImage) {
           await this.prisma.diseaseImage.create({
             data: {

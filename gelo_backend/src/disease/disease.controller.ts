@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { DiseaseService } from './disease.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { Roles } from '../auth/auth.decorator';
@@ -36,7 +45,10 @@ export class DiseaseController {
   }
 
   @Post(':id/advices')
-  async updateAdvices(@Param('id') id: string, @Body() advices: { type: string; title?: string; content: string }[]) {
+  async updateAdvices(
+    @Param('id') id: string,
+    @Body() advices: { type: string; title?: string; content: string }[],
+  ) {
     return this.diseaseService.updateAdvices(+id, advices);
   }
 }

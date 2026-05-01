@@ -11,6 +11,7 @@ model Account {
   username     String   @unique @db.VarChar(100)
   email        String   @unique @db.VarChar(255)
   passwordHash String   @map("password_hash") @db.VarChar(255)
+  isVerified   Boolean  @default(false) @map("is_verified")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
   role         UserRole @default(PATIENT)
@@ -165,4 +166,23 @@ enum Gender {
 enum DiagnosticStatus {
   DISEASE
   UNKNOWN
+}
+
+model OtpCode {
+  id        Int      @id @default(autoincrement()) @map("otp_id")
+  email     String   @db.VarChar(255)
+  code      String   @db.VarChar(6)
+  type      OtpType
+  expiresAt DateTime @map("expires_at")
+  attempts  Int      @default(0)
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email, type])
+}
+
+enum OtpType {
+  REGISTER
+  FORGOT_PASSWORD
+  CHANGE_PASSWORD
 }
