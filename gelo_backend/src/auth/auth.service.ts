@@ -13,8 +13,10 @@ import { RegisterDto, UpdateProfileDto } from './dto/auth.dto';
 import { MailService } from '../mail/mail.service';
 import { OtpService } from './otp.service';
 
+import { BaseService } from '../common/services/base.service';
+
 @Injectable()
-export class AuthService {
+export class AuthService extends BaseService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
@@ -94,9 +96,8 @@ export class AuthService {
 
   // ─── REGISTER ─────────────────────────────────────────────────────────────────
   async register(registerDto: RegisterDto) {
-    const { username, email, password, fullName, age, gender } = registerDto;
-    const emailToUse = email.trim().toLowerCase();
-    const usernameToUse = username.trim();
+    const emailToUse = this.normalize(email, true);
+    const usernameToUse = this.normalize(username);
 
     const existingByEmail = await this.prisma.account.findUnique({
       where: { email: emailToUse },
@@ -179,8 +180,8 @@ export class AuthService {
     const account = await this.prisma.account.findFirst({
       where: {
         OR: [
-          { email: identifier.trim().toLowerCase() },
-          { username: identifier.trim() },
+          { email: this.normalize(identifier, true) },
+          { username: this.normalize(identifier) },
         ],
       },
       include: { patient: true },

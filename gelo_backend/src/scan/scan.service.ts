@@ -10,14 +10,18 @@ import { cloudinary } from '../common/cloudinary.config';
 import { DiagnosticStatus } from '@prisma/client';
 import { AiIntegrationService } from '../common/services/ai-integration.service';
 
+import { BaseService } from '../common/services/base.service';
+
 @Injectable()
-export class ScanService {
+export class ScanService extends BaseService {
   private readonly logger = new Logger(ScanService.name);
 
   constructor(
     private prisma: PrismaService,
     private aiService: AiIntegrationService,
-  ) {}
+  ) {
+    super();
+  }
 
   async initiateScan(patientId: number, imageUrls: string[]) {
     this.logger.log(`Initiating AI-only scan for patient ${patientId}`);
@@ -191,12 +195,12 @@ export class ScanService {
 
   /** Soft Delete: Marks scan as deleted for patient but keeps data for Admin dataset */
   async deleteScan(patientId: number, scanId: number) {
-    const scan = await this.prisma.skinScan.findFirst({
-      where: { id: scanId, patientId, isDeleted: false },
-    });
-
-    if (!scan)
-      throw new BadRequestException('Scan not found or access denied.');
+    const scan = await this.handleNotFound(
+      this.prisma.skinScan.findFirst({
+        where: { id: scanId, patientId, isDeleted: false },
+      }),
+      'Scan not found or access denied.',
+    );
 
     // Just mark as deleted, don't touch Cloudinary or other records
     await this.prisma.skinScan.update({
