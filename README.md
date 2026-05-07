@@ -37,6 +37,8 @@ Chạy lệnh sau tại thư mục gốc:
 docker-compose up -d --build
 ```
 
+*(Hệ thống sẽ tự động đồng bộ Database và khởi tạo dữ liệu mẫu trong lần đầu tiên khởi chạy)*
+
 Sau khi chạy xong:
 
 ### 4. Các lệnh vận hành Docker hữu ích
@@ -61,6 +63,10 @@ Sau khi chạy xong:
 - **Giao diện người dùng (Frontend):** [http://localhost:5173](http://localhost:5173)
 - **Tài liệu Backend API:** [http://localhost:3000/api](http://localhost:3000/api)
 - **Tài liệu AI Service (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+**Tài khoản đăng nhập mặc định (sau khi Seed):**
+- **Admin:** `admin` / `password123`
+- **Patient:** `patient` / `patient123`
 
 ---
 
