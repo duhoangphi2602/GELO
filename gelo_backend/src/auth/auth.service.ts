@@ -24,7 +24,9 @@ export class AuthService extends BaseService {
     private jwtService: JwtService,
     private mailService: MailService,
     private otpService: OtpService,
-  ) {}
+  ) {
+    super();
+  }
 
   // ─── BACKGROUND CRON JOBS ────────────────────────────────────────────────────
   /**
@@ -96,6 +98,7 @@ export class AuthService extends BaseService {
 
   // ─── REGISTER ─────────────────────────────────────────────────────────────────
   async register(registerDto: RegisterDto) {
+    const { username, email, password, fullName, age, gender } = registerDto;
     const emailToUse = this.normalize(email, true);
     const usernameToUse = this.normalize(username);
 
