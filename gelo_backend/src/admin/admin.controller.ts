@@ -48,7 +48,7 @@ export class AdminController {
   @Post('review/:scanId')
   async submitReview(
     @Param('scanId') scanId: string,
-    @Body() body: { isCorrect: boolean; actualDiseaseId?: number; actualStatus?: string; note?: string },
+    @Body() body: { isCorrect: boolean; actualDiseaseId?: number; actualStatus?: string; note?: string; imageQuality?: string },
   ) {
     if (body.isCorrect === false && !body.actualDiseaseId && !body.actualStatus) {
       throw new BadRequestException('Please provide the correct disease or status if the prediction is wrong.');

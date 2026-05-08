@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DiagnosticStatus, FeedbackRole } from '@prisma/client';
+import { DiagnosticStatus, FeedbackRole, ImageQuality } from '@prisma/client';
 import { AiIntegrationService } from '../common/services/ai-integration.service';
 
 @Injectable()
@@ -98,7 +98,16 @@ export class AdminDashboardService {
         feedback: { none: { role: FeedbackRole.ADMIN } },
       },
       include: {
-        patient: { select: { fullName: true, id: true } },
+        patient: {
+          select: {
+            fullName: true,
+            id: true,
+            diaries: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+          },
+        },
         images: { take: 1 },
         diagnosis: { include: { predictedDisease: true } },
         feedback: {
@@ -116,7 +125,16 @@ export class AdminDashboardService {
         },
       },
       include: {
-        patient: { select: { fullName: true, id: true } },
+        patient: {
+          select: {
+            fullName: true,
+            id: true,
+            diaries: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+          },
+        },
         images: { take: 1 },
         diagnosis: { include: { predictedDisease: true } },
         feedback: {
@@ -139,6 +157,8 @@ export class AdminDashboardService {
         userFeedback?.role === FeedbackRole.USER &&
         userFeedback?.isCorrect === false;
 
+      const diary = scan.patient?.diaries?.[0];
+
       return {
         scanId: scan.id,
         patientId: scan.patient?.id,
@@ -153,6 +173,13 @@ export class AdminDashboardService {
         userNote: userFeedback?.note,
         createdAt: scan.createdAt,
         isDeleted: scan.isDeleted,
+        // Added diary info
+        patientDiary: diary ? {
+          score: diary.conditionScore,
+          symptoms: diary.symptoms,
+          note: diary.note,
+          date: diary.createdAt
+        } : null
       };
     });
   }
@@ -240,6 +267,7 @@ export class AdminDashboardService {
       actualDiseaseId?: number;
       actualStatus?: string;
       note?: string;
+      imageQuality?: string;
     },
   ) {
     const diagnosis = await this.prisma.diagnosisResult.findUnique({
@@ -262,6 +290,14 @@ export class AdminDashboardService {
                 ? DiagnosticStatus.DISEASE
                 : diagnosis.diagnosticStatus),
           },
+        });
+      }
+
+      // Update image quality regardless of correctness
+      if (body.imageQuality) {
+        await tx.skinScan.update({
+          where: { id: scanId },
+          data: { imageQuality: body.imageQuality as ImageQuality },
         });
       }
 

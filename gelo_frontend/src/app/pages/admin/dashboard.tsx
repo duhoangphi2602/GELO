@@ -41,10 +41,10 @@ export function AdminDashboard() {
   return (
     <AdminLayout title="Admin Dashboard" subtitle="Monitor AI performance, manage patients, and review low-confidence diagnoses">
       <div className="flex items-center gap-2 mb-8 border-b border-border pb-px">
-        <button onClick={() => setActiveTab("overview")} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${activeTab === "overview" ? "border-[#2a64ad] text-[#2a64ad]" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+        <button onClick={() => setActiveTab("overview")} className={`cursor-pointer flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${activeTab === "overview" ? "border-[#2a64ad] text-[#2a64ad]" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
           <LayoutDashboard size={16} /> Overview
         </button>
-        <button onClick={() => setActiveTab("settings")} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${activeTab === "settings" ? "border-[#2a64ad] text-[#2a64ad]" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+        <button onClick={() => setActiveTab("settings")} className={`cursor-pointer flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${activeTab === "settings" ? "border-[#2a64ad] text-[#2a64ad]" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
           <Settings size={16} /> AI Engine Settings
         </button>
       </div>

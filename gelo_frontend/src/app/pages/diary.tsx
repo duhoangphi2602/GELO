@@ -18,6 +18,7 @@ export function PatientDiary() {
   const [notes, setNotes] = useState("");
   const [lastSavedId, setLastSavedId] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -43,6 +44,7 @@ export function PatientDiary() {
       queryClient.invalidateQueries({ queryKey: ["diaries"] });
       toast.success("Entry saved!", "Your diary entry has been recorded successfully.");
       setNotes("");
+      setSelectedSymptoms([]);
       setSortOrder('newest');
       setLastSavedId(res.diaryId);
       setTimeout(() => setLastSavedId(null), 3000);
@@ -86,6 +88,14 @@ export function PatientDiary() {
     }
   }, [lastSavedId]);
 
+  const toggleSymptom = (symptom: string) => {
+    setSelectedSymptoms(prev => 
+      prev.includes(symptom) 
+        ? prev.filter(s => s !== symptom) 
+        : [...prev, symptom]
+    );
+  };
+
   const handleSave = () => {
     if (!isPatient) {
       toast.warning("Access Restricted", "Only patients can maintain a personal skin diary.");
@@ -102,6 +112,7 @@ export function PatientDiary() {
       patientId: Number(patientId),
       scanId: scanIdRaw ? parseInt(scanIdRaw) : null,
       conditionScore: Number(recoveryLevel),
+      symptoms: selectedSymptoms,
       note: notes,
       entryDate: entryDate,
     });
@@ -185,7 +196,12 @@ export function PatientDiary() {
               <div className="grid grid-cols-2 lg:grid-cols-1 gap-1.5">
                 {["Itching", "Redness", "Swelling", "Pain", "Discharge", "Fever"].map((symptom) => (
                   <label key={symptom} className="flex items-center gap-2 cursor-pointer group p-1.5 hover:bg-slate-50 rounded-lg transition-colors">
-                    <input type="checkbox" className="w-3.5 h-3.5 rounded border-slate-300 accent-[#2a64ad]" />
+                    <input 
+                      type="checkbox" 
+                      checked={selectedSymptoms.includes(symptom)}
+                      onChange={() => toggleSymptom(symptom)}
+                      className="w-3.5 h-3.5 rounded border-slate-300 accent-[#2a64ad]" 
+                    />
                     <span className="text-[11px] text-slate-600 font-bold group-hover:text-[#2a64ad] transition-colors">{symptom}</span>
                   </label>
                 ))}
@@ -229,7 +245,18 @@ export function PatientDiary() {
                         <span className="text-[10px] font-black text-[#2a64ad] uppercase block">{new Date(diary.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                         <div className="mt-1 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /><span className="text-[10px] font-bold text-slate-400">Score: {diary.conditionScore}</span></div>
                     </div>
-                    <p className="text-slate-600 text-[11px] leading-relaxed font-medium flex-1 pr-8">{diary.note || "System stability log entry."}</p>
+                    <div className="flex-1 pr-8 space-y-2">
+                        <p className="text-slate-600 text-[11px] leading-relaxed font-medium">{diary.note || "System stability log entry."}</p>
+                        {diary.symptoms && diary.symptoms.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {diary.symptoms.map((s: string) => (
+                              <span key={s} className="px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                    </div>
                     <button onClick={() => handleDelete(diary.id)} className="absolute top-3 right-3 p-2.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 ))}

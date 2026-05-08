@@ -12,7 +12,9 @@ import {
   BadgeInfo,
   ActivitySquare,
   Clock,
-  ExternalLink
+  ExternalLink,
+  AlertCircle,
+  BookOpen
 } from "lucide-react";
 import { scanService } from "@/services/scan.service";
 import { Layout } from "@/components/layout/Layout";
@@ -219,12 +221,24 @@ export function DiagnosticResult() {
               </div>
             </div>
 
-            <button
-              onClick={() => navigate(`/feedback?scanId=${scanId}`)}
-              className="cursor-pointer w-full py-5 bg-white border-2 border-slate-900 text-slate-900 font-black rounded-[1.5rem] hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-3"
-            >
-              <MessageSquareHeart size={20} /> Correct AI Diagnosis <ChevronRight size={20} />
-            </button>
+            {resultData?.hasFeedback ? (
+              <button
+                onClick={() => {
+                   localStorage.setItem("currentScanId", scanId.toString());
+                   navigate("/diary");
+                }}
+                className="cursor-pointer w-full py-5 bg-emerald-600 text-white font-black rounded-[1.5rem] hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-200"
+              >
+                <BookOpen size={20} /> Track Progress in Diary <ChevronRight size={20} />
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate(`/feedback?scanId=${scanId}`)}
+                className="cursor-pointer w-full py-5 bg-white border-2 border-slate-900 text-slate-900 font-black rounded-[1.5rem] hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-3"
+              >
+                <MessageSquareHeart size={20} /> Correct AI Diagnosis <ChevronRight size={20} />
+              </button>
+            )}
           </div>
         </div>
       </div>

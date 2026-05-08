@@ -1,0 +1,6 @@
+@echo off
+echo [1/2] Starting Database...
+docker-compose up -d db
+
+echo [2/2] Starting All Services...
+npm run dev

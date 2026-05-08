@@ -16,15 +16,35 @@ export class DiaryService extends BaseService {
     patientId: number,
     scanId: number | null,
     conditionScore: number,
+    symptoms: string[],
     note: string,
     entryDate?: string,
   ) {
     if (!patientId) {
-      console.error(
-        '[DiaryService] Create failed: patientId is missing in token',
-      );
       throw new BadRequestException(
         'Diary entries can only be created by patients with a valid profile.',
+      );
+    }
+
+    // Check for existing entry today (limit to one per day)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const existingEntry = await this.prisma.skinDiary.findFirst({
+      where: {
+        patientId,
+        createdAt: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+    });
+
+    if (existingEntry && !entryDate) {
+      throw new BadRequestException(
+        'You have already created a diary entry for today. You can update it or wait until tomorrow.',
       );
     }
 
@@ -34,9 +54,6 @@ export class DiaryService extends BaseService {
         where: { id: scanId },
       });
       if (!scanExists) {
-        console.warn(
-          `[DiaryService] Self-Healing: Scan ID ${scanId} not found in DB. Proceeding without connection.`,
-        );
         validScanId = null;
       }
     }
@@ -47,6 +64,7 @@ export class DiaryService extends BaseService {
           patient: { connect: { id: patientId } },
           scan: validScanId ? { connect: { id: validScanId } } : undefined,
           conditionScore,
+          symptoms: symptoms || [],
           note,
           createdAt: entryDate ? new Date(entryDate) : undefined,
         },

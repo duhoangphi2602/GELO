@@ -67,6 +67,7 @@ model DiseaseAdvice {
 model SkinScan {
   id          Int              @id @default(autoincrement()) @map("scan_id")
   patientId   Int              @map("patient_id")
+  imageQuality ImageQuality    @default(CLEAR) @map("image_quality")
   createdAt   DateTime         @default(now()) @map("created_at")
   isDeleted   Boolean          @default(false) @map("is_deleted")
   diagnosis   DiagnosisResult?
@@ -141,8 +142,10 @@ model SkinDiary {
   patientId      Int       @map("patient_id")
   scanId         Int?      @map("scan_id")
   conditionScore Int?      @map("condition_score")
+  symptoms       String[]  @default([])
   note           String?
   createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
   patient        Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
   scan           SkinScan? @relation(fields: [scanId], references: [id], onDelete: Cascade)
 }
@@ -186,4 +189,9 @@ enum OtpType {
   REGISTER
   FORGOT_PASSWORD
   CHANGE_PASSWORD
+}
+
+enum ImageQuality {
+  CLEAR
+  BLURRY
 }

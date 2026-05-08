@@ -95,9 +95,23 @@ export function Feedback() {
 
          <div ref={errorRef}>
            {error && (
-             <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-2">
-               <AlertCircle className="w-5 h-5" />
-               <span className="text-sm font-medium">{error}</span>
+             <div className="p-6 bg-red-50 border border-red-100 text-red-600 rounded-3xl space-y-4 animate-in slide-in-from-top-2 shadow-sm">
+               <div className="flex items-center gap-3">
+                 <AlertCircle className="w-5 h-5" />
+                 <span className="text-sm font-bold">{error}</span>
+               </div>
+               
+               {error.includes("already submitted feedback") && (
+                 <div className="pt-2 border-t border-red-200/50">
+                    <p className="text-xs mb-3 text-red-500 font-medium">You've already provided a clinical verification for this scan, but you can still record your daily recovery status in your diary.</p>
+                    <button 
+                      onClick={() => navigate("/diary")}
+                      className="cursor-pointer px-6 py-2.5 bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-md"
+                    >
+                      Continue to Skin Diary
+                    </button>
+                 </div>
+               )}
              </div>
            )}
          </div>

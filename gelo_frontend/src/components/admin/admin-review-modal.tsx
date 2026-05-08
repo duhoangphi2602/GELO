@@ -21,11 +21,12 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [actualDiseaseId, setActualDiseaseId] = useState<string | number>("");
   const [note, setNote] = useState("");
+  const [imageQuality, setImageQuality] = useState<"CLEAR" | "BLURRY">("CLEAR");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      api.get("/scans/admin/diseases")
+      api.get("/admin/diseases")
         .then(res => setDiseases(Array.isArray(res.data) ? res.data : []))
         .catch(err => console.error("Failed to fetch diseases", err));
 
@@ -33,6 +34,7 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
       setIsCorrect(null);
       setActualDiseaseId("");
       setNote("");
+      setImageQuality("CLEAR");
     }
   }, [isOpen]);
 
@@ -50,11 +52,12 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
 
     setSubmitting(true);
     try {
-      await api.post(`/scans/admin/review/${scan.scanId}`, {
+      await api.post(`/admin/review/${scan.scanId}`, {
         isCorrect,
         actualDiseaseId: (isCorrect || actualDiseaseId === "UNKNOWN" || !actualDiseaseId) ? undefined : Number(actualDiseaseId),
         actualStatus: (actualDiseaseId === "UNKNOWN") ? "UNKNOWN" : undefined,
-        note
+        note,
+        imageQuality
       });
 
       toast.success("Review submitted successfully");
@@ -137,6 +140,39 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                   </div>
                 )}
               </div>
+
+              {/* Patient Diary Section */}
+              {scan.patientDiary && (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-5">
+                  <label className="text-[10px] font-black uppercase text-emerald-600 mb-3 block tracking-widest">Patient Self-Tracking (Diary)</label>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-lg font-bold text-emerald-800">Condition Score: {scan.patientDiary.score}/10</p>
+                      <p className="text-[10px] text-emerald-600 font-medium">Logged on: {new Date(scan.patientDiary.date).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+
+                  {scan.patientDiary.symptoms && scan.patientDiary.symptoms.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-[10px] font-bold uppercase text-emerald-700 mb-2">Reported Symptoms:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {scan.patientDiary.symptoms.map((s: string) => (
+                          <span key={s} className="px-2 py-0.5 bg-white border border-emerald-200 rounded-md text-[10px] font-bold text-emerald-700">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {scan.patientDiary.note && (
+                    <div className="bg-white/60 p-3 rounded-lg border border-emerald-100">
+                      <p className="text-[10px] font-bold uppercase text-emerald-700 mb-1">Patient's Note:</p>
+                      <p className="text-xs text-emerald-900 leading-relaxed italic">"{scan.patientDiary.note}"</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -168,6 +204,33 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                   >
                     <X className="w-4 h-4" />
                     <span className="font-bold">Inaccurate</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Image Quality Assessment Section */}
+              <div>
+                <p className="text-sm font-medium mb-3 text-slate-700">Scan Image Quality Assessment</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setImageQuality("CLEAR")}
+                    className={`cursor-pointer flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${imageQuality === "CLEAR"
+                      ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm"
+                      : "bg-card border-border hover:border-blue-200"
+                      }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="font-bold">Clear / Sharp</span>
+                  </button>
+                  <button
+                    onClick={() => setImageQuality("BLURRY")}
+                    className={`cursor-pointer flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${imageQuality === "BLURRY"
+                      ? "bg-amber-50 border-amber-500 text-amber-700 shadow-sm"
+                      : "bg-card border-border hover:border-amber-200"
+                      }`}
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    <span className="font-bold">Blurry / Low Quality</span>
                   </button>
                 </div>
               </div>

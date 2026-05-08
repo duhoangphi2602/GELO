@@ -22,21 +22,22 @@ export class DiaryController {
 
   @Post()
   @Roles(UserRole.PATIENT)
-  async createDiary(
+  async createDiaryEntry(
     @CurrentUser('patientId') patientId: number,
     @Body()
     body: {
-      scanId: number | null;
+      scanId?: number;
       conditionScore: number;
+      symptoms: string[];
       note: string;
-      entryDate: string;
+      entryDate?: string;
     },
   ) {
-    // patientId lấy từ JWT token, không từ body
     return this.diaryService.createDiaryEntry(
       patientId,
-      body.scanId,
+      body.scanId || null,
       body.conditionScore,
+      body.symptoms,
       body.note,
       body.entryDate,
     );
