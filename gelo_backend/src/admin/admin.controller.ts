@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Post, Param, Body, Query, Res, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Put, Post, Delete, Param, Body, Query, Res, UseGuards, BadRequestException } from '@nestjs/common';
 import { AdminDashboardService } from './admin.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { Roles } from '../auth/auth.decorator';
@@ -76,5 +76,15 @@ export class AdminController {
     @Body() body: { version?: string; inference_threshold?: number; enabled_disease_codes?: string[] }
   ) {
     return this.adminService.updateAiSettings(body);
+  }
+
+  @Delete('scan/:scanId')
+  async deleteScan(@Param('scanId') scanId: string) {
+    return this.adminService.deleteScan(parseInt(scanId, 10));
+  }
+
+  @Post('scans/bulk-delete')
+  async bulkDeleteScans(@Body() body: { scanIds: number[] }) {
+    return this.adminService.bulkDeleteScans(body.scanIds);
   }
 }

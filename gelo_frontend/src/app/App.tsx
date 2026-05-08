@@ -1,6 +1,6 @@
 import { RouterProvider, createBrowserRouter } from "react-router";
 import routes from "~react-pages";
-import { ToastProvider } from "@/components/ui/ToastProvider";
+import { ToastProvider } from "@/components/shared/ui/ToastProvider";
 
 const router = createBrowserRouter(routes);
 

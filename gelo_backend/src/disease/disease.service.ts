@@ -68,9 +68,9 @@ export class DiseaseService extends BaseService {
       return await tx.diseaseAdvice.createMany({
         data: advices.map((a) => ({
           diseaseId,
-          adviceType: a.type,
-          title: a.title,
-          content: a.content,
+          adviceType: a.type || 'GENERAL',
+          title: a.title ?? '',
+          content: a.content || '',
         })),
       });
     });

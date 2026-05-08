@@ -16,18 +16,26 @@ async function main() {
 
   // 1. Cleanup existing data
   console.log('Cleaning up existing database tables...');
-  await prisma.$executeRaw`TRUNCATE TABLE "OtpCode" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "Prediction" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "FeedbackLog" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "ScanImage" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "DiagnosisResult" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "SkinDiary" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "SkinScan" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "DiseaseAdvice" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "DiseaseImage" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "Disease" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "Patient" RESTART IDENTITY CASCADE;`;
-  await prisma.$executeRaw`TRUNCATE TABLE "Account" RESTART IDENTITY CASCADE;`;
+  const deleteTable = async (model: any) => {
+    try {
+      await model.deleteMany();
+    } catch (e) {
+      console.warn(`Could not delete data from model: ${e.message}`);
+    }
+  };
+
+  await deleteTable(prisma.otpCode);
+  await deleteTable(prisma.prediction);
+  await deleteTable(prisma.feedbackLog);
+  await deleteTable(prisma.scanImage);
+  await deleteTable(prisma.diagnosisResult);
+  await deleteTable(prisma.skinDiary);
+  await deleteTable(prisma.skinScan);
+  await deleteTable(prisma.diseaseAdvice);
+  await deleteTable(prisma.diseaseImage);
+  await deleteTable(prisma.disease);
+  await deleteTable(prisma.patient);
+  await deleteTable(prisma.account);
 
   // 2. Create Admin account (no Patient profile)
   console.log('Creating admin account...');

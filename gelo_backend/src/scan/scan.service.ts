@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { cloudinary } from '../common/cloudinary.config';
-import { DiagnosticStatus } from '@prisma/client';
+import { DiagnosticStatus, ImageQuality } from '@prisma/client';
 import { AiIntegrationService } from '../common/services/ai-integration.service';
 
 import { BaseService } from '../common/services/base.service';
@@ -23,13 +23,14 @@ export class ScanService extends BaseService {
     super();
   }
 
-  async initiateScan(patientId: number, imageUrls: string[]) {
-    this.logger.log(`Initiating AI-only scan for patient ${patientId}`);
+  async initiateScan(patientId: number, imageUrls: string[], imageQuality: string = 'CLEAR') {
+    this.logger.log(`Initiating AI-only scan for patient ${patientId} (Quality: ${imageQuality})`);
 
     // 1. Create SkinScan and ScanImages (Initial record)
     const scan = await this.prisma.skinScan.create({
       data: {
         patientId,
+        imageQuality: imageQuality as ImageQuality,
         images: {
           create: imageUrls.map((url) => ({ imageUrl: url })),
         },

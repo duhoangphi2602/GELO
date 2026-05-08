@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, CheckCircle2, AlertTriangle, Image as ImageIcon, Activity } from "lucide-react";
-import { useToastContext } from "@/components/ui/ToastContext";
+import { useToastContext } from "@/components/shared/ui/ToastContext";
 import api from "@/api/axiosClient";
 
 interface ReviewModalProps {
@@ -21,7 +21,6 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [actualDiseaseId, setActualDiseaseId] = useState<string | number>("");
   const [note, setNote] = useState("");
-  const [imageQuality, setImageQuality] = useState<"CLEAR" | "BLURRY">("CLEAR");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -34,7 +33,6 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
       setIsCorrect(null);
       setActualDiseaseId("");
       setNote("");
-      setImageQuality("CLEAR");
     }
   }, [isOpen]);
 
@@ -56,8 +54,7 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
         isCorrect,
         actualDiseaseId: (isCorrect || actualDiseaseId === "UNKNOWN" || !actualDiseaseId) ? undefined : Number(actualDiseaseId),
         actualStatus: (actualDiseaseId === "UNKNOWN") ? "UNKNOWN" : undefined,
-        note,
-        imageQuality
+        note
       });
 
       toast.success("Review submitted successfully");
@@ -208,30 +205,18 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                 </div>
               </div>
 
-              {/* Image Quality Assessment Section */}
-              <div>
-                <p className="text-sm font-medium mb-3 text-slate-700">Scan Image Quality Assessment</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setImageQuality("CLEAR")}
-                    className={`cursor-pointer flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${imageQuality === "CLEAR"
-                      ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm"
-                      : "bg-card border-border hover:border-blue-200"
-                      }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span className="font-bold">Clear / Sharp</span>
-                  </button>
-                  <button
-                    onClick={() => setImageQuality("BLURRY")}
-                    className={`cursor-pointer flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${imageQuality === "BLURRY"
-                      ? "bg-amber-50 border-amber-500 text-amber-700 shadow-sm"
-                      : "bg-card border-border hover:border-amber-200"
-                      }`}
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    <span className="font-bold">Blurry / Low Quality</span>
-                  </button>
+              {/* Image Quality Display (Read-only) */}
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-0.5">Automated Image Quality</p>
+                  <p className="text-sm font-bold text-slate-700">The system analyzed this scan as:</p>
+                </div>
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-lg border font-black text-xs uppercase tracking-wider ${scan.imageQuality === "CLEAR" ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-amber-50 text-amber-600 border-amber-200"}`}>
+                  {scan.imageQuality === "CLEAR" ? (
+                    <><CheckCircle2 className="w-4 h-4" /> Clear / Sharp</>
+                  ) : (
+                    <><ImageIcon className="w-4 h-4" /> Blurry / Low Quality</>
+                  )}
                 </div>
               </div>
 

@@ -52,6 +52,7 @@ export class ScanController {
   async initiateScan(
     @CurrentUser('patientId') patientId: number,
     @UploadedFile() file: Express.Multer.File,
+    @Body() body: { imageQuality?: string },
   ) {
     if (!patientId) {
       throw new BadRequestException('Patient profile required.');
@@ -60,7 +61,8 @@ export class ScanController {
       throw new BadRequestException('Image file is required.');
     }
     const imageUrls = [file.path];
-    return this.scanService.initiateScan(patientId, imageUrls);
+    const imageQuality = body.imageQuality || 'CLEAR';
+    return this.scanService.initiateScan(patientId, imageUrls, imageQuality);
   }
 
   // ─── Patient: Lịch sử scan ─────────────────────────────────────────────

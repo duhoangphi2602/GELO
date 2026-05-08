@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "@/api/axiosClient";
 import { Save, RefreshCw, Cpu, Activity, AlertTriangle, Box } from "lucide-react";
-import { useToastContext } from "@/components/ui/ToastContext";
+import { useToastContext } from "@/components/shared/ui/ToastContext";
 
 export function AdminSettings() {
   const [config, setConfig] = useState<any>(null);

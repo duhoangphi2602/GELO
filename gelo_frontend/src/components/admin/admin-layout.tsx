@@ -8,9 +8,10 @@ import {
   FileText,
   LogOut,
   ShieldCheck,
+  TrendingUp,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { SessionManager } from "@/components/auth/SessionManager";
+import { SessionManager } from "@/components/shared/auth/SessionManager";
 import { Navigate } from "react-router";
 
 
@@ -28,11 +29,11 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
   const { logout, isAuthenticated, isAdmin } = useAuth();
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/auth/login" replace />;
   }
 
   if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/patient/dashboard" replace />;
   }
 
 

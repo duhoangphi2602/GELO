@@ -173,6 +173,7 @@ export class AdminDashboardService {
         userNote: userFeedback?.note,
         createdAt: scan.createdAt,
         isDeleted: scan.isDeleted,
+        imageQuality: scan.imageQuality,
         // Added diary info
         patientDiary: diary ? {
           score: diary.conditionScore,
@@ -401,5 +402,21 @@ export class AdminDashboardService {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  }
+
+  async deleteScan(scanId: number) {
+    this.logger.log(`Admin action: Deleting scan #${scanId} permanently.`);
+    await this.prisma.skinScan.delete({
+      where: { id: scanId },
+    });
+    return { success: true, message: `Scan #${scanId} deleted.` };
+  }
+
+  async bulkDeleteScans(scanIds: number[]) {
+    this.logger.log(`Admin action: Bulk deleting ${scanIds.length} scans.`);
+    await this.prisma.skinScan.deleteMany({
+      where: { id: { in: scanIds } },
+    });
+    return { success: true, message: `${scanIds.length} scans deleted successfully.` };
   }
 }

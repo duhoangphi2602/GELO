@@ -1,6 +1,6 @@
 // useToast.ts – Hook quản lý toast state, dùng chung toàn app
 import { useState, useCallback } from "react";
-import type { ToastMessage, ToastType } from "@/components/ui/Toast";
+import type { ToastMessage, ToastType } from "@/components/shared/ui/Toast";
 
 let _idCounter = 0;
 

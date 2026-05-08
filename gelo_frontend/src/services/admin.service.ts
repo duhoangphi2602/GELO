@@ -60,4 +60,12 @@ export const adminService = {
   async reviewScan(scanId: number, data: any): Promise<void> {
     await api.post(`/admin/review/${scanId}`, data);
   },
+  
+  async deleteScan(scanId: number): Promise<void> {
+    await api.delete(`/admin/scan/${scanId}`);
+  },
+
+  async bulkDeleteScans(scanIds: number[]): Promise<void> {
+    await api.post('/admin/scans/bulk-delete', { scanIds });
+  },
 };

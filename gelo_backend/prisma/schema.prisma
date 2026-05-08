@@ -48,18 +48,20 @@ model Disease {
 model DiseaseImage {
   id        Int      @id @default(autoincrement()) @map("image_id")
   diseaseId Int?     @map("disease_id")
-  imageUrl  String?  @map("image_url")
-  createdAt DateTime @default(now()) @map("created_at")
   scanId    Int?     @map("scan_id")
+  imageUrl  String   @map("image_url") @db.VarChar(500)
+  createdAt DateTime @default(now()) @map("created_at")
+
   disease   Disease? @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  scan      SkinScan? @relation(fields: [scanId], references: [id], onDelete: Cascade)
 }
 
 model DiseaseAdvice {
   id         Int      @id @default(autoincrement()) @map("advice_id")
   diseaseId  Int?     @map("disease_id")
-  adviceType String?  @map("advice_type") @db.VarChar(20)
-  title      String?  @db.VarChar(255)
-  content    String?
+  adviceType String   @map("advice_type") @db.VarChar(20)
+  title      String   @db.VarChar(255)
+  content    String
   priority   Int?
   disease    Disease? @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
 }
@@ -74,6 +76,7 @@ model SkinScan {
   feedback    FeedbackLog[]
   predictions Prediction[]
   images      ScanImage[]
+  diseaseImages DiseaseImage[]
   diaries     SkinDiary[]
   patient     Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
 

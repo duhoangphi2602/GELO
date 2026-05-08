@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { adminService } from "@/services/admin.service";
 import { Save, AlertTriangle, Heart, CheckCircle, Loader2, ActivitySquare, X } from "lucide-react";
-import { useToastContext } from "@/components/ui/ToastContext";
+import { useToastContext } from "@/components/shared/ui/ToastContext";
 
 type AdviceType = "care" | "lifestyle" | "emergency";
 

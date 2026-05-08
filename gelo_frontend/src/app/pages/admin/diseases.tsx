@@ -7,7 +7,7 @@ import { z as zod } from "zod";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
 import { adminService } from "@/services/admin.service";
-import { useToastContext } from "@/components/ui/ToastContext";
+import { useToastContext } from "@/components/shared/ui/ToastContext";
 
 const diseaseSchema = zod.object({
   code: zod.string().min(1, "Code is required"),
