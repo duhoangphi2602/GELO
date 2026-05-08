@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { adminService } from "@/services/admin.service";
@@ -11,7 +10,6 @@ import { useSelection } from "@/hooks/useSelection";
 import { PendingReviewsTable } from "@/components/admin/pending-reviews-table";
 
 export function AdminDashboard() {
-  const navigate = useNavigate();
   const toast = useToastContext();
   const [selectedScan, setSelectedScan] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -76,8 +74,6 @@ export function AdminDashboard() {
           <button onClick={() => setActiveTab("settings")} className={`cursor-pointer flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${activeTab === "settings" ? "border-[#2a64ad] text-[#2a64ad]" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <Settings size={16} /> AI Engine Settings
           </button>
-        </div>
-
         </div>
       </div>
 

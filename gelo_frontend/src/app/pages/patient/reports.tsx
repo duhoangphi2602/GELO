@@ -42,8 +42,6 @@ export function PatientReports() {
     healthRate = "0";
   }
 
-  const inconclusiveCount = scans.filter(s => s.diagnosis?.diagnosticStatus === 'UNKNOWN').length;
-
   // Process data for AreaChart (Last 7 days scan trend)
   const last7Days = Array.from({ length: 7 }, (_, i) => startOfDay(subDays(new Date(), 6 - i)));
   const trendData = last7Days.map(date => {
@@ -132,7 +130,7 @@ export function PatientReports() {
                     dataKey="value"
                     stroke="none"
                   >
-                    {pieData.map((entry, index) => (
+                    {pieData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>

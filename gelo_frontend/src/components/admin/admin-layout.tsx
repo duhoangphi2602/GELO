@@ -8,7 +8,6 @@ import {
   FileText,
   LogOut,
   ShieldCheck,
-  TrendingUp,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { SessionManager } from "@/components/shared/auth/SessionManager";

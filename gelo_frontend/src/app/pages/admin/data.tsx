@@ -8,7 +8,7 @@ import { useSelection } from "@/hooks/useSelection";
 import { VerifiedDataTable } from "@/components/admin/verified-data-table";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend 
+  PieChart, Pie, Cell 
 } from 'recharts';
 import { format, subDays, startOfDay, isSameDay } from 'date-fns';
 
@@ -180,7 +180,7 @@ export function AdminDataManagement() {
                     dataKey="value"
                     stroke="none"
                   >
-                    {pieData.map((entry, index) => (
+                    {pieData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
