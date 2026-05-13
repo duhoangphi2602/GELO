@@ -1,0 +1,14 @@
+{
+  "0": {
+    "id": 1,
+    "code": "L20.9",
+    "status": "DISEASE",
+    "name": "Atopic Dermatitis"
+  },
+  "1": {
+    "id": 0,
+    "code": "Z00.0",
+    "status": "HEALTHY",
+    "name": "HEALTHY"
+  }
+}
