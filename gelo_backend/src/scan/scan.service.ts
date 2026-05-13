@@ -57,12 +57,22 @@ export class ScanService extends BaseService {
         Math.max(0, Math.round((result.confidence || 0) * 100)),
       );
       const modelVer = result.model_version || 'v1.0.0';
-      const diagnosticStatus =
-        (result.diagnosticStatus as DiagnosticStatus) ??
-        DiagnosticStatus.UNKNOWN;
 
+      // Validate that AI returns a valid DiagnosticStatus
+      const validStatuses = Object.values(DiagnosticStatus);
+      const diagnosticStatus = validStatuses.includes(
+        result.diagnosticStatus as DiagnosticStatus,
+      )
+        ? (result.diagnosticStatus as DiagnosticStatus)
+        : DiagnosticStatus.UNKNOWN;
+
+      // HEALTHY means no disease detected — skip disease lookup
       let trueDiseaseId: number | null = null;
-      if (result.code && result.code !== 'UNKNOWN') {
+      if (
+        diagnosticStatus !== DiagnosticStatus.HEALTHY &&
+        result.code &&
+        result.code !== 'UNKNOWN'
+      ) {
         const dbDisease = await this.prisma.disease.findUnique({
           where: { code: result.code },
         });

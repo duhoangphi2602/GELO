@@ -173,6 +173,7 @@ enum Gender {
 enum DiagnosticStatus {
   DISEASE
   UNKNOWN
+  HEALTHY
 }
 
 model OtpCode {

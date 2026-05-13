@@ -102,14 +102,16 @@ class PredictorService:
             status = "UNKNOWN"
             name = "Unknown"
 
-        # 6. Dynamic Labels Checking
-        enabled_codes = self.config.get("enabled_disease_codes")
-        if enabled_codes is not None and code not in enabled_codes:
-            logger.info(f"Predicted Disease Code '{code}' is not in enabled_disease_codes list. Classifying as Unknown.")
-            disease_id = 0
-            code = "UNKNOWN"
-            status = "UNKNOWN"
-            name = "Unknown"
+        # 6. Dynamic Labels Checking (only applies to DISEASE predictions)
+        # Non-disease statuses (HEALTHY, UNKNOWN, etc.) bypass this filter entirely
+        if status == "DISEASE":
+            enabled_codes = self.config.get("enabled_disease_codes")
+            if enabled_codes is not None and code not in enabled_codes:
+                logger.info(f"Predicted Disease Code '{code}' is not in enabled_disease_codes list. Classifying as Unknown.")
+                disease_id = 0
+                code = "UNKNOWN"
+                status = "UNKNOWN"
+                name = "Unknown"
 
         # Final check: ensure UNKNOWN code always has consistent status
         if code == "UNKNOWN":

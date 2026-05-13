@@ -39,9 +39,12 @@ export class AdminDashboardService {
       totalScans: p._count.skinScans,
       totalDiaries: p._count.diaries,
       lastScanDisease:
-        p.skinScans[0]?.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
-          ? 'Unknown'
-          : (p.skinScans[0]?.diagnosis?.predictedDisease?.name ?? null),
+        p.skinScans[0]?.diagnosis?.diagnosticStatus === DiagnosticStatus.HEALTHY
+          ? 'Healthy'
+          : p.skinScans[0]?.diagnosis?.diagnosticStatus ===
+              DiagnosticStatus.UNKNOWN
+            ? 'Unknown'
+            : (p.skinScans[0]?.diagnosis?.predictedDisease?.name ?? null),
       lastScanDate: p.skinScans[0]?.createdAt ?? null,
     }));
   }
@@ -166,9 +169,11 @@ export class AdminDashboardService {
         imageUrl: scan.images?.[0]?.imageUrl ?? null,
         confidence: scan.diagnosis?.aiConfidence ?? 0,
         predictedDisease:
-          scan.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
-            ? 'Unknown'
-            : (scan.diagnosis?.predictedDisease?.name ?? 'Unknown'),
+          scan.diagnosis?.diagnosticStatus === DiagnosticStatus.HEALTHY
+            ? 'Healthy'
+            : scan.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
+              ? 'Unknown'
+              : (scan.diagnosis?.predictedDisease?.name ?? 'Unknown'),
         reason: isUserReported ? 'User Reported Error' : 'Low Confidence',
         userNote: userFeedback?.note,
         createdAt: scan.createdAt,

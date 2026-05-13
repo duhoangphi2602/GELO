@@ -40,6 +40,7 @@ export class ResultService {
 
     // aiConfidence is stored 0–100; return directly, no multiplication needed
     const isUnknown = result.diagnosticStatus === DiagnosticStatus.UNKNOWN;
+    const isHealthy = result.diagnosticStatus === DiagnosticStatus.HEALTHY;
 
     return {
       scanId: result.scanId,
@@ -51,12 +52,16 @@ export class ResultService {
           ? Math.round((result as any).aiConfidence)
           : 0,
       diagnosticStatus: result.diagnosticStatus,
-      disease: isUnknown
-        ? 'Analysis Inconclusive'
-        : (result.predictedDisease?.name ?? 'Unknown'),
-      description: isUnknown
-        ? 'The AI model could not identify a specific condition with high certainty from the provided image.'
-        : (result.predictedDisease?.description ?? null),
+      disease: isHealthy
+        ? 'No Disease Detected'
+        : isUnknown
+          ? 'Analysis Inconclusive'
+          : (result.predictedDisease?.name ?? 'Unknown'),
+      description: isHealthy
+        ? 'The AI model has classified this scan as healthy skin. No abnormalities or disease patterns were detected.'
+        : isUnknown
+          ? 'The AI model could not identify a specific condition with high certainty from the provided image.'
+          : (result.predictedDisease?.description ?? null),
       images: result.scan.images.map((img) => img.imageUrl),
       advices: (result.predictedDisease?.advices ?? []).map((ad) => ({
         type: ad.adviceType,

@@ -71,6 +71,11 @@ export function DiagnosticResult() {
   const uploadedImage = images[0];
 
   const getTheme = () => {
+    if (diagnosticStatus === 'HEALTHY') return {
+      color: "emerald", bg: "bg-emerald-50/50", border: "border-emerald-200", text: "text-emerald-700",
+      fill: "bg-emerald-500", pill: "bg-emerald-100 text-emerald-700", title: "No Disease Detected",
+      icon: CheckCircle, status: "Healthy — All Clear"
+    };
     if (diagnosticStatus === 'UNKNOWN') return {
       color: "slate", bg: "bg-slate-50/50", border: "border-slate-100", text: "text-slate-600",
       fill: "bg-slate-400", pill: "bg-slate-100 text-slate-600", title: "Analysis Inconclusive",
@@ -92,6 +97,14 @@ export function DiagnosticResult() {
   const Icon = theme.icon;
 
   const displayDescription = () => {
+    if (diagnosticStatus === 'HEALTHY') {
+      return (
+        <span>
+          Great news! The AI model has analyzed your scan and found <strong className="font-extrabold">no signs of skin disease</strong> (Confidence: <strong className="font-extrabold">{aiConfidence}%</strong>).
+          <strong className="block mt-2 text-emerald-600">Continue monitoring your skin health and consult a dermatologist for routine checkups.</strong>
+        </span>
+      );
+    }
     if (diagnosticStatus === 'UNKNOWN') {
       return (
         <span>

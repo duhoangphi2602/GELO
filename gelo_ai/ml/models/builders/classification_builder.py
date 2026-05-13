@@ -21,13 +21,23 @@ class ClassificationBuilder(BaseModelBuilder):
             num_classes: Số lượng lớp phân loại.
             config: Config bổ sung (chưa sử dụng, dự phòng cho tương lai).
         """
-        if not timm.is_model(architecture):
-            available = timm.list_models(f"*{architecture}*")
-            raise ValueError(
-                f"Kiến trúc '{architecture}' không được timm hỗ trợ. "
-                f"Các model tương tự: {available[:5]}"
-            )
+        library = config.get("library", "timm") if config else "timm"
 
-        logger.info(f"Building classification model: {architecture} with {num_classes} classes via timm")
-        model = timm.create_model(architecture, pretrained=False, num_classes=num_classes)
-        return model
+        if library == "torchvision":
+            import torchvision.models as tv_models
+            if not hasattr(tv_models, architecture):
+                raise ValueError(f"Architecture '{architecture}' not found in torchvision.models")
+            logger.info(f"Building classification model: {architecture} with {num_classes} classes via torchvision")
+            model = getattr(tv_models, architecture)(num_classes=num_classes)
+            return model
+        else:
+            if not timm.is_model(architecture):
+                available = timm.list_models(f"*{architecture}*")
+                raise ValueError(
+                    f"Kiến trúc '{architecture}' không được timm hỗ trợ. "
+                    f"Các model tương tự: {available[:5]}"
+                )
+
+            logger.info(f"Building classification model: {architecture} with {num_classes} classes via timm")
+            model = timm.create_model(architecture, pretrained=False, num_classes=num_classes)
+            return model
