@@ -24,7 +24,7 @@ export function Header() {
       case "/patient/history": return "Scan History";
       case "/patient/profile": return "My Profile";
       case "/patient/feedback": return "App Feedback";
-      case "/admin/reports": return "Analytical Reports";
+      case "/patient/reports": return "Analytical Reports";
 
       default: return "Dashboard";
     }
