@@ -14,7 +14,8 @@ import {
   Clock,
   ExternalLink,
   AlertCircle,
-  BookOpen
+  BookOpen,
+  LayoutDashboard
 } from "lucide-react";
 import { scanService } from "@/services/scan.service";
 import { Layout } from "@/components/shared/layout/Layout";
@@ -234,24 +235,33 @@ export function DiagnosticResult() {
               </div>
             </div>
 
-            {resultData?.hasFeedback ? (
+            <div className="space-y-4 w-full">
+              {resultData?.hasFeedback ? (
+                <button
+                  onClick={() => {
+                     localStorage.setItem("currentScanId", scanId.toString());
+                     navigate("/patient/diary");
+                  }}
+                  className="cursor-pointer w-full py-5 bg-emerald-600 text-white font-black rounded-[1.5rem] hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-200"
+                >
+                  <BookOpen size={20} /> Track Progress in Diary <ChevronRight size={20} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate(`/patient/feedback?scanId=${scanId}`)}
+                  className="cursor-pointer w-full py-5 bg-white border-2 border-slate-900 text-slate-900 font-black rounded-[1.5rem] hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-3 shadow-lg shadow-slate-100"
+                >
+                  <MessageSquareHeart size={20} /> Correct AI Diagnosis <ChevronRight size={20} />
+                </button>
+              )}
+
               <button
-                onClick={() => {
-                   localStorage.setItem("currentScanId", scanId.toString());
-                   navigate("/patient/diary");
-                }}
-                className="cursor-pointer w-full py-5 bg-emerald-600 text-white font-black rounded-[1.5rem] hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-200"
+                onClick={() => navigate("/patient/dashboard")}
+                className="cursor-pointer w-full py-5 bg-white border-2 border-slate-300 text-slate-800 font-black rounded-[1.5rem] hover:bg-slate-900 hover:border-slate-900 hover:text-white transition-all flex items-center justify-center gap-3 shadow-lg shadow-slate-100/50"
               >
-                <BookOpen size={20} /> Track Progress in Diary <ChevronRight size={20} />
+                <LayoutDashboard size={20} /> Return to Dashboard
               </button>
-            ) : (
-              <button
-                onClick={() => navigate(`/patient/feedback?scanId=${scanId}`)}
-                className="cursor-pointer w-full py-5 bg-white border-2 border-slate-900 text-slate-900 font-black rounded-[1.5rem] hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-3"
-              >
-                <MessageSquareHeart size={20} /> Correct AI Diagnosis <ChevronRight size={20} />
-              </button>
-            )}
+            </div>
           </div>
         </div>
       </div>
