@@ -2,8 +2,39 @@ import { Download, Activity, ExternalLink } from "lucide-react";
 
 export function ReportTable({ scans = [], loading }: { scans: any[], loading: boolean }) {
   const handleExport = () => {
-     // Logic for CSV export
-     alert("Exporting current view to CSV...");
+    if (!scans || scans.length === 0) return;
+
+    const headers = ["Scan ID", "Date", "AI Finding", "Confidence (%)", "Diagnostic Status"];
+    const rows = scans.map(scan => {
+      const result = scan.diagnosis?.predictedDisease?.name || "Other / No Finding";
+      const conf = scan.diagnosis?.aiConfidence || 0;
+      let statusStr = "Pending Review";
+      if (scan.diagnosis?.diagnosticStatus === 'DISEASE') statusStr = "Risk Detected";
+      else if (scan.diagnosis?.diagnosticStatus === 'HEALTHY') statusStr = "Healthy / Clear";
+
+      return [
+        scan.id,
+        new Date(scan.createdAt).toLocaleDateString(),
+        result,
+        conf,
+        statusStr
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `gelo_patient_history_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (

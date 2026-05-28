@@ -84,9 +84,8 @@ export function MedicalAssessment() {
   const scanMutation = useMutation({
     mutationFn: (formData: FormData) => scanService.initiateScan(formData),
     onSuccess: (data) => {
-      localStorage.setItem("currentScanId", data.scanId.toString());
       toast.success("Analysis Complete", "Redirecting to your results...");
-      setTimeout(() => navigate("/patient/results"), 1000);
+      setTimeout(() => navigate(`/patient/results/${data.scanId}`), 1000);
     },
      onError: (error: any) => {
        const msg = error.code === 'ECONNABORTED'

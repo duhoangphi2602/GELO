@@ -69,8 +69,7 @@ export function ScanHistory() {
   };
 
   const navigateToResult = (scanId: number) => {
-    localStorage.setItem("currentScanId", scanId.toString());
-    navigate("/patient/results");
+    navigate(`/patient/results/${scanId}`);
   };
 
   return (

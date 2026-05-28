@@ -13,7 +13,7 @@ FALLBACK_THRESHOLD = 0.70  # Adjusted for better sensitivity in screening
 FALLBACK_LABELS = {
     "0": {"id": 1, "code": "L20.9", "status": "DISEASE", "name": "Atopic Dermatitis"},
     "1": {"id": 2, "code": "D18.0", "status": "DISEASE", "name": "Vascular Tumors"},
-    "2": {"id": 3, "code": "MEL_NEV_MOL", "status": "DISEASE", "name": "Melanoma Skin Cancer / Nevi / Moles"},
+    "2": {"id": 3, "code": "MELANOMA", "status": "DISEASE", "name": "Melanoma"},
     "3": {"id": 4, "code": "L10", "status": "DISEASE", "name": "Bullous Disease"},
 }
 

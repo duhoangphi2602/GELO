@@ -100,8 +100,8 @@ async function main() {
   // Disease ID 3
   const mel = await prisma.disease.create({
     data: {
-      code: 'MEL_NEV_MOL',
-      name: 'Melanoma Skin Cancer / Nevi / Moles',
+      code: 'MELANOMA',
+      name: 'Melanoma',
       description:
         'A broad category covering benign moles (nevi) and melanoma, the most dangerous form of skin cancer. Melanoma develops in melanocytes, the cells that produce skin pigment. Early detection is critical for effective treatment.',
     },

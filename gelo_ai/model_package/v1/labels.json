@@ -13,9 +13,9 @@
   },
   "2": {
     "id": 3,
-    "code": "MEL_NEV_MOL",
+    "code": "MELANOMA",
     "status": "DISEASE",
-    "name": "Melanoma Skin Cancer / Nevi / Moles"
+    "name": "Melanoma"
   },
   "3": {
     "id": 4,

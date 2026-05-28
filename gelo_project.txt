@@ -1,0 +1,1051 @@
+BỘ KHOA HỌC VÀ CÔNG NGHỆ
+HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG 
+ 
+ 
+ĐỒ ÁN CUỐI KỲ
+MÔN NHẬP MÔN THỰC TẬP CƠ SỞ
+ 
+ 
+ĐỀ TÀI:  
+NHÓM 16:HPV
+DƯ HOÀNG PHI - N23DCCI057
+TRƯƠNG NHẬT HOÀNG - N23DCDK024
+PHẠM THẾ VỸ - N23DCCN
+ 
+ 
+GIẢNG VIÊN HƯỚNG DẪN:
+THS.NGUYỄN THỊ BÍCH NGUYÊN
+LỜI CẢM ƠN
+Đề tài “Xây dựng ứng dụng web hỗ trợ chẩn đoán bệnh da liễu dựa trên ảnh chụp” là nội dung nhóm em chọn để nghiên cứu và làm khi học môn Thực tập cơ sở.
+Để hoàn thành quá trình nghiên cứu và hoàn thiện luận văn này, lời đầu tiên chúng em xin chân thành cảm ơn sâu sắc đến THS.Nguyễn Thị Bích Nguyên thuộc Khoa Công nghệ thông tin 2. Các thầy đã trực tiếp chỉ bảo và hướng dẫn chúng em trong suốt quá trình nghiên cứu để hoàn thiện luận văn này.
+Nhân dịp này, tôi cũng xin cảm ơn Khoa Công nghệ thông tin Trường Học viện Công Nghệ Bưu Chính Viễn Thông cơ sở TP. HCM, lãnh đạo và các anh chị đang công tác tại trường đã tạo điều kiện và thời gian cho chúng em trong suốt quá trình nghiên cứu.
+Thành phố Hồ Chí Minh, tháng 06 năm 2025
+MỤC LỤC
+CHƯƠNG 1: GIỚI THIỆU ĐỀ TÀI 
+1.1. Tìm hiểu “Nền tảng GELO AI hỗ trợ chẩn đoán hình ảnh y tế”: 
+1.2. Nền tảng công nghệ: 
+1.3. Công cụ lập trình và công nghệ sử dụng: 
+1.4. Giới thiệu AI/ML trong chẩn đoán hình ảnh da liễu: 
+1.5. Các thư viện – framework hỗ trợ: 
+1.5.1. NestJS (Backend): 
+1.5.2. Prisma + PostgreSQL: 
+1.5.3. FastAPI + PyTorch (AI Service): 
+1.5.4. React + Vite (Frontend): 
+1.5.5. TanStack Query + TailwindCSS: 
+CHƯƠNG 2: KHẢO SÁT HIỆN TRẠNG 
+2.1. Hiện trạng thực tế: 
+2.2. Quy trình nghiệp vụ tổng quát: 
+2.2.1. Đối với người dùng chưa có tài khoản: 
+2.2.2. Đối với người dùng đã có tài khoản (Patient):
+2.2.3. Quy trình scan AI và trả kết quả: 
+2.2.4. Quy trình feedback/duyệt kết quả (Admin): 
+2.2.5. Quản lý bệnh, advice và bộ dữ liệu: 
+2.3. Yêu cầu chức năng:
+2.4. Yêu cầu phi chức năng: 
+2.5. Yêu cầu hệ thống: 
+CHƯƠNG 3: PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG 
+3.1. Sơ đồ phân cấp chức năng: 
+3.1.1. Sơ đồ phân cấp chức năng mục đỉnh: 
+3.1.2. Sơ đồ phân rã chức năng: 
+3.2. Mô hình Use Case: 
+3.2.1. Xác định Actor: 
+3.2.2. Xác định các Use Case: 
+3.2.3. Biểu đồ Use Case tổng quát: 
+3.2.4. Đặc tả Use Case chi tiết: 
+3.3. Phân tích dữ liệu và thực thể: 
+3.4. Mô hình ERD: 
+3.5. Mô hình cơ sở dữ liệu quan hệ: 
+3.6. Mô hình dữ liệu và ràng buộc:
+3.7. Kiến trúc hệ thống (Frontend/Backend/AI): 
+3.8. Luồng dữ liệu và tích hợp AI Service: 
+CHƯƠNG 4: ỨNG DỤNG WEB APPLICATION 
+4.1. Yêu cầu cài đặt/vận hành: 
+4.2. Demo giao diện Admin: 
+4.3. Demo giao diện Patient: 
+4.4. Luồng nghiệp vụ chính 
+4.5. Quản trị hệ thống và bảo trì:
+CHƯƠNG 1: GIỚI THIỆU ĐỀ TÀI
+1.1 Tìm hiểu “Nền tảng GELO AI hỗ trợ chẩn đoán hình ảnh y tế”:
+Trong bối cảnh y tế hiện đại, nhu cầu khám và sàng lọc các bệnh lý về da ngày càng tăng cao, dẫn đến tình trạng quá tải tại các bệnh viện chuyên khoa. Nhằm giải quyết bài toán này, đề tài tập trung nghiên cứu và phát triển Nền tảng GELO AI – một giải pháp công nghệ toàn diện ứng dụng trí tuệ nhân tạo vào việc hỗ trợ chẩn đoán hình ảnh da liễu.
+Nền tảng hướng tới hai mục tiêu cốt lõi:
+Đối với bệnh nhân: Cung cấp công cụ tự quét (scan) tổn thương da qua ảnh chụp, theo dõi diễn biến sức khỏe thông qua nhật ký da (Skin Diary) và nhận các khuyến cáo y tế kịp thời.
+Đối với quản trị viên: Cung cấp bộ công cụ giám sát, duyệt kết quả AI (Review), quản lý dữ liệu bệnh học và hiệu chỉnh trực tiếp hoạt động của mô hình AI một cách linh hoạt.
+ 
+1.2 Kiến trúc hệ thống
+Frontend: Vite + React (router, tanstack query), giao diện role-based (Quan sát qua UI, Suy đoán từ code).
+Backend: NestJS + Prisma + PostgreSQL, JWT auth, role guard (Suy đoán từ code).
+AI Service: FastAPI + PyTorch, gọi qua HTTP nội bộ.
+Lưu trữ ảnh: Cloudinary upload qua server.
+Email/OTP: dịch vụ mail + OTP cho đăng ký/đổi mật khẩu.
+1.3 Công cụ lập trình và công nghệ sử dụng
+Hệ thống tận dụng tối đa thế mạnh của hai hệ sinh thái ngôn ngữ phổ biến nhất hiện nay:
+TypeScript/JavaScript: Sử dụng xuyên suốt từ Frontend đến Backend nhằm tối ưu hóa tốc độ phát triển, đảm bảo tính đồng bộ dữ liệu (Type-safe).
+Python: Ngôn ngữ xử lý cốt lõi tại AI Service nhờ vào hệ thư viện tính toán khoa học mạnh mẽ như PyTorch, timm (PyTorch Image Models) và FastAPI.
+Hệ quản trị cơ sở dữ liệu: PostgreSQL kết hợp với dịch vụ lưu trữ đám mây Cloudinary để quản lý tối ưu cả dữ liệu quan hệ có cấu trúc và tệp tin hình ảnh dung lượng cao.
+1.4 Giới thiệu AI/ML trong chẩn đoán hình ảnh da liễu
+Kiến trúc mô hình:Hệ thống ứng dụng kiến trúc EfficientNet-V2-S chuyên biệt cho bài toán phân loại hình ảnh y tế. Đây là dòng mô hình tiên tiến giúp cân bằng giữa độ chính xác vượt trội và tốc độ xử lý nhanh (Inference latency thấp), phù hợp cho các ứng dụng thực tế trên trình duyệt và di động.
+Phương pháp huấn luyện (Transfer Learning): Mô hình được phát triển dựa trên phương pháp Học chuyển tiếp (Transfer Learning) từ trọng số pre-trained trên tập dữ liệu ImageNet, sau đó được tinh chỉnh (Fine-tuning) để nhận diện 4 nhóm bệnh lý/tình trạng da chính bao gồm:
+   1. Atopic Dermatitis
+    2. Vascular Tumors
+    3. Melanoma / Nevi / Moles
+    4. Bullous Disease
+Tiền xử lý dữ liệu: Mọi hình ảnh trước khi đưa vào mô hình đều được chuẩn hóa về kích thước 224x224 pixels và áp dụng các thông số chuẩn hóa (Normalizing) của ImageNet.
+Cơ chế Vòng lặp phản hồi (Feedback Loop): Khi AI đưa ra kết quả dưới ngưỡng cấu hình (Inference Threshold < 0.7) hoặc bị chuyên gia đánh giá sai, dữ liệu đó sẽ được gắn nhãn lại (Re-labeling) để tự động đưa vào tập chuẩn bị huấn luyện (Retraining), giúp mô hình ngày càng chính xác theo thời gian.
+ 
+1.5 Các thư viện – framework hỗ trợ
+1.5.1 NestJS (Backend)
+NestJS là một framework Node.js tiên tiến, hỗ trợ mạnh mẽ TypeScript. Framework này giúp xây dựng kiến trúc mã nguồn tường minh theo mô hình Module-Controller-Service. Trong hệ thống này, NestJS chịu trách nhiệm xử lý các luồng logic phức tạp, bảo mật hệ thống thông qua JWT Auth, phân quyền nghiêm ngặt bằng Role Guards (Admin/Patient) và tối ưu hóa hiệu năng kết nối cơ sở dữ liệu.
+1.5.2 Prisma + PostgreSQL
+PostgreSQL: Hệ quản trị cơ sở dữ liệu quan hệ mã nguồn mở mạnh mẽ, đảm bảo tính toàn vẹn dữ liệu cho các thực thể như Tài khoản, Nhật ký bệnh nhân, Lịch sử quét và Kết quả chẩn đoán.
+Prisma: Đóng vai trò là thế hệ ORM mới giúp kỹ sư ánh xạ cơ sở dữ liệu thành các đối tượng mã nguồn một cách trực quan, giảm thiểu lỗi truy vấn và tự động hóa quá trình đồng bộ hóa sơ đồ dữ liệu (Migration).
+1.5.3 FastAPI + PyTorch (AI Service)
+PyTorch: Thư viện học máy mã nguồn mở hàng đầu, cung cấp môi trường tính toán tensor mạnh mẽ để nạp mô hình, xử lý ma trận điểm ảnh và thực hiện lan truyền xuôi (Inference) để đưa ra dự đoán bệnh.
+FastAPI: Framework web dành cho Python có tốc độ xử lý hàng đầu hiện nay nhờ tận dụng cơ chế bất đồng bộ (Async). FastAPI giúp tạo ra các API nội bộ cực kỳ nhẹ, hỗ trợ tài liệu hóa tự động bằng Swagger và tối ưu hóa thời gian phản hồi kết quả từ mô hình AI.
+1.5.4 React + Vite (Frontend)
+React: Thư viện xây dựng giao diện người dùng dựa trên Component, giúp tái sử dụng mã nguồn và quản lý các trạng thái giao diện phức tạp (như luồng phân quyền Role-based UI và hiển thị biểu đồ).
+Vite: Công cụ build-tool thế hệ mới thay thế cho Webpack, tăng tốc độ khởi động môi trường phát triển (Hot Module Replacement) và tối ưu dung lượng mã nguồn khi đóng gói triển khai thực tế.
+1.5.5 TanStack Query + TailwindCSS
+TanStack Query (React Query): Bộ thư viện quản lý trạng thái bất đồng bộ (Server-state). Công cụ này chịu trách nhiệm tự động gọi lại API (Refetching), lưu bộ nhớ đệm (Caching) cho các danh sách lịch sử quét, đồng thời quản lý các trạng thái tải dữ liệu (Loading/Error) một cách mượt mà.
+Tailwind CSS: Framework CSS utility-first giúp xây dựng giao diện hiện đại, tối giản và đáp ứng tốt trên nhiều kích thước màn hình (Responsive Design) từ máy tính của Bác sĩ đến điện thoại thông minh của Bệnh nhân.
+ 
+CHƯƠNG 2: KHẢO SÁT HIỆN TRẠNG
+2.1 Hiện Trạng thực tế
+Trong thực tiễn y tế hiện nay, việc phát hiện sớm các bệnh lý về da gặp nhiều rào cản do tâm lý ngại đi khám của người dân, chi phí y tế cao và sự phân bổ không đồng đều của các bác sĩ chuyên khoa da liễu tại các vùng sâu vùng xa.
+Hầu hết các phương pháp kiểm tra hiện tại phụ thuộc hoàn toàn vào lịch hẹn trực tiếp tại bệnh viện. Người bệnh thiếu một công cụ cá nhân hóa, tin cậy để tự theo dõi sự thay đổi của các tổn thương da theo thời gian. Sự ra đời của các mô hình học sâu mở ra cơ hội lớn, nhưng việc tích hợp chúng vào một quy trình ứng dụng hoàn chỉnh – nơi dữ liệu của bệnh nhân được bảo mật và kết quả của AI được giám sát, hiệu chỉnh liên tục bởi các chuyên gia – vẫn còn bỏ ngỏ. Hệ thống GELO AI được thiết kế nhằm lấp đầy khoảng trống công nghệ này.
+2.2 Quy trình nghiệp vụ tổng quát:
+2.2.1 Đối với người dùng chưa có tài khoản:
+Người dùng khi mới tiếp cận hệ thống chỉ có thể tương tác với giao diện giới thiệu hoặc trang đăng nhập công cộng. Để sử dụng dịch vụ, quy trình diễn ra như sau:
+Người dùng thực hiện đăng ký tài khoản bằng cách cung cấp các thông tin cơ bản (họ và tên, tên đăng nhập, email, mật khẩu, tuổi, giới tính).
+Hệ thống tự động gửi một mã xác thực một lần (OTP) qua email.
+Người dùng nhập mã OTP để kích hoạt trạng thái tài khoản.
+2.2.2  Đối với người dùng đã có tài khoản (Patient):
+Sau khi xác thực thành công và được phân quyền là Patient, người dùng tham gia vào các nghiệp vụ tự theo dõi sức khỏe:
+Quản lý thông tin: Cập nhật hồ sơ cá nhân (tuổi, giới tính) để tối ưu hóa dữ liệu dịch tễ.
+Theo dõi sức khỏe (Skin Diary): Người bệnh chủ động ghi lại trạng thái da hàng ngày theo thang điểm từ 1-10, tích chọn các triệu chứng lâm sàng đi kèm và ghi chú thêm. Hệ thống tự động tính toán điểm sức khỏe tổng quan (Health Score) theo tuần/tháng để hiển thị trực quan dưới dạng biểu đồ (Area/Pie Chart) tại trang báo cáo (Reports).
+Nếu quên mật khẩu, người dùng sử dụng luồng "Forgot Password" để nhận mã OTP và thiết lập lại mật khẩu mới.
+2.2.3 Quy trình scan AI và trả kết quả:
+Đây là nghiệp vụ cốt lõi của phân hệ Bệnh nhân:
+Tải ảnh: Bệnh nhân chụp và tải lên một hình ảnh vùng da bị tổn thương.
+Kiểm tra chất lượng ảnh (Client-side): Hệ thống tiến hành thuật toán phát hiện mờ/nhòe (blur detection). Nếu ảnh không đạt chất lượng, hệ thống đưa ra cảnh báo nguy cơ sai lệch để người dùng cân nhắc chụp lại.
+Xử lý dự đoán: Khi người dùng nhấn thực thi, hệ thống khởi tạo phiên quét, đẩy ảnh lên Cloudinary và gọi API nội bộ của AI Service.
+Trả kết quả: Kết quả trả về gồm mã định danh, độ tự tin (Confidence). Nếu độ tự tin >50%, hệ thống phân loại vào nhóm có độ tin cậy cao, tự động điều hướng người dùng đến trang kết quả để xem chi tiết bệnh học và các khuyến cáo y tế tương ứng (chăm sóc, lối sống, trường hợp khẩn cấp). ID phiên quét tạm thời được lưu tại localStorage để duy trì trạng thái giao diện.
+2.2.4 Quy trình feedback/duyệt kết quả (Admin):
+Nhằm đảm bảo an toàn y tế và cải tiến mô hình, mọi dự đoán của AI đều trải qua quy trình giám sát:
+Luồng dữ liệu sau khi AI dự đoán sẽ được đẩy vào danh sách chờ duyệt (Pending Reviews) trên Dashboard của Admin.
+Người quản trị chuyên môn (Admin) kiểm tra hình ảnh gốc và kết quả dự đoán của mô hình.
+Admin thực hiện phản hồi (Feedback): Xác nhận AI đúng hoặc đánh dấu sai và chọn lại mã bệnh chính xác thực tế, đi kèm ghi chú chuyên môn.
+Hệ thống cập nhật bản ghi, chuyển dữ liệu này vào tập dữ liệu chuẩn hóa để sẵn sàng tái huấn luyện mô hình.
+2.2.5 Quản lý bệnh, advice và bộ dữ liệu:
+Admin toàn quyền quản trị tài nguyên hệ thống thông qua các nghiệp vụ:
+Quản lý danh mục bệnh (Disease Management): Thực hiện các thao tác Thêm, Sửa, Xóa (CRUD) các mã bệnh, tên bệnh và mô tả y khoa.
+Cấu hình khuyến cáo (Advice Configuration): Thiết lập các bộ lời khuyên chi tiết cho từng loại bệnh, chia nhỏ thành 3 nhóm rõ ràng: Chăm sóc tại chỗ (Care), Thay đổi lối sống (Lifestyle), và Cảnh báo khẩn cấp (Emergency).
+Quản lý cấu hình mô hình (AI Engine Settings): Admin có thể chọn phiên bản mô hình chạy chính thức (v1/v2/v3), thay đổi ngưỡng kích hoạt dự đoán (inference threshold), và thực hiện lưu cấu hình cập nhật ngay lập tức không cần tắt máy chủ (Save & Hot-Reload)
+2.3 Yêu cầu chức năng:
+QTV: Quản trị viên  
+CRUD: Create, Read, Update, và Delete (Tạo, Đọc, Cập nhật, Xóa)
+Chức năng
+Mô tả chi tiết
+Chức năng đăng ký tài khoản mới
+Bệnh nhân chưa có tài khoản có thể đăng ký tài khoản mới.
+Chức năng đăng nhập
+Bệnh nhân đã có tài khoản đăng nhập vào tài khoản của mình.
+Chức năng quên mật khẩu
+Bệnh nhân quên mật khẩu có thể đặt lại mật khẩu qua việc xác nhận trong email do admin gửi.
+Chức năng quét hình ảnh (Scan)
+Bệnh nhân tải ảnh, kiểm tra độ mờ, nhận diện ảnh lỗi, gửi yêu cầu phân tích tới AI.
+Xem kết quả (Results)
+Hệ thống hiển thị trạng thái chẩn đoán, tỉ lệ phần trăm chính xác, bộ lời khuyên y tế.
+Nhật ký da (Diary)
+Bệnh nhân tạo, sửa, xóa nhật ký sức khỏe hàng ngày.
+Báo cáo (Reports)
+Bệnh nhân xem biểu đồ trực quan về tần suất quét, phân bố bệnh và diễn biến sức khỏe. Xuất dữ liệu ra file CSV.
+Giám sát AI (Review)
+QTV duyệt danh sách ca bệnh chờ, gắn nhãn đúng/sai, hiệu chỉnh kết quả thực tế của mô hình.
+Cấu hình AI (Settings)
+QTV thay đổi phiên bản mô hình, xem kiến trúc mạng, điều chỉnh ngưỡng inference, bật/tắt cơ chế Hot-Reload.
+Quản lý dữ liệu nền
+QTV CRUD danh mục bệnh; cấu hình ma trận lời khuyên; tìm kiếm, lọc và kết xuất danh sách bệnh nhân.
+2.4 Yêu cầu phi chức năng:
+Để vận hành ổn định và mang lại trải nghiệm tối ưu trong môi trường thực tế, hệ thống GELO AI được thiết kế tuân thủ các tiêu chuẩn kỹ thuật sau:
+*Tính hiệu năng (Performance):
+Thời gian phản hồi API cơ bản (CRUD) không quá 200ms.
+Thời gian thực hiện lan truyền xuôi (Inference) của mô hình AI đối với một hình ảnh đơn lẻ không vượt quá 2-3 giây.
+Tối ưu hóa dung lượng tải trang ban đầu thông qua kỹ thuật code-splitting và nén tài nguyên của Vite.
+*Tính bảo mật (Security):
+Xác thực người dùng bằng cơ chế JSON Web Token (JWT) có thời hạn và Refresh Token.
+Mật khẩu người dùng được mã hóa bằng thuật toán b-crypt trước khi lưu trữ vào cơ sở dữ liệu.
+Phân quyền truy cập tài nguyên nghiêm ngặt (Authorization) thông qua Role Guards tại Backend để tránh rò rỉ dữ liệu giữa các vai trò khác nhau.
+Dữ liệu hình ảnh được lưu trữ an toàn trên dịch vụ đám mây (Cloudinary) với các khóa bảo mật riêng biệt.
+*Tính ổn định và Khả dụng (Availability & Reliability):
+Hệ thống đảm bảo hoạt động liên tục (uptime) 99.9%.
+Cơ chế xử lý lỗi (Error Handling) toàn diện, cung cấp thông báo rõ ràng cho người dùng khi có sự cố mạng hoặc lỗi kỹ thuật từ mô hình AI.
+Giao diện thiết kế theo chuẩn Responsive, tương thích tốt trên nhiều loại thiết bị (Desktop, Tablet, Smartphone) và các trình duyệt phổ biến (Chrome, Edge, Safari).
+*Tính bảo trì và Mở rộng (Maintainability & Scalability):
+Mã nguồn được tổ chức theo kiến trúc Module hóa, giúp dễ dàng nâng cấp hoặc thay thế các thành phần (như đổi mô hình AI mới) mà không ảnh hưởng đến toàn bộ hệ thống.
+Sử dụng TypeScript để đảm bảo tính nhất quán của dữ liệu (Type-safety) và giảm thiểu lỗi logic trong quá trình phát triển.
+2.5 Yêu cầu hệ thống và Phân quyền:
+2.5.1 Quản trị viên (Admin):
+Là nhóm người dùng có quyền hạn cao nhất, thực hiện các nhiệm vụ vận hành và giám sát hệ thống:
+Giám sát thực tế (Reviewing): Kiểm soát và phê duyệt các kết quả dự đoán của AI, thực hiện gắn nhãn lại (Re-labeling) để chuẩn bị dữ liệu cho quá trình tái huấn luyện.
+Quản trị AI (AI Management): Cấu hình phiên bản mô hình, điều chỉnh ngưỡng tin cậy (Threshold) và quản lý cơ chế nạp mô hình động (Hot-reload).
+Quản trị Tài nguyên: Thêm, sửa, xóa danh mục các loại bệnh lý và cấu hình ma trận lời khuyên (Care, Lifestyle, Emergency).
+Quản trị Người dùng: Theo dõi danh sách bệnh nhân, quản lý tài khoản và thống kê dữ liệu hệ thống.
+2.5.2 Bệnh nhân (Patient/Customer):
+Đối tượng sử dụng chính của dịch vụ, tập trung vào các chức năng cá nhân hóa:
+Chẩn đoán hình ảnh: Tải ảnh lên và nhận kết quả phân tích tức lời từ AI.
+Quản lý sức khỏe cá nhân: Ghi nhật ký da (Skin Diary) hàng ngày, theo dõi diễn biến sức khỏe qua biểu đồ trực quan.
+Quản lý tài khoản: Cập nhật thông tin cá nhân, thay đổi mật khẩu và xem lại toàn bộ lịch sử quét bệnh.
+2.5.3 Yêu cầu môi trường vận hành:
+Phía Server: Node.js (v18+), PostgreSQL (v14+), Python (3.9+) với các thư viện AI tương ứng.
+Phía Client: Trình duyệt web hiện đại hỗ trợ ES6+ (Chrome, Firefox, Safari, Edge). Yêu cầu kết nối Internet ổn định để tải ảnh và nhận phản hồi từ dịch vụ đám mây.
+CHƯƠNG 3: PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG 
+3.1. Sơ đồ phân cấp chức năng:
+3.1.1. Sơ đồ phân cấp chức năng mục đỉnh: 
+Nhóm chức năng Hệ thống & Người dùng 
+Đăng ký
+Đăng nhập
+Nhóm chức năng Nghiệp vụ Y tế & Chẩn đoán 
+Quét mới(Bệnh nhân)
+Lịch sử quét 
+Xem kết quả
+Nhật ký
+Nhóm chức năng Báo cáo & Phân tích 
+Báo cáo phân tích sức khỏe 
+Nhóm chức năng Quản trị & Cấu hình (Quản trị viên) 
+Kiểm tra và phê duyệt
+Quản lý bệnh
+Cấu hình khuyến nghị
+=>  Mỗi chức này được phân rã thành một số chức năng nhỏ hơn mà thao tác thực hiện nó đủ đơn giản cho việc lập trình. 
+3.1.2. Sơ đồ phân rã chức năng: 
+Chức năng Đăng ký: Cho phép bệnh nhân tạo tài khoản để sử dụng hệ thống.
+Nhập thông tin: Nhập họ tên, email/username, mật khẩu và thông tin cá nhân cần thiết.
+Tạo tài khoản: Hệ thống lưu thông tin và tạo hồ sơ bệnh nhân tương ứng.
+Gửi OTP xác thực: Hệ thống gửi mã OTP qua email để kích hoạt tài khoản.
+Xác thực OTP: Người dùng nhập OTP, hệ thống kiểm tra và kích hoạt tài khoản nếu hợp lệ.
+Chức năng Đăng nhập: Xác thực người dùng và phân quyền truy cập
+Nhập thông tin: Người dùng nhập email/username và mật khẩu.
+Xác thực thông tin: Hệ thống kiểm tra thông tin và tình trạng tài khoản.
+Cấp token / Phân quyền: Hệ thống cấp token và gán vai trò (Role: Admin/Patient).
+Chuyển hướng vào dashboard: Điều hướng đến giao diện phù hợp theo vai trò.
+Chức năng Quét mới (bệnh nhân): Thực hiện quét ảnh da liễu bằng AI.
+Tải ảnh: Bệnh nhân tải lên ảnh cần phân tích.
+Kiểm tra chất lượng ảnh: Hệ thống đánh giá ảnh (rõ/nét) và cảnh báo nếu chất lượng kém.
+Gửi scan đến AI: Ảnh được gửi sang dịch vụ AI để dự đoán.
+Nhận kết quả: Hệ thống nhận về chẩn đoán, độ tin cậy, bệnh dự đoán.
+Lưu kết quả: Lưu kết quả vào cơ sở dữ liệu (CSDL) và gắn với hồ sơ bệnh nhân.
+Chức năng Lịch sử quét: Quản lý danh sách các lần quét. 
+Xem danh sách scan: Hiển thị các lượt scan đã thực hiện của bệnh nhân.
+Xem chi tiết kết quả: Mở kết quả chi tiết của một lượt scan.
+Xóa scan: Xóa một bản ghi scan đã chọn.
+Xóa tất cả: Xóa toàn bộ lịch sử quét (có xác nhận).
+Chức năng Xem kết quả: Hiển thị kết quả chẩn đoán của AI. 
+Lấy dữ liệu theo scanId: Truy vấn kết quả dựa trên mã scan.
+Hiển thị thông tin chẩn đoán: Hiển thị bệnh dự đoán, độ tin cậy, trạng thái.
+Hiển thị hình ảnh / Lời khuyên: Hiển thị ảnh đã quét và các khuyến nghị y tế.
+Gửi phản hồi đúng/sai: Bệnh nhân đánh giá kết quả (feedback).
+Chức năng Nhật ký: Ghi nhận tình trạng sức khỏe hằng ngày/ tuần/ tháng.
+Nhập ngày / điểm / triệu chứng: Nhập ngày, điểm đánh giá, triệu chứng và ghi chú.
+Lưu nhật ký: Lưu bản ghi nhật ký vào CSDL.
+Xem danh sách nhật ký: Hiển thị các bản ghi nhật ký đã lưu.
+Xóa nhật ký: Xóa một bản ghi nhật ký (có xác nhận).
+Chức năng Báo cáo phân tích sức khỏe: Tổng hợp và phân tích dữ liệu sức khỏe. 
+Tổng hợp dữ liệu scan: Lấy dữ liệu từ lịch sử quét.
+Tổng hợp dữ liệu nhật ký: Lấy dữ liệu từ nhật ký bệnh nhân.
+Tính chỉ số sức khỏe: Tính toán điểm sức khỏe (health score) / chỉ số xu hướng.
+Hiển thị biểu đồ / bảng: Hiển thị biểu đồ (chart) và bảng chi tiết.
+Chức năng Kiểm tra & Phê duyệt: Quản trị viên (Admin) kiểm tra kết quả AI. 
+Xem danh sách cần duyệt: Liệt kê các lượt scan cần duyệt (độ tin cậy thấp - low confidence / bị báo sai).
+Mở chi tiết scan: Xem thông tin chi tiết kết quả.
+Xác nhận đúng / sai: Xác nhận AI đúng hay sai, chọn bệnh đúng nếu AI dự đoán sai.
+Cập nhật dữ liệu đã xác minh: Lưu kết quả duyệt và cập nhật vào tập dữ liệu (dataset).
+Chức năng Quản lý bệnh: Quản trị danh sách bệnh cho hệ thống. 
+Xem danh sách bệnh: Hiển thị danh sách các bệnh hiện có.
+Thêm bệnh: Tạo mới một loại bệnh (mã bệnh, tên bệnh, mô tả).
+Sửa thông tin bệnh: Cập nhật thông tin bệnh.
+Xóa bệnh: Xóa bệnh không còn sử dụng (nếu được phép).
+Chức năng Cấu hình khuyến nghị: Thiết lập các khuyến nghị theo từng loại bệnh. 
+Chọn bệnh: Chọn bệnh cần cấu hình khuyến nghị.
+Nhập khuyến nghị (care/lifestyle/emergency): Nhập các khuyến nghị theo nhóm (chăm sóc / lối sống / khẩn cấp).
+Lưu cấu hình: Lưu bộ khuyến nghị vào hệ thống.
+3.2. Mô hình Use Case: 
+3.2.1. Xác định Actor: 
+Dựa vào yêu cầu bài toán, ta có các actor: Bệnh nhân(patient) và Quản trị viên(admin)
+3.2.2. Xác định các Use Case: 
+Từ yêu cầu chức năng ứng với từng actor ta có thể xác định được các use case như sau:
+BỆNH NHÂN (PATIENT) 
+UC-01: Đăng nhập / Phân quyền
+UC-02: Đăng ký + Xác thực OTP
+UC-03: Quên mật khẩu + Đặt lại mật khẩu qua OTP (Reset OTP)
+UC-04: Cập nhật hồ sơ + Đổi mật khẩu
+UC-05: Quét mới (Tạo lượt quét AI - Scan AI)
+UC-06: Xem kết quả
+UC-07: Lịch sử quét + Xóa lịch sử
+UC-08: Nhật ký sức khỏe
+UC-09: Báo cáo phân tích sức khỏe
+QUẢN TRỊ VIÊN (ADMIN) 
+UC-01: Đăng nhập / Phân quyền
+UC-04: Cập nhật hồ sơ + Đổi mật khẩu
+UC-10: Xem Bảng điều khiển (Dashboard) + Danh sách chờ duyệt (Pending review)
+UC-11: Kiểm tra & Phê duyệt (Đánh giá lượt quét - Review Scan)
+UC-12: Quản lý danh mục bệnh
+UC-13: Cấu hình khuyến nghị y tế
+UC-14: Quản lý tập dữ liệu (Dataset) + Xuất tệp CSV (Export CSV)
+UC-15: Quản lý thông tin bệnh nhân (Patient)
+UC-16: Cấu hình công cụ AI (AI Engine) (Bao gồm: Mô hình/Ngưỡng chấp nhận/Danh sách bệnh được kích hoạt)
+3.2.3. Biểu đồ Use Case tổng quát: 
+Biểu đồ use case tổng quát dành cho bệnh nhân:
+Biểu đồ use case tổng quát dành cho quản trị viên:
+3.2.4. Đặc tả Use Case chi tiết: 
+UC-01: Đăng nhập / Phân quyền
+Tác nhân (Actor): Quản trị viên (Admin), Bệnh nhân
+Mục tiêu: Xác thực danh tính và điều hướng vào đúng giao diện (Dashboard) theo vai trò.
+Điều kiện tiên quyết (Precondition): Người dùng đã có tài khoản và tài khoản đã được xác thực.
+Luồng hoạt động:
+Người dùng nhập thông tin định danh (Email/Tên đăng nhập) và mật khẩu.
+Hệ thống kiểm tra và xác thực thông tin.
+Hệ thống cấp mã Token và gắn vai trò (Role) tương ứng.
+Hệ thống điều hướng người dùng vào giao diện điều khiển (Dashboard) phù hợp.
+UC-02: Đăng ký + Xác thực OTP
+Tác nhân (Actor): Bệnh nhân
+Mục tiêu: Tạo tài khoản mới và kích hoạt tài khoản trên hệ thống.
+Điều kiện tiên quyết (Precondition): Email đăng ký chưa từng được xác thực trên hệ thống.
+Luồng hoạt động:
+Người dùng nhập các thông tin đăng ký theo yêu cầu.
+Hệ thống khởi tạo tài khoản ở trạng thái chờ và gửi mã OTP qua Email.
+Người dùng nhận và nhập mã OTP vào hệ thống.
+Hệ thống xác thực mã OTP hợp lệ và kích hoạt tài khoản chính thức.
+UC-03: Quên mật khẩu + Thiết lập lại qua OTP
+Tác nhân (Actor): Quản trị viên (Admin), Bệnh nhân
+Mục tiêu: Khôi phục lại mật khẩu khi người dùng quên.
+Điều kiện tiên quyết (Precondition): Email nhập vào phải hợp lệ và tồn tại trên hệ thống.
+Luồng hoạt động:
+Người dùng nhập địa chỉ Email đã đăng ký.
+Hệ thống kiểm tra; nếu Email tồn tại, hệ thống sẽ gửi một mã OTP.
+Người dùng nhập mã OTP kèm theo mật khẩu mới.
+Hệ thống xác thực và cập nhật mật khẩu mới vào cơ sở dữ liệu.
+UC-04: Cập nhật hồ sơ + Đổi mật khẩu
+Tác nhân (Actor): Quản trị viên (Admin), Bệnh nhân
+Mục tiêu: Thay đổi thông tin cá nhân hoặc cập nhật mật khẩu mới.
+Điều kiện tiên quyết (Precondition): Người dùng đã đăng nhập hợp lệ.
+Luồng hoạt động:
+Người dùng mở trang quản lý hồ sơ cá nhân.
+Người dùng chỉnh sửa các thông tin cần thiết và nhấn Lưu.
+Nếu người dùng chọn đổi mật khẩu: Hệ thống sẽ yêu cầu xác thực bằng mã OTP.
+Người dùng nhập mã OTP và mật khẩu mới.
+Hệ thống xác thực và cập nhật thông tin/mật khẩu mới.
+UC-05: Bệnh nhân tạo Quét AI (Scan AI)
+Tác nhân (Actor): Bệnh nhân
+Mục tiêu: Tải hình ảnh lên và nhận kết quả phân tích từ trí tuệ nhân tạo (AI).
+Điều kiện tiên quyết (Precondition): Bệnh nhân đã đăng nhập và có mã định danh bệnh nhân (patientId).
+Luồng hoạt động:
+Bệnh nhân tải hình ảnh y tế/hình ảnh cần quét lên hệ thống.
+Hệ thống tự động kiểm tra chất lượng hình ảnh (độ mờ, độ phân giải...).
+Hệ thống gửi dữ liệu ảnh đến Dịch vụ AI để phân tích.
+Hệ thống tiếp nhận kết quả trả về từ AI.
+Hệ thống lưu kết quả, tạo mã phiên quét (scanId) và điều hướng người dùng sang trang xem kết quả.
+UC-06: Bệnh nhân xem Kết quả
+Tác nhân (Actor): Bệnh nhân
+Mục tiêu: Xem kết quả chẩn đoán hình ảnh từ AI và nhận lời khuyên y tế.
+Điều kiện tiên quyết (Precondition): Có mã phiên quét (scanId) hợp lệ.
+Luồng hoạt động:
+Hệ thống truy xuất dữ liệu từ cơ sở dữ liệu dựa trên scanId.
+Hệ thống hiển thị kết quả chẩn đoán, độ tin cậy (%), lời khuyên sức khỏe kèm hình ảnh gốc.
+(Tùy chọn) Bệnh nhân có thể gửi phản hồi (Feedback) về kết quả là Đúng hay Sai.
+UC-07: Bệnh nhân xem Lịch sử Quét + Xóa
+Tác nhân (Actor): Bệnh nhân
+Mục tiêu: Quản lý và xem lại danh sách các phiên quét cũ.
+Điều kiện tiên quyết (Precondition): Bệnh nhân đã đăng nhập.
+Luồng hoạt động:
+Hệ thống hiển thị danh sách các lịch sử quét của bệnh nhân.
+Bệnh nhân có thể chọn một phiên quét cụ thể để xem chi tiết.
+Bệnh nhân có thể chọn xóa một phiên quét hoặc xóa toàn bộ lịch sử (hệ thống sẽ hiển thị hộp thoại xác nhận).
+Hệ thống thực hiện xóa và cập nhật lại danh sách lịch sử.
+UC-08: Bệnh nhân ghi Nhật ký
+Tác nhân (Actor): Bệnh nhân
+Mục tiêu: Theo dõi và ghi lại diễn biến tình trạng sức khỏe hàng ngày.
+Điều kiện tiên quyết (Precondition): Bệnh nhân đã đăng nhập.
+Luồng hoạt động:
+Bệnh nhân nhập ngày ghi, điểm số đánh giá sức khỏe, các triệu chứng gặp phải và ghi chú thêm.
+Bệnh nhân nhấn lưu nhật ký.
+Hệ thống cập nhật vào danh sách nhật ký và cho phép người dùng xem lại hoặc xóa khi cần.
+UC-09: Bệnh nhân xem Báo cáo / Thống kê
+Tác nhân (Actor): Bệnh nhân
+Mục tiêu: Theo dõi xu hướng sức khỏe tổng quan dựa trên dữ liệu quét AI và nhật ký hàng ngày.
+Điều kiện tiên quyết (Precondition): Bệnh nhân đã đăng nhập.
+Luồng hoạt động:
+Hệ thống tự động tổng hợp dữ liệu từ các phiên quét AI và các bản ghi nhật ký.
+Hệ thống tính toán các chỉ số sức khỏe theo biểu đồ thời gian.
+Hệ thống hiển thị các biểu đồ trực quan và bảng thống kê lịch sử cho bệnh nhân theo dõi.
+UC-10: Admin xem Dashboard + Danh sách chờ duyệt
+Tác nhân (Actor): Quản trị viên (Admin)
+Mục tiêu: Nắm bắt tổng quan hoạt động của hệ thống và các phiên quét cần kiểm tra lại.
+Điều kiện tiên quyết (Precondition): Đăng nhập dưới quyền Quản trị viên.
+Luồng hoạt động:
+Hệ thống hiển thị các số liệu thống kê tổng quan (lượng người dùng, số ca quét...).
+Hệ thống hiển thị danh sách các phiên quét đang ở trạng thái "Chờ duyệt" (Pending review).
+Admin chọn một phiên quét cụ thể trong danh sách chờ để tiến hành kiểm tra.
+UC-11: Admin kiểm tra & Phê duyệt phiên quét
+Tác nhân (Actor): Quản trị viên (Admin)
+Mục tiêu: Xác nhận độ chính xác của kết quả AI để làm giàu tập dữ liệu chuẩn (Verified Data).
+Điều kiện tiên quyết (Precondition): Có phiên quét trong danh sách chờ duyệt.
+Luồng hoạt động:
+Admin mở xem chi tiết thông tin và hình ảnh của phiên quét.
+Admin đánh giá và xác nhận kết quả AI đưa ra là Đúng hoặc Sai.
+Nếu AI chẩn đoán sai: Admin sẽ chọn lại tên bệnh lý hoặc trạng thái chính xác dựa trên chuyên môn.
+Admin nhấn lưu; hệ thống cập nhật trạng thái phiên quét và chuyển dữ liệu này vào kho dữ liệu chuẩn.
+UC-12: Admin quản lý Bệnh lý (Disease)
+Tác nhân (Actor): Quản trị viên (Admin)
+Mục tiêu: Thực hiện các thao tác Xem, Thêm, Sửa, Xóa (CRUD) danh mục các loại bệnh lý.
+Điều kiện tiên quyết (Precondition): Đăng nhập dưới quyền Quản trị viên.
+Luồng hoạt động:
+Hệ thống hiển thị danh sách các loại bệnh lý hiện có trong hệ thống.
+Admin thực hiện các thao tác: Thêm bệnh mới, Chỉnh sửa thông tin bệnh hoặc Xóa bệnh.
+Hệ thống kiểm tra tính hợp lệ và cập nhật thay đổi vào cơ sở dữ liệu.
+UC-13: Admin cấu hình Khuyến nghị / Lời khuyên
+Tác nhân (Actor): Quản trị viên (Admin)
+Mục tiêu: Thiết lập các nội dung lời khuyên y tế tương ứng với từng loại bệnh lý.
+Điều kiện tiên quyết (Precondition): Đăng nhập dưới quyền Admin và chọn một loại bệnh cụ thể.
+Luồng hoạt động:
+Admin chọn một bệnh lý cần cấu hình trong danh mục.
+Admin nhập/chỉnh sửa các nội dung lời khuyên theo các phân loại (Chăm sóc y tế / Phong cách sống / Trường hợp khẩn cấp).
+Admin nhấn lưu cấu hình để áp dụng cho các kết quả trả về cho bệnh nhân sau này.
+UC-14: Admin quản lý Tập dữ liệu + Xuất file CSV
+Tác nhân (Actor): Quản trị viên (Admin)
+Mục tiêu: Quản lý kho dữ liệu đã xác thực để phục vụ cho việc tái huấn luyện (Retrain) mô hình AI.
+Điều kiện tiên quyết (Precondition): Đăng nhập dưới quyền Quản trị viên.
+Luồng hoạt động:
+Admin thực hiện tìm kiếm, lọc dữ liệu theo thời gian, loại bệnh hoặc độ chính xác.
+Hệ thống hiển thị bảng dữ liệu đã qua xác thực (Verified Data).
+Admin nhấn chọn xuất dữ liệu (Export CSV) để tải tập tin về máy tính.
+UC-15: Admin quản lý Bệnh nhân
+Tác nhân (Actor): Quản trị viên (Admin)
+Mục tiêu: Theo dõi thông tin tài khoản và kiểm tra hoạt động của bệnh nhân trên nền tảng.
+Điều kiện tiên quyết (Precondition): Đăng nhập dưới quyền Quản trị viên.
+Luồng hoạt động:
+Hệ thống hiển thị toàn bộ danh sách bệnh nhân.
+Admin có thể sử dụng các tính năng Tìm kiếm, Lọc hoặc Sắp xếp (Sort) theo bộ tiêu chí.
+Admin bấm xem chi tiết một bệnh nhân để theo dõi các hoạt động liên quan (lịch sử quét AI, nhật ký sức khỏe).
+UC-16: Admin cấu hình Công cụ AI (AI Engine)
+Tác nhân (Actor): Quản trị viên (Admin)
+Mục tiêu: Thay đổi phiên bản mô hình, ngưỡng tin cậy và danh mục bệnh áp dụng cho AI.
+Điều kiện tiên quyết (Precondition): Đăng nhập dưới quyền Admin và dịch vụ AI (AI Service) đang hoạt động ổn định.
+Luồng hoạt động:
+Admin lựa chọn gói phiên bản mô hình AI (Model Package) muốn áp dụng.
+Admin điều chỉnh ngưỡng tin cậy (Threshold) tối thiểu để trả kết quả chẩn đoán.
+Admin cấu hình danh sách các loại bệnh lý mà mô hình này được phép nhận diện.
+Admin lưu cấu hình; hệ thống kích hoạt tính năng nạp nóng (Hot-reload) để cập nhật cấu hình mới ngay lập tức cho AI Engine mà không cần tắt hệ thống.
+3.3. Phân tích dữ liệu và thực thể: 
+ACCOUNT(AccountID PK, Username, Email, PasswordHash, Role, IsVerified, CreatedAt, UpdatedAt)
+PATIENT(PatientID PK, AccountID FK→ACCOUNT.AccountID, FullName, Age, Gender, CreatedAt)
+DISEASE(DiseaseID PK, Code, Name, Description)
+SKIN_SCAN(ScanID PK, PatientID FK→PATIENT.PatientID, ImageQuality, IsDeleted, CreatedAt)
+SCAN_IMAGE(ImageID PK, ScanID FK→SKIN_SCAN.ScanID, ImageUrl, CreatedAt)
+PREDICTION(PredictionID PK, ScanID FK→SKIN_SCAN.ScanID, DiseaseID FK→DISEASE.DiseaseID, Confidence, ModelVersion, DiagnosticStatus, CreatedAt)
+DIAGNOSIS_RESULT(ResultID PK, ScanID FK→SKIN_SCAN.ScanID, PredictedDiseaseID FK→DISEASE.DiseaseID, FinalDiseaseID FK→DISEASE.DiseaseID, AiConfidence, Decision, DiagnosticStatus, CreatedAt)
+FEEDBACK_LOG(FeedbackID PK, ScanID FK→SKIN_SCAN.ScanID, PredictedDiseaseID FK→DISEASE.DiseaseID, ActualDiseaseID FK→DISEASE.DiseaseID, IsCorrect, Note, Role, DiagnosticStatus, CreatedAt)
+DISEASE_ADVICE(AdviceID PK, DiseaseID FK→DISEASE.DiseaseID, AdviceType, Title, Content, Priority)
+DISEASE_IMAGE(ImageID PK, DiseaseID FK→DISEASE.DiseaseID, ScanID FK→SKIN_SCAN.ScanID, ImageUrl, CreatedAt)
+SKIN_DIARY(DiaryID PK, PatientID FK→PATIENT.PatientID, ScanID FK→SKIN_SCAN.ScanID, ConditionScore, Symptoms, Note, CreatedAt, UpdatedAt)
+OTP_CODE(OtpID PK, Email, Code, Type, ExpiresAt, Attempts, Used, CreatedAt) 
+3.4. Mô hình ERD: 
+3.5. Mô hình cơ sở dữ liệu quan hệ: 
+Chú thích: PK = Khóa chính,  FK = Khóa ngoại
+1. ACCOUNT
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+AccountID
+int
+ID tài khoản
+PK, auto increment
+Username
+varchar(100)
+Tên đăng nhập
+Not null, Unique
+Email
+varchar(255)
+Email người dùng
+Not null, Unique
+PasswordHash
+varchar(255)
+Mật khẩu mã hóa
+Not null
+IsVerified
+boolean
+Trạng thái xác thực
+Not null, default false
+Role
+enum(user_role)
+Vai trò (ADMIN/PATIENT)
+Not null, default PATIENT
+CreatedAt
+timestamp
+Ngày tạo
+Not null, default now()
+UpdatedAt
+timestamp
+Ngày cập nhật
+Not null
+ 
+2. PATIENT
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+PatientID
+int
+ID bệnh nhân
+PK, auto increment
+AccountID
+int
+Tài khoản liên kết
+FK -> ACCOUNT(AccountID), Unique, Not null
+FullName
+varchar(100)
+Họ tên bệnh nhân
+Nullable
+Age
+int
+Tuổi
+Nullable
+Gender
+enum(gender)
+Giới tính
+Nullable, default UNKNOWN
+CreatedAt
+timestamp
+Ngày tạo
+Not null, default now()
+ 
+3. DISEASE
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+DiseaseID
+int
+ID bệnh
+PK, auto increment
+Code
+varchar(50)
+Mã bệnh
+Not null, Unique
+Name
+varchar(100)
+Tên bệnh
+Not null
+Description
+text
+Mô tả bệnh
+Nullable
+ 
+4. SKIN_SCAN
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+ScanID
+int
+ID lần quét
+PK, auto increment
+PatientID
+int
+Bệnh nhân sở hữu
+FK -> PATIENT(PatientID), Not null
+ImageQuality
+enum(image_quality)
+Chất lượng ảnh
+Not null, default CLEAR
+CreatedAt
+timestamp
+Thời gian quét
+Not null, default now()
+IsDeleted
+boolean
+Xóa mềm
+Not null, default false
+ 
+5. SCAN_IMAGE
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+ImageID
+int
+ID ảnh
+PK, auto increment
+ScanID
+int
+Liên kết scan
+FK -> SKIN_SCAN(ScanID), Not null
+ImageUrl
+varchar(500)
+Đường dẫn ảnh
+Not null
+CreatedAt
+timestamp
+Ngày tạo
+Not null, default now()
+ 
+6. PREDICTION
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+PredictionID
+int
+ID dự đoán
+PK, auto increment
+ScanID
+int
+Liên kết scan
+FK -> SKIN_SCAN(ScanID), Nullable
+DiseaseID
+int
+Bệnh dự đoán
+FK -> DISEASE(DiseaseID), Nullable
+Confidence
+float
+Độ tin cậy (0–100)
+Nullable
+ModelVersion
+varchar(255)
+Phiên bản mô hình
+Nullable
+DiagnosticStatus
+enum(diagnostic_status)
+Trạng thái (DISEASE/UNKNOWN)
+Not null, default DISEASE
+CreatedAt
+timestamp
+Ngày tạo
+Not null, default now()
+ 
+7. DIAGNOSIS_RESULT
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+ResultID
+int
+ID kết quả
+PK, auto increment
+ScanID
+int
+Liên kết scan
+FK -> SKIN_SCAN(ScanID), Unique, Not null
+PredictedDiseaseID
+int
+Bệnh dự đoán
+FK -> DISEASE(DiseaseID), Nullable
+FinalDiseaseID
+int
+Bệnh chốt
+FK -> DISEASE(DiseaseID), Nullable
+AiConfidence
+float
+Độ tin cậy AI
+Nullable
+Decision
+varchar(50)
+high_confidence / low_confidence
+Nullable
+DiagnosticStatus
+enum(diagnostic_status)
+Trạng thái chẩn đoán
+Not null, default DISEASE
+CreatedAt
+timestamp
+Ngày tạo
+Not null, default now()
+ 
+8. FEEDBACK_LOG
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+FeedbackID
+int
+ID phản hồi
+PK, auto increment
+ScanID
+int
+Liên kết scan
+FK -> SKIN_SCAN(ScanID), Nullable
+PredictedDiseaseID
+int
+Bệnh AI dự đoán
+FK -> DISEASE(DiseaseID), Nullable
+ActualDiseaseID
+int
+Bệnh thực tế
+FK -> DISEASE(DiseaseID), Nullable
+IsCorrect
+boolean
+Đúng/Sai
+Nullable
+Note
+text
+Ghi chú
+Nullable
+Role
+enum(feedback_role)
+USER/ADMIN
+Not null, default USER
+DiagnosticStatus
+enum(diagnostic_status)
+Trạng thái chẩn đoán
+Not null, default DISEASE
+CreatedAt
+timestamp
+Ngày tạo
+Not null, default now()
+ 
+9. DISEASE_ADVICE
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+AdviceID
+int
+ID khuyến nghị
+PK, auto increment
+DiseaseID
+int
+Bệnh liên kết
+FK -> DISEASE(DiseaseID), Nullable
+AdviceType
+varchar(20)
+care/lifestyle/emergency
+Not null
+Title
+varchar(255)
+Tiêu đề
+Not null
+Content
+text
+Nội dung
+Not null
+Priority
+int
+Độ ưu tiên
+Nullable
+ 
+10. DISEASE_IMAGE
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+ImageID
+int
+ID ảnh
+PK, auto increment
+DiseaseID
+int
+Bệnh liên kết
+FK -> DISEASE(DiseaseID), Nullable
+ScanID
+int
+Scan liên kết
+FK -> SKIN_SCAN(ScanID), Nullable
+ImageUrl
+varchar(500)
+Đường dẫn ảnh
+Not null
+CreatedAt
+timestamp
+Ngày tạo
+Not null, default now()
+ 
+11. SKIN_DIARY
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+DiaryID
+int
+ID nhật ký
+PK, auto increment
+PatientID
+int
+Bệnh nhân
+FK -> PATIENT(PatientID), Not null
+ScanID
+int
+Scan liên kết
+FK -> SKIN_SCAN(ScanID), Nullable
+ConditionScore
+int
+Điểm đánh giá
+Nullable
+Symptoms
+text[]
+Danh sách triệu chứng
+Nullable
+Note
+text
+Ghi chú
+Nullable
+CreatedAt
+timestamp
+Ngày tạo
+Not null, default now()
+UpdatedAt
+timestamp
+Ngày cập nhật
+Not null
+ 
+12. OTP_CODE
+Thuộc tính
+Kiểu
+Mô tả
+Ràng buộc
+OtpID
+int
+ID OTP
+PK, auto increment
+Email
+varchar(255)
+Email người nhận
+Not null
+Code
+varchar(6)
+Mã OTP
+Not null
+Type
+enum(otp_type)
+REGISTER/FORGOT_PASSWORD/CHANGE_PASSWORD
+Not null
+ExpiresAt
+timestamp
+Hết hạn
+Not null
+Attempts
+int
+Số lần thử
+Not null, default 0
+Used
+boolean
+Đã sử dụng
+Not null, default false
+CreatedAt
+timestamp
+Ngày tạo
+Not null, default now()
+ 
+3.6. Mô hình dữ liệu và ràng buộc:
+Entity A
+Entity B
+Quan hệ
+Bội số
+Khoá ngoại
+ACCOUNT
+PATIENT
+1–1
+1 tài khoản ↔ 0/1 bệnh nhân
+PATIENT.AccountID → ACCOUNT.AccountID (Unique)
+PATIENT
+SKIN_SCAN
+1–n
+1 bệnh nhân có nhiều lần quét
+SKIN_SCAN.PatientID → PATIENT.PatientID
+SKIN_SCAN
+SCAN_IMAGE
+1–n
+1 scan có nhiều ảnh
+SCAN_IMAGE.ScanID → SKIN_SCAN.ScanID
+SKIN_SCAN
+PREDICTION
+1–n
+1 scan có nhiều prediction
+PREDICTION.ScanID → SKIN_SCAN.ScanID
+SKIN_SCAN
+DIAGNOSIS_RESULT
+1–1
+1 scan ↔ 1 kết quả
+DIAGNOSIS_RESULT.ScanID → SKIN_SCAN.ScanID (Unique)
+SKIN_SCAN
+FEEDBACK_LOG
+1–n
+1 scan có nhiều feedback
+FEEDBACK_LOG.ScanID → SKIN_SCAN.ScanID
+PATIENT
+SKIN_DIARY
+1–n
+1 bệnh nhân có nhiều nhật ký
+SKIN_DIARY.PatientID → PATIENT.PatientID
+SKIN_SCAN
+SKIN_DIARY
+1–n (tùy chọn)
+1 scan có thể liên kết nhiều nhật ký
+SKIN_DIARY.ScanID → SKIN_SCAN.ScanID (Nullable)
+DISEASE
+PREDICTION
+1–n
+1 bệnh có nhiều prediction
+PREDICTION.DiseaseID → DISEASE.DiseaseID
+DISEASE
+DIAGNOSIS_RESULT
+1–n
+1 bệnh được dự đoán/kết luận nhiều lần
+PredictedDiseaseID / FinalDiseaseID → DISEASE.DiseaseID
+DISEASE
+FEEDBACK_LOG
+1–n
+1 bệnh liên quan nhiều feedback
+PredictedDiseaseID / ActualDiseaseID → DISEASE.DiseaseID
+DISEASE
+DISEASE_ADVICE
+1–n
+1 bệnh có nhiều advice
+DISEASE_ADVICE.DiseaseID → DISEASE.DiseaseID
+DISEASE
+DISEASE_IMAGE
+1–n
+1 bệnh có nhiều ảnh training
+DISEASE_IMAGE.DiseaseID → DISEASE.DiseaseID
+SKIN_SCAN
+DISEASE_IMAGE
+1–n
+1 scan có thể tạo nhiều training image
+DISEASE_IMAGE.ScanID → SKIN_SCAN.ScanID
+3.7. Kiến trúc hệ thống (Frontend/Backend/AI): 
+ Frontend (Vite + React)
+Giao diện: Cung cấp giao diện người dùng cho Bệnh nhân và Quản trị viên.
+Phân quyền: Định tuyến theo vai trò (role-based routing), bảo vệ các trang cần xác thực.
+Xử lý dữ liệu: Gọi API thông qua axios, quản lý trạng thái và bộ nhớ đệm (cache) bằng TanStack Query.
+ Backend (NestJS + Prisma + PostgreSQL)
+Cung cấp REST API: Phục vụ cho các chức năng đăng nhập, quét (scan), trả kết quả, nhật ký và quản trị.
+Bảo mật: Sử dụng JWT để xác thực và phân quyền theo vai trò.
+Xử lý nghiệp vụ: Lưu trữ lượt quét, kết quả, phản hồi (feedback), dữ liệu huấn luyện (train data) và lời khuyên y tế (advice).
+Cơ sở dữ liệu: Truy cập CSDL PostgreSQL thông qua Prisma ORM.
+ AI Service (FastAPI + PyTorch)
+Xử lý hình ảnh: Nhận hình ảnh từ Backend để dự đoán và chẩn đoán bệnh.
+Đầu ra: Trả về kết quả chẩn đoán, độ tin cậy (độ chính xác) và mã bệnh.
+Quản trị AI: Hỗ trợ các API cấu hình mô hình (model), ngưỡng chặn (threshold) và danh sách bệnh.
+ Luồng tích hợp
+Frontend – Backend: Sử dụng REST API (gắn kèm JWT).
+Backend – AI Service: Sử dụng HTTP API (các endpoint /predict, /config).
+Backend – Database: Kết nối qua Prisma + PostgreSQL.
+ Mô hình triển khai
+Hệ thống sẽ chạy trực tiếp ở môi trường cục bộ (local):
+Frontend chạy bằng Vite.
+Backend chạy bằng NestJS.
+AI Service chạy bằng FastAPI.
+Database chạy bằng PostgreSQL local.
+3.8. Luồng dữ liệu và tích hợp AI Service: 
+1) Luồng dữ liệu chính (Patient Scan - Quét bệnh nhân)
+Bệnh nhân tải ảnh lên tại giao diện New Scan.
+Frontend gửi file ảnh sang Backend dưới dạng dữ liệu multipart/form-data.
+Backend lưu trữ thông tin lượt quét và hình ảnh vào bộ nhớ (Cloud hoặc Storage).
+Backend gọi sang AI Service qua API /ai/predict, đính kèm đường dẫn ảnh và scan_id.
+AI Service trả về kết quả dự đoán bao gồm: disease_id/code (mã bệnh), confidence (độ tin cậy), diagnosticStatus (trạng thái chẩn đoán) và model_version (phiên bản mô hình).
+Backend lưu thông tin Prediction và DiagnosisResult vào cơ sở dữ liệu (CSDL).
+Frontend nhận lại scanId và tự động chuyển hướng người dùng sang trang Kết quả.
+Frontend gọi API /results/{scanId} để lấy dữ liệu mới nhất và hiển thị lên màn hình.
+2) Luồng phản hồi (Feedback)
+Bệnh nhân đánh giá kết quả là Đúng/Sai trực tiếp trên trang kết quả.
+Frontend gửi phản hồi về Backend qua endpoint /results/{scanId}/feedback.
+Backend ghi nhận và lưu lại vào nhật ký FeedbackLog.
+Nếu phản hồi xác nhận Đúng và có thông tin bệnh rõ ràng $\rightarrow$ hệ thống tự động lưu hình ảnh vào mục DiseaseImage (để bổ sung vào bộ dữ liệu huấn luyện sau này).
+3) Luồng kiểm duyệt của Quản trị viên (Admin Review)
+Admin xem danh sách các phản hồi đang chờ xử lý (Pending Reviews).
+Admin kiểm tra lượt quét và xác nhận lại kết quả là Đúng/Sai dựa trên chuyên môn.
+Backend cập nhật FeedbackLog với vai trò ADMIN, đồng thời đồng bộ hóa dữ liệu xác minh.
+Dữ liệu đã được xác minh (verified) sẽ được đưa vào phân hệ Quản lý dữ liệu (Data Management) và sẵn sàng để xuất file CSV.
+4) Luồng cấu hình AI (AI Configuration)
+Admin lựa chọn mô hình (model), ngưỡng chặn (threshold) và danh sách các loại bệnh được phép chẩn đoán trên giao diện.
+Backend gửi các thông số cấu hình này sang AI Service qua API cấu hình (config API).
+AI Service thực hiện Hot-reload (tải lại mô hình ngay lập tức mà không cần khởi động lại server) và cập nhật danh sách các bệnh được hỗ trợ.
+Frontend nhận phản hồi và cập nhật trạng thái cấu hình mới nhất lên giao diện.
+5) Tích hợp AI Service
+Backend: Chỉ đóng vai trò trung gian giao tiếp với AI (không cần can thiệp hay nhận biết sâu về kiến trúc mô hình cụ thể). Ngoài ra, Backend chịu trách nhiệm hoàn toàn về việc lưu trữ, phân quyền và quản lý lịch sử hệ thống.
+AI Service: Tập trung hoàn toàn vào việc xử lý dự đoán hình ảnh và trả về kết quả theo cấu trúc chuẩn hóa cho Backend.
+CHƯƠNG 4: KHAI ỨNG DỤNG WEB APPLICATION
+ 
+*Chương này trình bày chi tiết về kiến trúc triển khai hệ thống, quy trình cài đặt, các luồng nghiệp vụ cốt lõi và giao diện thực tế của nền tảng Gelo AI. Dựa trên phân tích thiết kế ở Chương 3, hệ thống được hiện thực hóa với các phân hệ rõ ràng, đáp ứng đầy đủ yêu cầu chẩn đoán y tế và quản trị.*
+ 
+4.1. Kiến trúc phân rã dịch vụ và Môi trường vận hành
+ 
+Nền tảng Gelo AI được phát triển theo kiến trúc hướng dịch vụ (Microservices/Service-Oriented Architecture), cho phép tách biệt logic nghiệp vụ, nâng cao tính bảo mật và khả năng mở rộng.
+Frontend (React + Vite): Chịu trách nhiệm hiển thị giao diện người dùng (UI) tương tác cao, quản lý trạng thái luồng dữ liệu thông qua TanStack Query và định tuyến an toàn dựa trên quyền hạn (Role-based access).
+Backend API (NestJS + Prisma): Xử lý toàn bộ logic nghiệp vụ, xác thực người dùng (JWT Auth), và tương tác với cơ sở dữ liệu PostgreSQL.
+AI Service (FastAPI + PyTorch): Dịch vụ xử lý ảnh độc lập, tiếp nhận hình ảnh từ Backend, chuẩn hóa và đưa qua mạng nơ-ron học sâu để dự đoán bệnh lý.
+ 
+Hệ thống được vận hành trên môi trường hỗ trợ Docker, tối ưu hóa quá trình đồng bộ môi trường phát triển và môi trường thực tế.
+ 
+4.2. Hướng dẫn cài đặt và cấu hình hệ thống
+ 
+Quá trình triển khai hệ thống được tự động hóa thông qua Docker Compose, tuy nhiên, cấu hình mô hình AI đòi hỏi sự can thiệp thủ công nhằm đảm bảo tính toàn vẹn của mô hình máy học kích thước lớn.
+ 
+Bước 1: Chuẩn bị tệp mô hình AI
+Do kích thước lớn, các tệp trọng số mô hình (`.pt` / `.pth`) không được quản lý trên Git. Quản trị viên cần tải và đặt các tệp này vào đúng cấu trúc thư mục quy định tại AI Service:
+Mô hình v1: Đặt tại `gelo_ai/model_package/v1/model.pt`
+Mô hình v2: Đặt tại `gelo_ai/model_package/v2/model.pth`
+ 
+Bước 2: Cấu hình biến môi trường
+Thiết lập các tham số kết nối cơ sở dữ liệu, khóa bảo mật JWT, và API key nội bộ bằng cách sao chép các tệp `.env.example` thành `.env` tại cả ba thư mục dịch vụ (`gelo_frontend`, `gelo_backend`, `gelo_ai`).
+ 
+Bước 3: Khởi chạy bằng Docker Compose
+Từ thư mục gốc của dự án, hệ thống được biên dịch và khởi tạo tự động bằng lệnh:
+```bash
+docker-compose up -d --build
+```
+Hệ thống sẽ tự động đồng bộ lược đồ cơ sở dữ liệu (Prisma Migrate) và nạp dữ liệu y khoa mẫu (Database Seeding) trong lần đầu khởi chạy.
+ 
+ 4.3. Các luồng nghiệp vụ chính của hệ thống
+ 
+Việc vận hành nền tảng dựa trên các quy trình được kiểm soát nghiêm ngặt:
+ 
+Luồng Xác thực và Kích hoạt tài khoản:
+Để đảm bảo thông tin cá nhân của bệnh nhân, hệ thống áp dụng cơ chế xác thực hai lớp khi đăng ký. Người dùng mới bắt buộc phải xác nhận mã OTP được gửi tự động qua hệ thống Email Service để kích hoạt tài khoản hợp lệ trước khi sử dụng các dịch vụ y tế.
+ 
+Luồng Chẩn đoán hình ảnh tích hợp AI:
+Đây là luồng dữ liệu trung tâm. Khi bệnh nhân tải ảnh lên, thuật toán xử lý ảnh trên client sẽ phát hiện và cảnh báo nếu ảnh bị mờ. Ảnh đạt chuẩn được tải lên hệ thống lưu trữ Cloudinary, sau đó Backend điều phối gửi URL ảnh qua FastAPI để mô hình học sâu (Deep Learning) phân tích. Kết quả chẩn đoán và độ tự tin (Confidence) được Backend thu thập, kết hợp với các Lời khuyên y khoa tương ứng (Advice) từ Database để hiển thị lại cho bệnh nhân.
+ 
+Luồng Kiểm duyệt và Làm sạch dữ liệu (Feedback Loop):
+Mọi chẩn đoán từ AI đều có rủi ro sai sót. Khi bệnh nhân báo cáo kết quả sai hoặc khi AI dự đoán với độ tin cậy thấp, hồ sơ quét da sẽ được chuyển vào danh sách "Chờ duyệt" (Pending Reviews). Tại đây, quản trị viên có chuyên môn y khoa sẽ đánh giá lại ảnh chụp, chọn mã bệnh lý chuẩn xác và gắn nhãn lại. Dữ liệu này trở thành dữ liệu chuẩn (Verified Data) phục vụ cho quá trình tái huấn luyện (Retrain) mô hình AI sau này.
+ 
+4.4. Chi tiết chức năng và Giao diện phân hệ Bệnh nhân (Patient Portal)
+ 
+Phân hệ Patient được thiết kế với giao diện thân thiện, ưu tiên tính tiện dụng và bảo mật thông tin cá nhân.
+ 
+*(Lưu ý: Dưới đây là mô tả chi tiết, bạn có thể tham khảo phần Thư viện ảnh ở cuối tài liệu này để sao chép hình ảnh minh họa phù hợp vào các phần tương ứng)*
+ 
+o   4.4.1. Giao diện Xác thực và Đăng ký (Authentication)
+Trang đăng ký thu thập các thông tin cơ bản. Sau khi điền, người dùng được yêu cầu nhập mã xác thực OTP gửi qua email. Giao diện được thiết kế tối giản, trực quan, hỗ trợ tốt trên thiết bị di động.
+ 
+o   4.4.2. Giao diện Bảng điều khiển (Patient Dashboard)
+Trang chủ của bệnh nhân cung cấp cái nhìn tổng quan về tình trạng sức khỏe: hiển thị số lượt quét đã thực hiện, trạng thái nhật ký sức khỏe gần nhất, và các lối tắt điều hướng nhanh đến tính năng Quét da hoặc Xem báo cáo.
+ 
+o   4.4.3. Giao diện Quét ảnh và Cảnh báo chất lượng (Skin Scan)
+Giao diện tải ảnh được tích hợp bộ kiểm tra độ mờ (Blur check) theo thời gian thực. Bệnh nhân nhận được cảnh báo ngay trên màn hình nếu hình ảnh thiếu sáng hoặc mờ nhòe, giúp giảm thiểu rủi ro AI nhận diện sai.
+ 
+o   4.4.4. Giao diện Kết quả chẩn đoán (Results & Advice)
+Khi AI hoàn tất phân tích, giao diện hiển thị tên bệnh lý được dự đoán, phần trăm mức độ tin cậy và danh sách các lời khuyên y tế. Các lời khuyên được phân loại theo mã màu: Xanh (Chăm sóc), Vàng (Lối sống) và Đỏ (Cảnh báo khẩn cấp). Tại đây có nút chức năng để bệnh nhân gửi Phản hồi (Feedback) về kết quả và nút”return to dashboard” trong trường hợp bệnh nhân không muốn feedback.
+o   4.4.5. Giao diện Nhật ký sức khỏe (Skin Diary)
+Tính năng hỗ trợ bệnh nhân chấm điểm mức độ khó chịu trên da mỗi ngày, đánh dấu các triệu chứng và ghi chú sự thay đổi. Dữ liệu này giúp bệnh nhân có cái nhìn toàn diện hơn thay vì chỉ phụ thuộc vào một lần chụp ảnh.
+ 
+ 4.5. Chi tiết chức năng và Giao diện phân hệ Quản trị viên (Admin Portal)
+ 
+Phân hệ Admin đóng vai trò trung tâm kiểm soát và tinh chỉnh hệ thống.
+ 
+o   4.5.1. Bảng điều khiển Quản trị (Admin Dashboard)
+Hiển thị các thống kê thời gian thực: tổng số bệnh nhân, tổng số ca quét, phân bố tỷ lệ mắc các bệnh lý, và đánh giá tỷ lệ chẩn đoán chính xác của mô hình AI dựa trên các phản hồi đã được kiểm duyệt.
+ 
+o   4.5.2. Quản lý Danh mục Bệnh lý (Disease Management)
+Giao diện CRUD (Thêm/Đọc/Sửa/Xóa) cho phép cập nhật tên bệnh, mã bệnh và mô tả chi tiết, làm cơ sở dữ liệu gốc để mô hình AI ánh xạ kết quả.
+ 
+o   4.5.3. Quản lý Lời khuyên y tế (Advice Management)
+Màn hình cấu hình cho phép Admin soạn thảo các đoạn lời khuyên cụ thể cho từng loại bệnh. Hệ thống hỗ trợ gắn mức độ ưu tiên (Priority) để quyết định thông điệp nào hiển thị trước cho bệnh nhân.
+ 
+o   4.5.4. Giao diện Phê duyệt kết quả (Pending Reviews)
+Nơi Admin xem xét lại các ca chẩn đoán. Admin đối chiếu hình ảnh thực tế với kết quả của AI, sau đó "Gắn nhãn" lại kết quả thực tế. Giao diện này quyết định chất lượng của tập dữ liệu huấn luyện tương lai.
+4.6. Cơ chế quản trị hệ thống và Nạp lại mô hình động (Hot-Reload)
+ 
+Điểm nhấn kỹ thuật của Gelo AI là khả năng quản trị động cấu hình học máy trực tiếp từ giao diện Web.
+Cấu hình AI (AI Engine Config): Từ màn hình Admin, quản trị viên có quyền chọn chuyển đổi giữa các phiên bản mô hình (ví dụ: từ `v1` sang `v2`).
+Thay đổi ngưỡng tin cậy (Inference Threshold): Điều chỉnh linh hoạt mức độ nhạy của AI để giảm thiểu tỷ lệ dương tính giả hoặc âm tính giả trực tiếp trên UI.
+Nạp nóng (Hot-reload): Thay vì phải khởi động lại máy chủ (gây gián đoạn dịch vụ), khi Admin nhấn Lưu, Backend gọi API POST `/ai/config/reload` đến FastAPI. FastAPI sẽ tự động giải phóng bộ nhớ cũ và tải mô hình mới lên RAM ngay lập tức, đảm bảo thời gian hoạt động (uptime) của hệ thống luôn duy trì ở mức cao nhất.
+ 

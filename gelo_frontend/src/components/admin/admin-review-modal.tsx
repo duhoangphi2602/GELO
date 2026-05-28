@@ -170,6 +170,16 @@ export function AdminReviewModal({ isOpen, onClose, scan, onReviewSuccess }: Rev
                   )}
                 </div>
               )}
+
+              {/* Patient Feedback Section */}
+              {scan.userNote && (
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5">
+                  <label className="text-[10px] font-black uppercase text-indigo-600 mb-3 block tracking-widest">Patient Feedback on AI</label>
+                  <p className="text-sm text-indigo-900 whitespace-pre-line leading-relaxed italic border-l-2 border-indigo-400 pl-3">
+                    {scan.userNote}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

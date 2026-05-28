@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
-import { BookOpen, Save, Trash2, ArrowUpDown } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router";
+import { BookOpen, Save, Trash2, ArrowUpDown, ChevronDown, ChevronUp, Activity } from "lucide-react";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { diaryService } from "@/services/diary.service";
 import { Layout } from "@/components/shared/layout/Layout";
 import { useToastContext } from "@/components/shared/ui/ToastContext";
@@ -10,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export function PatientDiary() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const toast = useToastContext();
   const queryClient = useQueryClient();
   const { patientId, isPatient } = useAuth();
@@ -19,6 +21,7 @@ export function PatientDiary() {
   const [lastSavedId, setLastSavedId] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -75,6 +78,9 @@ export function PatientDiary() {
   const sortedDiaries = [...diaries].sort((a, b) => {
     const timeA = new Date(a.createdAt).getTime();
     const timeB = new Date(b.createdAt).getTime();
+    if (timeA === timeB) {
+      return sortOrder === 'newest' ? b.id - a.id : a.id - b.id;
+    }
     return sortOrder === 'newest' ? timeB - timeA : timeA - timeB;
   });
 
@@ -107,14 +113,20 @@ export function PatientDiary() {
       return;
     }
 
-    const scanIdRaw = localStorage.getItem("currentScanId");
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+    const fullDateTime = new Date(`${entryDate}T${hours}:${minutes}:${seconds}`).toISOString();
+
+    const scanIdRaw = searchParams.get("scanId");
     saveMutation.mutate({
       patientId: Number(patientId),
       scanId: scanIdRaw ? parseInt(scanIdRaw) : null,
       conditionScore: Number(recoveryLevel),
       symptoms: selectedSymptoms,
       note: notes,
-      entryDate: entryDate,
+      entryDate: fullDateTime,
     });
   };
 
@@ -238,28 +250,119 @@ export function PatientDiary() {
                 {[1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-50 animate-pulse rounded-xl" />)}
               </div>
             ) : sortedDiaries.length > 0 ? (
-              <div className="space-y-3">
-                {sortedDiaries.map((diary: any) => (
-                  <div key={diary.id} id={`diary-entry-${diary.id}`} className={`group bg-white border shadow-sm rounded-xl p-4 transition-all duration-700 flex flex-col sm:flex-row gap-4 relative overflow-hidden ${diary.id === lastSavedId ? 'border-[#2a64ad] bg-[#2a64ad]/5 ring-4 ring-[#2a64ad]/10 scale-[1.02]' : 'border-slate-100 hover:border-blue-100'}`}>
-                    <div className="sm:w-32 flex-shrink-0">
-                        <span className="text-[10px] font-black text-[#2a64ad] uppercase block">{new Date(diary.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        <div className="mt-1 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /><span className="text-[10px] font-bold text-slate-400">Score: {diary.conditionScore}</span></div>
-                    </div>
-                    <div className="flex-1 pr-8 space-y-2">
-                        <p className="text-slate-600 text-[11px] leading-relaxed font-medium">{diary.note || "System stability log entry."}</p>
-                        {diary.symptoms && diary.symptoms.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {diary.symptoms.map((s: string) => (
-                              <span key={s} className="px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
-                                {s}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                    </div>
-                    <button onClick={() => handleDelete(diary.id)} className="absolute top-3 right-3 p-2.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
+              <div className="space-y-6">
+                <div className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Activity className="w-4 h-4 text-[#2a64ad]" />
+                    <h4 className="text-xs font-black text-slate-600 uppercase tracking-widest">Recovery Trend</h4>
                   </div>
-                ))}
+                  <div className="h-40 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={[...sortedDiaries].reverse().slice(-14)} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#2a64ad" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#2a64ad" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis 
+                          dataKey="createdAt" 
+                          tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                          style={{ fontSize: '10px', fontWeight: 'bold', fill: '#94a3b8' }}
+                          axisLine={false}
+                          tickLine={false}
+                          minTickGap={20}
+                        />
+                        <YAxis 
+                          domain={[0, 10]} 
+                          ticks={[0, 2, 4, 6, 8, 10]}
+                          style={{ fontSize: '10px', fontWeight: 'bold', fill: '#94a3b8' }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip 
+                          contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', fontSize: '12px', fontWeight: 'bold' }}
+                          labelFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                          formatter={(value: any) => [`Score: ${value}`, 'Condition']}
+                        />
+                        <Area type="monotone" dataKey="conditionScore" stroke="#2a64ad" strokeWidth={3} fillOpacity={1} fill="url(#scoreGradient)" activeDot={{ r: 6, fill: '#2a64ad', stroke: 'white', strokeWidth: 2 }} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {sortedDiaries.map((diary: any) => {
+                    const isExpanded = expandedId === diary.id;
+                    
+                    let scoreColor = "bg-green-100 text-green-700 border-green-200";
+                    let scoreDot = "bg-green-500";
+                    if (diary.conditionScore <= 3) {
+                      scoreColor = "bg-rose-100 text-rose-700 border-rose-200";
+                      scoreDot = "bg-rose-500";
+                    } else if (diary.conditionScore <= 6) {
+                      scoreColor = "bg-amber-100 text-amber-700 border-amber-200";
+                      scoreDot = "bg-amber-500";
+                    }
+
+                    return (
+                    <div key={diary.id} id={`diary-entry-${diary.id}`} className={`group bg-white border shadow-sm rounded-xl p-4 transition-all duration-300 flex flex-col relative overflow-hidden cursor-pointer hover:shadow-md ${diary.id === lastSavedId ? 'border-[#2a64ad] bg-[#2a64ad]/5 ring-4 ring-[#2a64ad]/10 scale-[1.02]' : 'border-slate-200'}`} onClick={() => setExpandedId(isExpanded ? null : diary.id)}>
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="sm:w-32 flex-shrink-0 flex sm:flex-col items-center sm:items-start justify-between sm:justify-start gap-2 sm:gap-1 mt-1">
+                            <span className="text-[11px] font-black text-[#2a64ad] uppercase block leading-tight">
+                              {new Date(diary.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                            </span>
+                            <div className={`px-2 py-1 rounded-md border flex items-center gap-1.5 ${scoreColor}`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${scoreDot}`} />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">Score: {diary.conditionScore}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="flex-1 pr-8 space-y-3">
+                            <div className="flex justify-between items-start">
+                              <p className={`text-slate-700 leading-relaxed font-medium transition-all ${isExpanded ? 'text-sm' : 'line-clamp-2 text-slate-600 text-[11px]'}`}>
+                                {diary.note || "No specific observations recorded for this day."}
+                              </p>
+                              <div className="text-slate-400 shrink-0 ml-2">
+                                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                              </div>
+                            </div>
+                            
+                            {diary.symptoms && diary.symptoms.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {diary.symptoms.map((s: string) => {
+                                  let badgeColor = "bg-slate-100 text-slate-600 border-slate-200";
+                                  if (s.toLowerCase() === "redness" || s.toLowerCase() === "fever" || s.toLowerCase() === "đỏ da" || s.toLowerCase() === "sốt") badgeColor = "bg-rose-50 text-rose-600 border-rose-100";
+                                  else if (s.toLowerCase() === "pain" || s.toLowerCase() === "itching" || s.toLowerCase() === "đau" || s.toLowerCase() === "ngứa") badgeColor = "bg-amber-50 text-amber-600 border-amber-100";
+                                  else if (s.toLowerCase() === "swelling" || s.toLowerCase() === "sưng") badgeColor = "bg-purple-50 text-purple-600 border-purple-100";
+                                  
+                                  return (
+                                  <span key={s} className={`px-2 py-1 rounded-md text-[9px] border font-bold uppercase tracking-tighter ${badgeColor}`}>
+                                    {s}
+                                  </span>
+                                )})}
+                              </div>
+                            )}
+                            
+                            {isExpanded && diary.scanId && (
+                              <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between hover:bg-slate-100 transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/scans/${diary.scanId}`); }}>
+                                <div className="flex items-center gap-2">
+                                  <Activity className="w-4 h-4 text-[#2a64ad]" />
+                                  <span className="text-xs font-bold text-slate-600">Skin Scan Attached</span>
+                                </div>
+                                <span className="text-[10px] font-black text-[#2a64ad] uppercase tracking-wider">
+                                  View Scan
+                                </span>
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                      
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(diary.id); }} className="absolute top-3 right-3 p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  )})}
+                </div>
               </div>
             ) : (
               <div className="bg-slate-50/50 border border-slate-100 border-dashed rounded-2xl py-8 flex flex-col items-center justify-center">

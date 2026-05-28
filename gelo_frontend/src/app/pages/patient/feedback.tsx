@@ -12,12 +12,13 @@ export function Feedback() {
   const navigate = useNavigate();
   const scanId = searchParams.get("scanId");
 
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [symptomsMatch, setSymptomsMatch] = useState<boolean | null>(null);
+  const [advicesHelpful, setAdvicesHelpful] = useState<boolean | null>(null);
   const [note, setNote] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-   const [loading, setLoading] = useState(false);
-   const errorRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
 
 
   useEffect(() => {
@@ -36,13 +37,14 @@ export function Feedback() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isCorrect === null || !scanId) return;
+    if (symptomsMatch === null || advicesHelpful === null || !scanId) return;
 
     setLoading(true);
     setError("");
 
     try {
-      await scanService.submitFeedback(Number(scanId), isCorrect, note);
+      const combinedNote = `[Symptoms Match: ${symptomsMatch ? 'Yes' : 'No'}] [Advices Helpful: ${advicesHelpful ? 'Yes' : 'No'}]\n${note}`;
+      await scanService.submitFeedback(Number(scanId), symptomsMatch, combinedNote);
       setSubmitted(true);
     } catch (err: any) {
 
@@ -121,32 +123,64 @@ export function Feedback() {
           <form onSubmit={handleSubmit} className="space-y-10">
             <div className="space-y-6">
               <label className="text-xl font-bold text-slate-800 block text-center">
-                Was the AI diagnosis correct for your condition?
+                Are the symptoms suggested by AI matching your condition?
               </label>
 
               <div className="flex justify-center gap-8">
                 <button
                   type="button"
-                  onClick={() => setIsCorrect(true)}
-                  className={`cursor-pointer flex flex-col items-center gap-4 p-8 rounded-3xl border-2 transition-all w-48 ${isCorrect === true
+                  onClick={() => setSymptomsMatch(true)}
+                  className={`cursor-pointer flex flex-col items-center gap-4 p-8 rounded-3xl border-2 transition-all w-48 ${symptomsMatch === true
                     ? "bg-green-50 border-green-500 text-green-700 ring-4 ring-green-100"
                     : "bg-slate-50 border-slate-100 text-slate-400 hover:border-green-200 hover:bg-white"
                     }`}
                 >
-                  <ThumbsUp className={`w-12 h-12 ${isCorrect === true ? "fill-green-500" : ""}`} />
-                  <span className="font-bold text-lg">Yes, Accurate</span>
+                  <ThumbsUp className={`w-12 h-12 ${symptomsMatch === true ? "fill-green-500" : ""}`} />
+                  <span className="font-bold text-lg">Yes, They Match</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setIsCorrect(false)}
-                  className={`cursor-pointer flex flex-col items-center gap-4 p-8 rounded-3xl border-2 transition-all w-48 ${isCorrect === false
+                  onClick={() => setSymptomsMatch(false)}
+                  className={`cursor-pointer flex flex-col items-center gap-4 p-8 rounded-3xl border-2 transition-all w-48 ${symptomsMatch === false
                     ? "bg-red-50 border-red-500 text-red-700 ring-4 ring-red-100"
                     : "bg-slate-50 border-slate-100 text-slate-400 hover:border-red-200 hover:bg-white"
                     }`}
                 >
-                  <ThumbsDown className={`w-12 h-12 ${isCorrect === false ? "fill-red-500" : ""}`} />
-                  <span className="font-bold text-lg">No, Incorrect</span>
+                  <ThumbsDown className={`w-12 h-12 ${symptomsMatch === false ? "fill-red-500" : ""}`} />
+                  <span className="font-bold text-lg">No, They Don't</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <label className="text-xl font-bold text-slate-800 block text-center">
+                Are the AI's care advices helpful to you?
+              </label>
+
+              <div className="flex justify-center gap-8">
+                <button
+                  type="button"
+                  onClick={() => setAdvicesHelpful(true)}
+                  className={`cursor-pointer flex flex-col items-center gap-4 p-8 rounded-3xl border-2 transition-all w-48 ${advicesHelpful === true
+                    ? "bg-green-50 border-green-500 text-green-700 ring-4 ring-green-100"
+                    : "bg-slate-50 border-slate-100 text-slate-400 hover:border-green-200 hover:bg-white"
+                    }`}
+                >
+                  <ThumbsUp className={`w-12 h-12 ${advicesHelpful === true ? "fill-green-500" : ""}`} />
+                  <span className="font-bold text-lg">Yes, Helpful</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAdvicesHelpful(false)}
+                  className={`cursor-pointer flex flex-col items-center gap-4 p-8 rounded-3xl border-2 transition-all w-48 ${advicesHelpful === false
+                    ? "bg-red-50 border-red-500 text-red-700 ring-4 ring-red-100"
+                    : "bg-slate-50 border-slate-100 text-slate-400 hover:border-red-200 hover:bg-white"
+                    }`}
+                >
+                  <ThumbsDown className={`w-12 h-12 ${advicesHelpful === false ? "fill-red-500" : ""}`} />
+                  <span className="font-bold text-lg">No, Not Helpful</span>
                 </button>
               </div>
             </div>
@@ -163,7 +197,7 @@ export function Feedback() {
 
             <button
               type="submit"
-              disabled={isCorrect === null || loading || !scanId}
+              disabled={symptomsMatch === null || advicesHelpful === null || loading || !scanId}
               className="cursor-pointer w-full px-10 py-5 bg-[#2a64ad] text-white rounded-2xl font-bold hover:bg-[#1e4e8c] transition-all flex items-center justify-center gap-3 disabled:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Submitting..." : (

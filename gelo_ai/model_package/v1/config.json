@@ -19,7 +19,7 @@
   "enabled_disease_codes": [
     "L20.9",
     "L10",
-    "MEL_NEV_MOL",
+    "MELANOMA",
     "D18.0"
   ]
 }

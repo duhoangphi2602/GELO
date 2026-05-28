@@ -34,14 +34,14 @@ export function Registration() {
   const [successMsg, setSuccessMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-   const [serverError, setServerError] = useState("");
-   const errorRef = useRef<HTMLDivElement>(null);
+  const [serverError, setServerError] = useState("");
+  const errorRef = useRef<HTMLDivElement>(null);
 
-   useEffect(() => {
-     if (serverError && errorRef.current) {
-       errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-     }
-   }, [serverError]);
+  useEffect(() => {
+    if (serverError && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [serverError]);
 
 
   // OTP State
@@ -79,7 +79,7 @@ export function Registration() {
         ...dataToSubmit,
         age: parseInt(dataToSubmit.age, 10),
       });
-      
+
       if (response.data.patientId) {
         setRegisteredEmail(dataToSubmit.email);
         setStep("OTP");
@@ -93,14 +93,44 @@ export function Registration() {
   };
 
   // OTP Handlers
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text/plain").replace(/\D/g, "").slice(0, 6);
+    if (!pastedData) return;
+
     const newOtp = [...otp];
-    newOtp[index] = value;
+    for (let i = 0; i < 6; i++) {
+      newOtp[i] = pastedData[i] || "";
+    }
+    setOtp(newOtp);
+    const focusIndex = Math.min(pastedData.length, 5);
+    otpRefs.current[focusIndex]?.focus();
+  };
+
+  const handleOtpChange = (index: number, value: string) => {
+    const inputValue = value.replace(/\D/g, "");
+    
+    // Support autocomplete or large paste via onChange
+    if (inputValue.length > 2) {
+      const pastedData = inputValue.slice(0, 6);
+      const newOtp = [...otp];
+      for (let i = 0; i < 6; i++) {
+        newOtp[i] = pastedData[i] || "";
+      }
+      setOtp(newOtp);
+      const focusIndex = Math.min(pastedData.length, 5);
+      otpRefs.current[focusIndex]?.focus();
+      return;
+    }
+
+    // Normal typing, take the last digit to prevent double typing from Vietnamese keyboards
+    const digit = inputValue.slice(-1);
+    const newOtp = [...otp];
+    newOtp[index] = digit;
     setOtp(newOtp);
 
     // Auto-focus next input
-    if (value !== "" && index < 5) {
+    if (digit !== "" && index < 5) {
       otpRefs.current[index + 1]?.focus();
     }
   };
@@ -202,14 +232,14 @@ export function Registration() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
-           <div ref={errorRef}>
-             {serverError && (
-               <div className={`mb-5 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm animate-in slide-in-from-top-2 ${serverError.includes("new OTP") ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-red-50 border-red-200 text-red-700"}`}>
-                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                 <span>{serverError}</span>
-               </div>
-             )}
-           </div>
+          <div ref={errorRef}>
+            {serverError && (
+              <div className={`mb-5 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm animate-in slide-in-from-top-2 ${serverError.includes("new OTP") ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-red-50 border-red-200 text-red-700"}`}>
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>{serverError}</span>
+              </div>
+            )}
+          </div>
 
 
           {step === "REGISTER" ? (
@@ -307,7 +337,7 @@ export function Registration() {
               <button
                 type="submit"
                 disabled={isSubmitting || loading}
-                className="w-full bg-[#2a64ad] text-white py-3 rounded-xl hover:shadow-lg transition-all mt-4 font-bold disabled:opacity-60"
+                className="w-full bg-[#2a64ad] text-white py-3 rounded-xl hover:shadow-lg transition-all mt-4 font-bold disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
               >
                 {isSubmitting ? "Creating Account..." : "Create Account"}
               </button>
@@ -328,13 +358,16 @@ export function Registration() {
                   {otp.map((digit, index) => (
                     <input
                       key={index}
-                       ref={(el) => { otpRefs.current[index] = el; }}
+                      ref={(el) => { otpRefs.current[index] = el; }}
 
                       type="text"
-                      maxLength={1}
+                      inputMode="numeric"
+                      pattern="\d*"
+                      maxLength={6}
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      onPaste={handlePaste}
                       className="w-12 h-14 text-center text-2xl font-bold bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#2a64ad] transition-all"
                     />
                   ))}
@@ -343,7 +376,7 @@ export function Registration() {
                 <button
                   onClick={handleVerifyOtp}
                   disabled={loading}
-                  className="w-full bg-[#2a64ad] text-white py-3 rounded-xl font-bold disabled:opacity-60"
+                  className="w-full bg-[#2a64ad] text-white py-3 rounded-xl font-bold disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                 >
                   {loading ? "Verifying..." : "Verify OTP"}
                 </button>
