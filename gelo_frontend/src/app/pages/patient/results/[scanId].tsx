@@ -67,7 +67,8 @@ export function DiagnosticResult() {
     description = "Please consult a medical professional for a verified diagnosis.",
     images = [],
     advices = [],
-    scannedAt
+    scannedAt,
+    hasFeedback = false
   } = resultData || {};
 
   const uploadedImage = images[0];
@@ -236,23 +237,40 @@ export function DiagnosticResult() {
               </div>
             </div>
 
-            <div className="space-y-4 w-full">
-              <button
-                onClick={() => navigate(`/patient/feedback?scanId=${scanId}`)}
-                className="cursor-pointer w-full py-5 bg-white border-2 border-slate-900 text-slate-900 font-black rounded-[1.5rem] hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-3 shadow-lg shadow-slate-100"
-              >
-                <MessageSquareHeart size={20} /> Provide Feedback <ChevronRight size={20} />
-              </button>
+            {hasFeedback ? (
+              <div className="space-y-4 w-full">
+                <button
+                  onClick={() => navigate("/patient/dashboard")}
+                  className="cursor-pointer w-full py-5 bg-[#2a64ad] text-white font-black rounded-[1.5rem] hover:bg-[#1e4e8c] transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-200"
+                >
+                  Return to Dashboard
+                </button>
+                <button
+                  onClick={() => navigate("/patient/history")}
+                  className="cursor-pointer w-full py-5 bg-white border-2 border-slate-200 text-slate-600 font-black rounded-[1.5rem] hover:bg-slate-50 transition-all flex items-center justify-center gap-3"
+                >
+                  View Scan History
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4 w-full">
+                <button
+                  onClick={() => navigate(`/patient/feedback?scanId=${scanId}`)}
+                  className="cursor-pointer w-full py-5 bg-white border-2 border-slate-900 text-slate-900 font-black rounded-[1.5rem] hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-3 shadow-lg shadow-slate-100"
+                >
+                  <MessageSquareHeart size={20} /> Provide Feedback <ChevronRight size={20} />
+                </button>
 
-              <button
-                onClick={() => {
-                   navigate(`/patient/diary?scanId=${scanId}`);
-                }}
-                className="cursor-pointer w-full py-5 bg-emerald-600 text-white font-black rounded-[1.5rem] hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-200"
-              >
-                <BookOpen size={20} /> Track Progress in Diary <ChevronRight size={20} />
-              </button>
-            </div>
+                <button
+                  onClick={() => {
+                    navigate(`/patient/diary?scanId=${scanId}`);
+                  }}
+                  className="cursor-pointer w-full py-5 bg-emerald-600 text-white font-black rounded-[1.5rem] hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-200"
+                >
+                  <BookOpen size={20} /> Track Progress in Diary <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
