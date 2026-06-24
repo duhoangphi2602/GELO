@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { adminService } from "@/services/admin.service";
@@ -26,15 +26,22 @@ export function AdviceConfiguration() {
     enabled: !!selectedDiseaseId,
   });
 
+  const currentDiseaseIdRef = useRef<string>("");
+
   useEffect(() => {
-    if (advices.length > 0) {
-      setCareAdvice(advices.filter((a: any) => a.adviceType === 'care').map((a: any) => a.content).join('\n'));
-      setLifestyleAdvice(advices.filter((a: any) => a.adviceType === 'lifestyle').map((a: any) => a.content).join('\n'));
-      setEmergencyWarnings(advices.filter((a: any) => a.adviceType === 'emergency').map((a: any) => a.content).join('\n'));
-    } else {
-      setCareAdvice(""); setLifestyleAdvice(""); setEmergencyWarnings("");
+    // Only initialize the form state once per disease selection
+    // to prevent background refetches from wiping out user's unsaved input.
+    if (!loadingAdvices && currentDiseaseIdRef.current !== selectedDiseaseId) {
+      currentDiseaseIdRef.current = selectedDiseaseId;
+      if (advices.length > 0) {
+        setCareAdvice(advices.filter((a: any) => a.adviceType === 'care').map((a: any) => a.content).join('\n'));
+        setLifestyleAdvice(advices.filter((a: any) => a.adviceType === 'lifestyle').map((a: any) => a.content).join('\n'));
+        setEmergencyWarnings(advices.filter((a: any) => a.adviceType === 'emergency').map((a: any) => a.content).join('\n'));
+      } else {
+        setCareAdvice(""); setLifestyleAdvice(""); setEmergencyWarnings("");
+      }
     }
-  }, [advices]);
+  }, [advices, loadingAdvices, selectedDiseaseId]);
 
   const saveMutation = useMutation({
     mutationFn: (data: any[]) => adminService.updateAdvices(selectedDiseaseId, data),

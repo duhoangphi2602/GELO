@@ -95,8 +95,7 @@ export function RecentScans({ loading, scans = [] }: { loading: boolean, scans: 
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          localStorage.setItem("currentScanId", scan.id.toString());
-                          navigate("/patient/results");
+                          navigate(`/patient/results/${scan.id}`);
                         }}
                         className="cursor-pointer text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-emerald-200"
                       >

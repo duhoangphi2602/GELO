@@ -10,7 +10,7 @@ export class AdminDashboardService {
   constructor(
     private prisma: PrismaService,
     private aiService: AiIntegrationService,
-  ) {}
+  ) { }
 
   async getAdminPatients() {
     const patients = await this.prisma.patient.findMany({
@@ -42,7 +42,7 @@ export class AdminDashboardService {
         p.skinScans[0]?.diagnosis?.diagnosticStatus === DiagnosticStatus.HEALTHY
           ? 'Healthy'
           : p.skinScans[0]?.diagnosis?.diagnosticStatus ===
-              DiagnosticStatus.UNKNOWN
+            DiagnosticStatus.UNKNOWN
             ? 'Unknown'
             : (p.skinScans[0]?.diagnosis?.predictedDisease?.name ?? null),
       lastScanDate: p.skinScans[0]?.createdAt ?? null,
@@ -105,11 +105,11 @@ export class AdminDashboardService {
           select: {
             fullName: true,
             id: true,
-            diaries: {
-              orderBy: { createdAt: 'desc' },
-              take: 1,
-            },
           },
+        },
+        diaries: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
         },
         images: { take: 1 },
         diagnosis: { include: { predictedDisease: true } },
@@ -132,11 +132,11 @@ export class AdminDashboardService {
           select: {
             fullName: true,
             id: true,
-            diaries: {
-              orderBy: { createdAt: 'desc' },
-              take: 1,
-            },
           },
+        },
+        diaries: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
         },
         images: { take: 1 },
         diagnosis: { include: { predictedDisease: true } },
@@ -153,6 +153,7 @@ export class AdminDashboardService {
     });
 
     const allPending = Array.from(allPendingMap.values());
+    allPending.sort((b, a) => b.createdAt.getTime() - a.createdAt.getTime());
 
     return allPending.map((scan) => {
       const userFeedback = scan.feedback?.[0];
@@ -160,7 +161,7 @@ export class AdminDashboardService {
         userFeedback?.role === FeedbackRole.USER &&
         userFeedback?.isCorrect === false;
 
-      const diary = scan.patient?.diaries?.[0];
+      const diary = scan.diaries?.[0];
 
       return {
         scanId: scan.id,

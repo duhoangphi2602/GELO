@@ -346,7 +346,7 @@ export function PatientDiary() {
                             )}
                             
                             {isExpanded && diary.scanId && (
-                              <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between hover:bg-slate-100 transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/scans/${diary.scanId}`); }}>
+                              <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between hover:bg-slate-100 transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/patient/results/${diary.scanId}`); }}>
                                 <div className="flex items-center gap-2">
                                   <Activity className="w-4 h-4 text-[#2a64ad]" />
                                   <span className="text-xs font-bold text-slate-600">Skin Scan Attached</span>
