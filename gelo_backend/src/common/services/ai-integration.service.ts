@@ -47,14 +47,15 @@ export class AiIntegrationService {
       }
 
       return await response.json();
-    } catch (error) {
+    } catch (error: unknown) {
       clearTimeout(timeout);
+      const err = error as Error;
       this.logger.error(
-        `AI Service request to ${endpoint} failed: ${error.message}`,
+        `AI Service request to ${endpoint} failed: ${err.message}`,
       );
       throw new ServiceUnavailableException(
-        error.message?.includes('AI Service')
-          ? error.message
+        err.message?.includes('AI Service')
+          ? err.message
           : 'Could not connect to AI Service',
       );
     }

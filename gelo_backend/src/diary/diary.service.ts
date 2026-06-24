@@ -91,7 +91,7 @@ export class DiaryService extends BaseService {
   async deleteDiaryEntry(diaryId: number, patientId: number) {
     const entry = await this.handleNotFound(
       this.prisma.skinDiary.findUnique({ where: { id: diaryId } }),
-      'Diary entry not found.'
+      'Diary entry not found.',
     );
 
     if (entry.patientId !== patientId) {

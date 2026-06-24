@@ -1,4 +1,17 @@
-import { Controller, Get, Put, Post, Delete, Param, Body, Query, Res, UseGuards, BadRequestException, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Post,
+  Delete,
+  Param,
+  Body,
+  Query,
+  Res,
+  UseGuards,
+  BadRequestException,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { AdminDashboardService } from './admin.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { Roles } from '../auth/auth.decorator';
@@ -48,10 +61,23 @@ export class AdminController {
   @Post('review/:scanId')
   async submitReview(
     @Param('scanId', ParseIntPipe) scanId: number,
-    @Body() body: { isCorrect: boolean; actualDiseaseId?: number; actualStatus?: string; note?: string; imageQuality?: string },
+    @Body()
+    body: {
+      isCorrect: boolean;
+      actualDiseaseId?: number;
+      actualStatus?: string;
+      note?: string;
+      imageQuality?: string;
+    },
   ) {
-    if (body.isCorrect === false && !body.actualDiseaseId && !body.actualStatus) {
-      throw new BadRequestException('Please provide the correct disease or status if the prediction is wrong.');
+    if (
+      body.isCorrect === false &&
+      !body.actualDiseaseId &&
+      !body.actualStatus
+    ) {
+      throw new BadRequestException(
+        'Please provide the correct disease or status if the prediction is wrong.',
+      );
     }
     return this.adminService.submitReview(scanId, body);
   }
@@ -73,7 +99,12 @@ export class AdminController {
 
   @Put('ai-settings')
   async updateAiSettings(
-    @Body() body: { version?: string; inference_threshold?: number; enabled_disease_codes?: string[] }
+    @Body()
+    body: {
+      version?: string;
+      inference_threshold?: number;
+      enabled_disease_codes?: string[];
+    },
   ) {
     return this.adminService.updateAiSettings(body);
   }
