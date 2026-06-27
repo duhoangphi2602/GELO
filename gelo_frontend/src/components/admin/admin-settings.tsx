@@ -74,20 +74,43 @@ export function AdminSettings() {
     setConfig({ ...config, enabled_disease_codes: newList });
   };
 
-  useEffect(() => {
-    if (config && availableModels.length > 0 && selectedVersion) {
-      const activeModel = availableModels.find(m => m.version === selectedVersion);
-      if (activeModel && activeModel.supported_labels) {
-        const supportedCodes = activeModel.supported_labels.map((l: any) => l.code);
-        const currentEnabled = config.enabled_disease_codes || [];
-        const validEnabled = currentEnabled.filter((code: string) => supportedCodes.includes(code));
+  const handleSelectModel = (version: string) => {
+    setSelectedVersion(version);
+    const activeModel = availableModels.find(m => m.version === version);
+    if (!activeModel || !config) {
+      return;
+    }
 
-        if (validEnabled.length !== currentEnabled.length) {
-          setConfig({ ...config, enabled_disease_codes: validEnabled });
-          const removed = currentEnabled.filter((code: string) => !supportedCodes.includes(code));
-          toast.success(`Disabled unsupported diseases: ${removed.join(', ')}`);
-        }
-      }
+    const nextConfig: any = { ...config };
+    if (activeModel.inference_threshold != null) {
+      nextConfig.inference_threshold = activeModel.inference_threshold;
+    }
+
+    if (activeModel.enabled_disease_codes && activeModel.enabled_disease_codes.length > 0) {
+      nextConfig.enabled_disease_codes = activeModel.enabled_disease_codes;
+    }
+
+    setConfig(nextConfig);
+  };
+
+  useEffect(() => {
+    if (!config || availableModels.length === 0 || !selectedVersion) {
+      return;
+    }
+
+    const activeModel = availableModels.find((m) => m.version === selectedVersion);
+    if (!activeModel || !activeModel.supported_labels) {
+      return;
+    }
+
+    const supportedCodes = activeModel.supported_labels.map((l: any) => l.code);
+    const currentEnabled = config.enabled_disease_codes || [];
+    const validEnabled = currentEnabled.filter((code: string) => supportedCodes.includes(code));
+
+    if (validEnabled.length !== currentEnabled.length) {
+      setConfig({ ...config, enabled_disease_codes: validEnabled });
+      const removed = currentEnabled.filter((code: string) => !supportedCodes.includes(code));
+      toast.success(`Disabled unsupported diseases: ${removed.join(', ')}`);
     }
   }, [selectedVersion, availableModels]);
 
@@ -150,7 +173,7 @@ export function AdminSettings() {
           {availableModels.map((model) => (
             <div
               key={model.version}
-              onClick={() => setSelectedVersion(model.version)}
+              onClick={() => handleSelectModel(model.version)}
               className={`cursor-pointer p-4 rounded-xl border-2 transition-all group ${selectedVersion === model.version
                 ? "border-[#2a64ad] bg-blue-50/50 ring-4 ring-blue-100"
                 : "border-border hover:border-[#2a64ad]/30 bg-muted/10"

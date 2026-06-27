@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import re
 import torch
 import torch.nn as nn
 
@@ -94,6 +95,9 @@ class ModelPackage:
         # Clean and map state dict keys
         clean_dict = self._clean_state_dict(raw_state_dict)
         
+        if self._has_custom_classifier_head(clean_dict):
+            self._apply_custom_classifier_head(clean_dict)
+
         missing, unexpected = self.model.load_state_dict(clean_dict, strict=False)
         
         if missing:
@@ -112,6 +116,38 @@ class ModelPackage:
         self.model.to(self.device)
         self.model.eval()
         logger.info(f"Model architecture '{arch_type}' reconstructed and weights loaded.")
+
+    def _has_custom_classifier_head(self, state_dict):
+        classifier_weights = [k for k in state_dict if re.match(r'^classifier\.\d+\.weight$', k)]
+        return len(classifier_weights) >= 2
+
+    def _apply_custom_classifier_head(self, state_dict):
+        """Replace the model classifier with a sequential head matching checkpoint layer positions."""
+        if not hasattr(self.model, 'classifier'):
+            return
+
+        sequence_keys = sorted(
+            [k for k in state_dict if re.match(r'^classifier\.(\d+)\.weight$', k)],
+            key=lambda k: int(re.match(r'^classifier\.(\d+)\.weight$', k).group(1))
+        )
+        indices = [int(re.match(r'^classifier\.(\d+)\.weight$', k).group(1)) for k in sequence_keys]
+        max_idx = max(indices)
+
+        layers = []
+        prev_out = None
+        for idx in range(max_idx + 1):
+            if idx in indices:
+                weight_key = next(k for k in sequence_keys if int(re.match(r'^classifier\.(\d+)\.weight$', k).group(1)) == idx)
+                out_features, in_features = state_dict[weight_key].shape
+                layers.append(nn.Linear(in_features, out_features))
+                prev_out = out_features
+            else:
+                layers.append(nn.Identity())
+
+        self.model.classifier = nn.Sequential(*layers)
+        logger.info(
+            f"Applied custom sequential classifier head with indices {indices} to model {type(self.model).__name__}."
+        )
 
     def _clean_state_dict(self, state_dict):
         """

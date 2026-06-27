@@ -85,6 +85,12 @@ export class ScanController {
     return this.scanService.getSupportedDiseases();
   }
 
+  @Get('engine-info')
+  @UseGuards(JwtAuthGuard)
+  async getAiEngineInfo() {
+    return this.scanService.getAiEngineInfo();
+  }
+
   // ─── Patient: Xoá toàn bộ lịch sử scan ──────────────────────────────────────
   @Delete('history/all')
   @UseGuards(JwtAuthGuard)

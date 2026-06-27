@@ -118,4 +118,31 @@ export class AdminController {
   async bulkDeleteScans(@Body() body: { scanIds: number[] }) {
     return this.adminService.bulkDeleteScans(body.scanIds);
   }
+
+  @Post('scans/bulk-review')
+  async bulkReviewScans(
+    @Body()
+    body: {
+      scanIds: number[];
+      isCorrect: boolean;
+      actualStatus?: string;
+      note?: string;
+      imageQuality?: string;
+    },
+  ) {
+    if (!body.scanIds || body.scanIds.length === 0) {
+      throw new BadRequestException('Please provide scan IDs to review.');
+    }
+    if (body.isCorrect === false && !body.actualStatus) {
+      throw new BadRequestException(
+        'Please provide actualStatus when marking scans as incorrect.',
+      );
+    }
+    return this.adminService.bulkReviewScans(body.scanIds, {
+      isCorrect: body.isCorrect,
+      actualStatus: body.actualStatus,
+      note: body.note,
+      imageQuality: body.imageQuality,
+    });
+  }
 }

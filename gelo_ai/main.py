@@ -155,6 +155,8 @@ async def list_models():
                             "name": cfg.get("name", version),
                             "architecture": cfg.get("architecture", "Unknown"),
                             "created_at": cfg.get("created_at", "Unknown"),
+                            "inference_threshold": cfg.get("inference_threshold", 0.7),
+                            "enabled_disease_codes": cfg.get("enabled_disease_codes", []),
                             "is_active": predictor.version == version,
                             "supported_labels": supported_labels
                         })

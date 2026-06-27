@@ -213,6 +213,25 @@ export class ScanService extends BaseService {
     }
   }
 
+  async getAiEngineInfo() {
+    try {
+      const config: any = await this.aiService.request('/ai/config');
+      return {
+        version: config.version || config.model_version || 'v1',
+        architecture: config.architecture || 'Unknown',
+        enabled_disease_codes: config.enabled_disease_codes || [],
+      };
+    } catch (error: unknown) {
+      const err = error as Error;
+      this.logger.error(`Failed to get AI engine info: ${err.message}`);
+      return {
+        version: 'v1',
+        architecture: 'Unknown',
+        enabled_disease_codes: [],
+      };
+    }
+  }
+
   /** Soft Delete: Marks scan as deleted for patient but keeps data for Admin dataset */
   async deleteScan(patientId: number, scanId: number) {
     const scan = await this.handleNotFound(

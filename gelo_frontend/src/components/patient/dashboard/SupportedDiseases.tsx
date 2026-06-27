@@ -3,14 +3,16 @@ import { Cpu, Info, CheckCircle2, ShieldCheck } from "lucide-react";
 interface Disease {
   id: number;
   name: string;
+  code: string;
 }
 
 interface SupportedDiseasesProps {
   diseases: Disease[];
   loading: boolean;
+  engineVersion?: string;
 }
 
-export function SupportedDiseases({ diseases = [], loading }: SupportedDiseasesProps) {
+export function SupportedDiseases({ diseases = [], loading, engineVersion }: SupportedDiseasesProps) {
   if (loading) {
     return (
       <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm animate-pulse">
@@ -34,7 +36,9 @@ export function SupportedDiseases({ diseases = [], loading }: SupportedDiseasesP
             <h2 className="text-sm font-black text-slate-800 tracking-tight">AI Capabilities</h2>
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">GELO Engine v1.0</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                GELO Engine {engineVersion || 'v1.0'}
+              </span>
             </div>
           </div>
         </div>
@@ -54,10 +58,15 @@ export function SupportedDiseases({ diseases = [], loading }: SupportedDiseasesP
               key={disease.id}
               className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-slate-100 group/item hover:bg-emerald-50/50 hover:border-emerald-100 transition-all cursor-default"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-                <span className="text-xs font-bold text-slate-600 group-hover/item:text-emerald-700 transition-colors">
-                  {disease.name}
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                  <span className="text-xs font-bold text-slate-600 group-hover/item:text-emerald-700 transition-colors">
+                    {disease.name}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono uppercase tracking-[0.2em]">
+                  Code: {disease.code}
                 </span>
               </div>
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover/item:opacity-100 transition-opacity" />

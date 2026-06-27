@@ -5,6 +5,7 @@ import { adminService } from "@/services/admin.service";
 import { TrendingUp, Users, FileCheck, AlertCircle, LayoutDashboard, Settings } from "lucide-react";
 import { AdminReviewModal } from "@/components/admin/admin-review-modal";
 import { AdminSettings } from "@/components/admin/admin-settings";
+import { ConfirmModal } from "@/components/shared/ui/ConfirmModal";
 import { useToastContext } from "@/components/shared/ui/ToastContext";
 import { useSelection } from "@/hooks/useSelection";
 import { PendingReviewsTable } from "@/components/admin/pending-reviews-table";
@@ -44,17 +45,103 @@ export function AdminDashboard() {
     refetchReviews();
   };
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    isDanger: true,
+    action: (() => {}) as () => void,
+  });
+
+  const openConfirm = (config: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDanger?: boolean;
+    action: () => void;
+  }) => {
+    setConfirmConfig({
+      title: config.title,
+      message: config.message,
+      confirmText: config.confirmText ?? 'Confirm',
+      cancelText: config.cancelText ?? 'Cancel',
+      isDanger: config.isDanger ?? true,
+      action: config.action,
+    });
+    setConfirmOpen(true);
+  };
+
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected scans?`)) return;
-    try {
-      await adminService.bulkDeleteScans(selectedIds);
-      toast.success("Batch Action", `${selectedIds.length} scans deleted successfully`);
-      clearSelection();
-      refetchReviews();
-    } catch (error) {
-      toast.error("Error", "Failed to delete selected scans");
-    }
+    openConfirm({
+      title: 'Delete Selected Scans',
+      message: `This action will permanently delete ${selectedIds.length} selected scan(s) from the system. This cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDanger: true,
+      action: async () => {
+        try {
+          await adminService.bulkDeleteScans(selectedIds);
+          toast.success('Batch Action', `${selectedIds.length} scans deleted successfully`);
+          clearSelection();
+          refetchReviews();
+        } catch (error) {
+          toast.error('Error', 'Failed to delete selected scans');
+        }
+      },
+    });
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedIds.length === 0) return;
+    openConfirm({
+      title: 'Approve Selected Scans',
+      message: `Mark ${selectedIds.length} selected scan(s) as correct. This will record admin review feedback and update the dataset.`,
+      confirmText: 'Approve',
+      cancelText: 'Cancel',
+      isDanger: false,
+      action: async () => {
+        try {
+          await adminService.bulkReviewScans(selectedIds, {
+            isCorrect: true,
+            note: 'Bulk approved by admin',
+          });
+          toast.success('Batch Review', `${selectedIds.length} scans approved successfully`);
+          clearSelection();
+          refetchReviews();
+        } catch (error) {
+          toast.error('Error', 'Failed to approve selected scans');
+        }
+      },
+    });
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedIds.length === 0) return;
+    openConfirm({
+      title: 'Reject Selected Scans',
+      message: `Mark ${selectedIds.length} selected scan(s) as incorrect. This will log admin review feedback for retraining.`,
+      confirmText: 'Reject',
+      cancelText: 'Cancel',
+      isDanger: true,
+      action: async () => {
+        try {
+          await adminService.bulkReviewScans(selectedIds, {
+            isCorrect: false,
+            actualStatus: 'UNKNOWN',
+            note: 'Bulk rejected by admin',
+          });
+          toast.success('Batch Review', `${selectedIds.length} scans rejected successfully`);
+          clearSelection();
+          refetchReviews();
+        } catch (error) {
+          toast.error('Error', 'Failed to reject selected scans');
+        }
+      },
+    });
   };
 
   const stats = [
@@ -110,6 +197,8 @@ export function AdminDashboard() {
                 onToggleAll={toggleSelectAll}
                 onToggleOne={toggleSelectOne}
                 onBulkDelete={handleBulkDelete}
+                onBulkApprove={handleBulkApprove}
+                onBulkReject={handleBulkReject}
                 onOpenReview={openReview}
               />
             </div>
@@ -135,6 +224,16 @@ export function AdminDashboard() {
       )}
 
       <AdminReviewModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} scan={selectedScan} onReviewSuccess={handleReviewSuccess} />
+      <ConfirmModal
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={confirmConfig.action}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        isDanger={confirmConfig.isDanger}
+      />
     </AdminLayout>
   );
 }
