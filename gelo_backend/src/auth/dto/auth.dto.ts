@@ -17,18 +17,18 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(3)
-  username: string;
+  username!: string;
 
   @ApiProperty({ example: 'john@example.com' })
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'password123' })
   @IsString()
   @IsNotEmpty()
   @MinLength(6)
-  password: string;
+  password!: string;
 
   @ApiProperty({ example: 'John Doe', required: false })
   @IsString()
@@ -52,13 +52,13 @@ export class LoginDto {
   @ApiProperty({ example: 'johndoe', description: 'Can be username or email' })
   @IsString()
   @IsNotEmpty()
-  identifier: string;
+  identifier!: string;
 
   @ApiProperty({ example: 'password123' })
   @IsString()
   @IsNotEmpty()
   @MinLength(6)
-  password: string;
+  password!: string;
 }
 
 export class UpdateProfileDto {
@@ -94,55 +94,55 @@ export class UpdateProfileDto {
 export class VerifyOtpDto {
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty()
-  code: string;
+  code!: string;
 
   @IsEnum(['REGISTER', 'FORGOT_PASSWORD', 'CHANGE_PASSWORD'])
   @IsNotEmpty()
-  type: 'REGISTER' | 'FORGOT_PASSWORD' | 'CHANGE_PASSWORD';
+  type!: 'REGISTER' | 'FORGOT_PASSWORD' | 'CHANGE_PASSWORD';
 }
 
 export class ResendOtpDto {
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @IsEnum(['REGISTER', 'FORGOT_PASSWORD', 'CHANGE_PASSWORD'])
   @IsNotEmpty()
-  type: 'REGISTER' | 'FORGOT_PASSWORD' | 'CHANGE_PASSWORD';
+  type!: 'REGISTER' | 'FORGOT_PASSWORD' | 'CHANGE_PASSWORD';
 }
 
 export class ForgotPasswordDto {
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 }
 
 export class ResetPasswordDto {
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty()
-  code: string;
+  code!: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(6)
-  newPassword: string;
+  newPassword!: string;
 }
 
 export class ChangePasswordVerifyDto {
   @IsString()
   @IsNotEmpty()
-  code: string;
+  code!: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(6)
-  newPassword: string;
+  newPassword!: string;
 }

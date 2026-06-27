@@ -41,9 +41,7 @@ const multerOptions = {
 
 @Controller('scans')
 export class ScanController {
-  constructor(
-    private readonly scanService: ScanService
-  ) {}
+  constructor(private readonly scanService: ScanService) {}
 
   // ─── Patient: Upload image & AI analysis (single-phase, AI-only) ────────
   @Post('initiate')

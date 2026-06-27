@@ -23,8 +23,14 @@ export class ScanService extends BaseService {
     super();
   }
 
-  async initiateScan(patientId: number, imageUrls: string[], imageQuality: string = 'CLEAR') {
-    this.logger.log(`Initiating AI-only scan for patient ${patientId} (Quality: ${imageQuality})`);
+  async initiateScan(
+    patientId: number,
+    imageUrls: string[],
+    imageQuality: string = 'CLEAR',
+  ) {
+    this.logger.log(
+      `Initiating AI-only scan for patient ${patientId} (Quality: ${imageQuality})`,
+    );
 
     // 1. Create SkinScan and ScanImages (Initial record)
     const scan = await this.prisma.skinScan.create({
@@ -142,7 +148,8 @@ export class ScanService extends BaseService {
         `Scan ${scan.id} complete — ${decision} (${aiConfidence}%) → ${diagnosticStatus}`,
       );
       return { scanId: scan.id, message: 'Scan analysis complete' };
-    } catch (error) {
+    } catch (error: unknown) {
+      const err = error as Error;
       this.logger.error(
         `AI Analysis failed for scan ${scan.id}. Cleaning up...`,
       );
@@ -150,8 +157,8 @@ export class ScanService extends BaseService {
       await this.cleanupFailedScan(scan.id, imageUrls);
 
       throw new ServiceUnavailableException(
-        error.message?.includes('AI Service')
-          ? error.message
+        err.message?.includes('AI Service')
+          ? err.message
           : 'AI Diagnostic Service failure. Your request was cancelled and no data was saved.',
       );
     }
@@ -164,8 +171,9 @@ export class ScanService extends BaseService {
         .delete({ where: { id: scanId } })
         .catch(() => {});
       await this.deleteImagesFromCloudinary(imageUrls);
-    } catch (err) {
-      this.logger.error(`Cleanup failed for scan ${scanId}: ${err.message}`);
+    } catch (err: unknown) {
+      const cleanupErr = err as Error;
+      this.logger.error(`Cleanup failed for scan ${scanId}: ${cleanupErr.message}`);
     }
   }
 
@@ -198,8 +206,9 @@ export class ScanService extends BaseService {
         select: { id: true, name: true, code: true },
         orderBy: { name: 'asc' },
       });
-    } catch (error) {
-      this.logger.error(`Failed to get supported diseases: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as Error;
+      this.logger.error(`Failed to get supported diseases: ${err.message}`);
       return [];
     }
   }
@@ -241,9 +250,10 @@ export class ScanService extends BaseService {
           const fileName = urlParts[urlParts.length - 1].split('.')[0];
           const publicId = `gelo/scans/${fileName}`;
           await cloudinary.uploader.destroy(publicId);
-        } catch (err) {
+        } catch (err: unknown) {
+          const cloudErr = err as Error;
           this.logger.error(
-            `Failed to delete Cloudinary asset: ${err.message}`,
+            `Failed to delete Cloudinary asset: ${cloudErr.message}`,
           );
         }
       }),

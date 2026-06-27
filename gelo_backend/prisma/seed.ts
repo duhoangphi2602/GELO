@@ -19,8 +19,9 @@ async function main() {
   const deleteTable = async (model: any) => {
     try {
       await model.deleteMany();
-    } catch (e) {
-      console.warn(`Could not delete data from model: ${e.message}`);
+    } catch (e: unknown) {
+      const err = e as Error;
+      console.warn(`Could not delete data from model: ${err.message}`);
     }
   };
 

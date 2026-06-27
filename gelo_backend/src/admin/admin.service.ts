@@ -10,7 +10,7 @@ export class AdminDashboardService {
   constructor(
     private prisma: PrismaService,
     private aiService: AiIntegrationService,
-  ) { }
+  ) {}
 
   async getAdminPatients() {
     const patients = await this.prisma.patient.findMany({
@@ -42,7 +42,7 @@ export class AdminDashboardService {
         p.skinScans[0]?.diagnosis?.diagnosticStatus === DiagnosticStatus.HEALTHY
           ? 'Healthy'
           : p.skinScans[0]?.diagnosis?.diagnosticStatus ===
-            DiagnosticStatus.UNKNOWN
+              DiagnosticStatus.UNKNOWN
             ? 'Unknown'
             : (p.skinScans[0]?.diagnosis?.predictedDisease?.name ?? null),
       lastScanDate: p.skinScans[0]?.createdAt ?? null,
@@ -181,12 +181,14 @@ export class AdminDashboardService {
         isDeleted: scan.isDeleted,
         imageQuality: scan.imageQuality,
         // Added diary info
-        patientDiary: diary ? {
-          score: diary.conditionScore,
-          symptoms: diary.symptoms,
-          note: diary.note,
-          date: diary.createdAt
-        } : null
+        patientDiary: diary
+          ? {
+              score: diary.conditionScore,
+              symptoms: diary.symptoms,
+              note: diary.note,
+              date: diary.createdAt,
+            }
+          : null,
       };
     });
   }
@@ -382,9 +384,10 @@ export class AdminDashboardService {
                     description: `Auto-imported from AI model ${model.version}`,
                   },
                 });
-              } catch (e) {
+              } catch (e: unknown) {
+                const err = e as Error;
                 this.logger.error(
-                  `Failed to auto-sync disease ${label.code}: ${e.message}`,
+                  `Failed to auto-sync disease ${label.code}: ${err.message}`,
                 );
               }
             }
@@ -393,8 +396,9 @@ export class AdminDashboardService {
       }
 
       return models;
-    } catch (err) {
-      this.logger.error(`Failed to get available models: ${err.message}`);
+    } catch (err: unknown) {
+      const errorObj = err as Error;
+      this.logger.error(`Failed to get available models: ${errorObj.message}`);
       throw new Error('Could not connect to AI Service');
     }
   }
@@ -423,6 +427,9 @@ export class AdminDashboardService {
     await this.prisma.skinScan.deleteMany({
       where: { id: { in: scanIds } },
     });
-    return { success: true, message: `${scanIds.length} scans deleted successfully.` };
+    return {
+      success: true,
+      message: `${scanIds.length} scans deleted successfully.`,
+    };
   }
 }

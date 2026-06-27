@@ -350,15 +350,15 @@ export class AuthService extends BaseService {
         patient:
           Object.keys(patientData).length > 0
             ? {
-              upsert: {
-                create: {
-                  fullName: fullName?.trim() || 'User',
-                  age: age || 25,
-                  gender: gender || Gender.UNKNOWN,
+                upsert: {
+                  create: {
+                    fullName: fullName?.trim() || 'User',
+                    age: age || 25,
+                    gender: gender || Gender.UNKNOWN,
+                  },
+                  update: patientData,
                 },
-                update: patientData,
-              },
-            }
+              }
             : undefined,
       },
     });
