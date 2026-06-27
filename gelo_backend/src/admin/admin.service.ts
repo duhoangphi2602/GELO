@@ -175,6 +175,12 @@ export class AdminDashboardService {
             : scan.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
               ? 'Unknown'
               : (scan.diagnosis?.predictedDisease?.name ?? 'Unknown'),
+        predictedDiseaseCode:
+          scan.diagnosis?.diagnosticStatus === DiagnosticStatus.HEALTHY
+            ? 'HEALTHY'
+            : scan.diagnosis?.diagnosticStatus === DiagnosticStatus.UNKNOWN
+              ? 'UNKNOWN'
+              : (scan.diagnosis?.predictedDisease?.code ?? 'UNKNOWN'),
         reason: isUserReported ? 'User Reported Error' : 'Low Confidence',
         userNote: userFeedback?.note,
         createdAt: scan.createdAt,
@@ -431,5 +437,75 @@ export class AdminDashboardService {
       success: true,
       message: `${scanIds.length} scans deleted successfully.`,
     };
+  }
+
+  async bulkReviewScans(
+    scanIds: number[],
+    body: {
+      isCorrect: boolean;
+      actualStatus?: string;
+      note?: string;
+      imageQuality?: string;
+    },
+  ) {
+    this.logger.log(
+      `Admin action: Bulk reviewing ${scanIds.length} scans as ${
+        body.isCorrect ? 'correct' : 'incorrect'
+      }.`,
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      const feedbacks = [] as any[];
+
+      for (const scanId of scanIds) {
+        const diagnosis = await tx.diagnosisResult.findUnique({
+          where: { scanId },
+        });
+        if (!diagnosis) {
+          throw new NotFoundException(
+            `DiagnosisResult not found for scan #${scanId}`,
+          );
+        }
+
+        if (!body.isCorrect) {
+          await tx.diagnosisResult.update({
+            where: { scanId },
+            data: {
+              diagnosticStatus:
+                (body.actualStatus as DiagnosticStatus) ??
+                (diagnosis.diagnosticStatus || DiagnosticStatus.UNKNOWN),
+            },
+          });
+        }
+
+        if (body.imageQuality) {
+          await tx.skinScan.update({
+            where: { id: scanId },
+            data: { imageQuality: body.imageQuality as ImageQuality },
+          });
+        }
+
+        const feedback = await tx.feedbackLog.create({
+          data: {
+            scanId,
+            diagnosticStatus:
+              (body.actualStatus as DiagnosticStatus) ??
+              diagnosis.diagnosticStatus,
+            predictedDiseaseId: diagnosis.predictedDiseaseId,
+            actualDiseaseId: body.isCorrect ? diagnosis.predictedDiseaseId : null,
+            isCorrect: body.isCorrect,
+            note: body.note ?? 'Admin bulk review',
+            role: FeedbackRole.ADMIN,
+          },
+        });
+        feedbacks.push(feedback);
+      }
+
+      return {
+        success: true,
+        message: `${feedbacks.length} scans reviewed successfully.`,
+        reviewedCount: feedbacks.length,
+      };
+    });
   }
 }

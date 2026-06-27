@@ -3,6 +3,7 @@ import api from '@/api/axiosClient';
 export interface Disease {
   id: number;
   name: string;
+  code: string;
   description?: string;
   symptoms?: string;
   treatment?: string;

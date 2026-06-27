@@ -44,5 +44,10 @@ export const scanService = {
   async getResults(scanId: number): Promise<any> {
     const { data } = await api.get(`/results/${scanId}`);
     return data;
+  },
+
+  async getEngineInfo(): Promise<{ version?: string; architecture?: string; enabled_disease_codes?: string[] }> {
+    const { data } = await api.get('/scans/engine-info');
+    return data;
   }
 };

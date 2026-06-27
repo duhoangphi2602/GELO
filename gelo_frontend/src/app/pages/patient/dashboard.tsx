@@ -26,6 +26,11 @@ export function Dashboard() {
     queryFn: () => diseaseService.getSupportedDiseases(),
   });
 
+  const { data: engineInfo = { version: 'v1' } } = useQuery({
+    queryKey: ["engine-info"],
+    queryFn: () => scanService.getEngineInfo(),
+  });
+
   const { data: diaries = [] } = useQuery({
     queryKey: ["diaries", patientId],
     queryFn: () => diaryService.getPatientDiaries(patientId || 1),
@@ -57,7 +62,7 @@ export function Dashboard() {
           <div className="space-y-1">
             <div className="flex items-center gap-2 mb-1">
               <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100">Live Engine</span>
-              <span className="text-slate-400 font-bold text-[10px] uppercase">GELO v1.0 Active</span>
+              <span className="text-slate-400 font-bold text-[10px] uppercase">GELO {engineInfo.version || 'v1.0'} Active</span>
             </div>
             <h1 className="text-3xl font-black text-slate-800 tracking-tight">
               Welcome back, <span className="text-[#2a64ad]">{fullName}</span>
@@ -102,7 +107,7 @@ export function Dashboard() {
 
           {/* Sidebar Area */}
           <div className="space-y-6">
-            <SupportedDiseases diseases={supportedDiseases} loading={loadingDiseases} />
+            <SupportedDiseases diseases={supportedDiseases} loading={loadingDiseases} engineVersion={engineInfo.version} />
           </div>
         </div>
 

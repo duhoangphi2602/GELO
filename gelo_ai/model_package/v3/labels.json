@@ -7,8 +7,14 @@
   },
   "1": {
     "id": 0,
-    "code": "Z00.0",
-    "status": "HEALTHY",
-    "name": "HEALTHY"
+    "code": "UNKNOWN",
+    "status": "UNKNOWN",
+    "name": "Unknown"
+  },
+  "-1": {
+    "id": 0,
+    "code": "UNKNOWN",
+    "status": "UNKNOWN",
+    "name": "Unknown"
   }
 }
