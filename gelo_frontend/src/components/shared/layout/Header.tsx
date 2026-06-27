@@ -16,16 +16,17 @@ export function Header() {
     .toUpperCase();
 
   const getPageTitle = () => {
-    switch (location.pathname) {
+    const path = location.pathname;
+    if (path.startsWith("/patient/results")) return "Diagnostic Report";
+    if (path.startsWith("/admin/review")) return "Scan Review";
+    switch (path) {
       case "/patient/dashboard": return "Dashboard";
       case "/patient/scan": return "Start New Scan";
       case "/patient/diary": return "Diary Tracking";
-      case "/patient/results": return "Diagnostic Report";
       case "/patient/history": return "Scan History";
       case "/patient/profile": return "My Profile";
       case "/patient/feedback": return "App Feedback";
       case "/patient/reports": return "Analytical Reports";
-
       default: return "Dashboard";
     }
   };

@@ -12,6 +12,7 @@ import {
   BadRequestException,
   Res,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
@@ -70,10 +71,10 @@ export class ScanController {
   @UseGuards(JwtAuthGuard)
   async getPatientScans(
     @CurrentUser('patientId') tokenPatientId: number,
-    @Param('patientId') patientId: string,
+    @Param('patientId', ParseIntPipe) patientId: number,
   ) {
     // Chỉ cho phép xem scan của chính mình
-    const requestedId = parseInt(patientId, 10);
+    const requestedId = patientId;
     if (tokenPatientId !== requestedId) {
       throw new BadRequestException('You can only view your own scan history.');
     }
@@ -101,8 +102,8 @@ export class ScanController {
   @UseGuards(JwtAuthGuard)
   async deleteScan(
     @CurrentUser('patientId') tokenPatientId: number,
-    @Param('scanId') scanId: string,
+    @Param('scanId', ParseIntPipe) scanId: number,
   ) {
-    return this.scanService.deleteScan(tokenPatientId, parseInt(scanId, 10));
+    return this.scanService.deleteScan(tokenPatientId, scanId);
   }
 }

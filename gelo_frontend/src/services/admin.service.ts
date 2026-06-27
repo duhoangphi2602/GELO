@@ -62,7 +62,7 @@ export const adminService = {
   },
   
   async deleteScan(scanId: number): Promise<void> {
-    await api.delete(`/admin/scan/${scanId}`);
+    await api.delete(`/admin/scans/${scanId}`);
   },
 
   async bulkDeleteScans(scanIds: number[]): Promise<void> {

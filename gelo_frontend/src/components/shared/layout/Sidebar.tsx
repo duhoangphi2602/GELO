@@ -29,7 +29,7 @@ export function Sidebar() {
           Main Menu
         </div>
         {navLinks.map((link) => {
-          const isActive = location.pathname === link.href;
+          const isActive = location.pathname === link.href || location.pathname.startsWith(link.href + "/");
           const Icon = link.icon;
 
           return (
